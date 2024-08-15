@@ -12,11 +12,24 @@ module.exports = withMT({
         Roboto: ["var(--font-Roboto)", "ui-sans-serif", "system-ui", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "Helvetica Neue", "Arial", "sans-serif", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"],
       },
     extend: {
-      backgroundImage: {
-        "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
-        "gradient-conic":
-          "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
-      },
+      // backgroundImage: {
+      //   "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
+      //   "gradient-conic":
+      //     "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
+      // },
+      fontFamily: {
+        montserrat: ['Montserrat', 'sans-serif'],
+        lato: ['Lato', 'sans-serif'],
+        onest: ['Onest', 'sans-serif'],
+        robotoMono: ['Roboto Mono', 'monospace'],
+        mooli: ['Mooli', 'sans-serif'],
+        mavenPro: ['Maven Pro', 'sans-serif'],
+        oxanium: ['Oxanium', 'cursive'],
+        mPlusp: ['M PLUS 1p'],
+        jaldi: ['Jaldi', 'sans-serif'],
+        k2d: ['K2D', 'sans-serif'],
+        sourceSans3: ['Source Sans 3', 'sans-serif']
+      }
     },
     screens: {
         "1000px": "1000px",
@@ -28,5 +41,7 @@ module.exports = withMT({
         "400px": "400px",
       },
   },
-  plugins: [],
+  plugins: [
+    require('tailwind-scrollbar')({ nocompatible: true }),
+  ],
 });

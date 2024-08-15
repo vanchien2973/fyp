@@ -1,10 +1,10 @@
 import React from 'react'
-import Header from './Header'
+import Topbar from './Topbar'
 
 const Hero = () => {
   return (
     <div>
-      <Header/>
+      <Topbar/>
     </div>
   )
 }

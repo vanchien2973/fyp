@@ -11,4 +11,9 @@ const redisClient = () => {
 
 const redis = new Redis(redisClient());
 
-export default redis;
+// Error handling for the Redis client
+redis.on('error', (err) => {
+  console.error('[ioredis] Unhandled error event:', err);
+});
+
+export { redis };

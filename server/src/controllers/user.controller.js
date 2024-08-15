@@ -10,7 +10,7 @@ import {
     refreshTokenOptions,
     sendToken,
 } from "../utils/jwt";
-import redis from "../utils/redis";
+import { redis } from "../utils/redis";
 import { getUserById } from "../services/user.service";
 import cloudinary from "cloudinary";
 
@@ -28,17 +28,17 @@ export const registerUser = CatchAsyncError(async (req, res, next) => {
     const activationCode = activationToken.activationCode;
     const data = { user: { name: user.name }, activationCode };
 
-    const html = await ejs.renderFile(
-        path.join(__dirname, "../mails/ActivationMail.ejs"),
-        data,
-    );
+    // const html = await ejs.renderFile(
+    //     path.join(__dirname, "../mails/ActivationMail.ejs"),
+    //     data,
+    // );
     // Send the activation email
     try {
         await SendMail({
             email: user.email,
             subject: "Activate Your Account",
             template: "ActivationMail.ejs",
-            html,
+            data,
         });
 
         res.status(201).json({

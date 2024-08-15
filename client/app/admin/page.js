@@ -6,25 +6,23 @@ import AdminSidebar from '../components/Admin/sidebar/AdminSidebar';
 import Hero from '../components/Admin/dashboard/Hero';
 
 const page = () => {
-
   return (
-    <div>
+    <>
       <AdminProtected>
         <Heading
           title={`ELP - Admin`}
           description="LMS using MERN"
           keywords="MERN, Redux, Redis"
         />
-        <div className='flex h-[200vh]'>
-          <div className='1500px:w-[16%] w-1/5'>
-            <AdminSidebar/>
-          </div>
-          <div className='w-[85%]'>
+        <div className='w-full h-full flex relative scrollbar-thin scrollbar-track-slate-800 scrollbar-thumb-slate-500'>
+          <AdminSidebar />
+          <main className='w-full h-full'>
             <Hero />
-          </div>
+          </main>
         </div>
       </AdminProtected>
-    </div>
+    </>
   )
 }
 export default page;
+

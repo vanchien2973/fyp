@@ -1,6 +1,11 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+@import url('https://fonts.googleapis.com/css2?family=Lato&family=Montserrat:wght@500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Mooli&family=Onest:wght@300;400&family=Roboto+Mono:wght@300&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Jaldi&family=M+PLUS+1p:wght@300&family=Maven+Pro&family=Oxanium:wght@300&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=K2D:wght@200&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@300&display=swap');
 
 /* Chrome, Safari, Edge, Opera */
 input::-webkit-outer-spin-button,
@@ -14,27 +19,8 @@ input[type=number] {
   -moz-appearance: textfield;
 }
 
-/* global.css */
-::-webkit-scrollbar {
-  width: 8px;
-}
 
-/* Track */
-::-webkit-scrollbar-track {
-  background: #000000;
-}
-
-/* Handle */
-::-webkit-scrollbar-thumb {
-  background: #f5f5f5b0;
-}
-
-/* Handle on hover */
-::-webkit-scrollbar-thumb:hover {
-  background: #848484;
-}
-
-/* :root {
+:root {
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 214, 219, 220;
   --background-end-rgb: 255, 255, 255;
@@ -46,7 +32,7 @@ input[type=number] {
     --background-start-rgb: 0, 0, 0;
     --background-end-rgb: 0, 0, 0;
   }
-} */
+}
 
 body {
   color: rgb(var(--foreground-rgb));
