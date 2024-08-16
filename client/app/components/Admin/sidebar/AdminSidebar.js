@@ -160,7 +160,7 @@ const AdminSidebar = () => {
                             <Box className='rounded-full overflow-hidden hover:shadow-lg hover:shadow-slate-400/50'>
                                 <img
                                     src={user.avatar ? user.avatar.url : '/assets/avatar.png'}
-                                    className='w-[120px] h-[75px]'
+                                    className='w-[80px] h-[80px]'
                                 />
                             </Box>
                             <Box className='flex flex-col items-center justify-center gap-y-1 mt-3'>
