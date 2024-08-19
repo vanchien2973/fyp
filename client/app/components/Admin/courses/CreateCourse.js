@@ -3,6 +3,7 @@ import React, { useState } from 'react'
 import CourseInformation from './CourseInformation';
 import CourseOptions from './CourseOptions';
 import { useTheme } from '@emotion/react';
+import CourseData from './CourseData';
 
 const CreateCourse = () => {
     const theme = useTheme();
@@ -31,6 +32,7 @@ const CreateCourse = () => {
         suggestion: '',
     });
     const [courseData, setCourseData] = useState({});
+    
 
     return (
         <div className='w-full flex min-h-screen'>
@@ -42,7 +44,18 @@ const CreateCourse = () => {
                             setCourseInfor={setCourseInfor}
                             active={active}
                             setActive={setActive}
-
+                        />
+                    )
+                }
+                {
+                    active === 1 && (
+                        <CourseData
+                            benefits={benefits}
+                            setBenefits={setBenefits}
+                            prerequisites={prerequisites}
+                            setPrerequisites={setPrerequisites}
+                            active={active}
+                            setActive={setActive}
                         />
                     )
                 }

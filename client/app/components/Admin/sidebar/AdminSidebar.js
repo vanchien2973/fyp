@@ -103,7 +103,7 @@ const AdminSidebar = () => {
     ];
 
     const renderCategory = (items, title, delay) => (
-        <MotionDiv variants={animateMenu} initial='initial' animate='final' transition={{ delay }}>
+        <MotionDiv variants={animateMenu} initial='initial' animate='final' transition={{ delay }} >
             <Typography
                 variant='h6'
                 className={`${isCollapsed ? 'hidden' : ''}`}
@@ -173,7 +173,7 @@ const AdminSidebar = () => {
                             </Box>
                         </Box>
                     )}
-                    <MotionDiv
+                    <MotionDiv 
                         className={`flex flex-col justify-between ${isCollapsed ? 'mt-[4rem]' : 'px-[10%] pt-[8%]'} space-y-7`}
                         variants={animateMenu}
                         initial='initial'
