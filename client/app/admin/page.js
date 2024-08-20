@@ -4,7 +4,6 @@ import Heading from '../utils/Heading';
 import AdminProtected from '../hooks/AdminProtected';
 import AdminSidebar from '../components/Admin/sidebar/AdminSidebar';
 import Hero from '../components/Admin/dashboard/Hero';
-import { ThemeProviderAdmin } from '../utils/ThemeAdmin';
 import AdminLayout from './layout';
 
 const page = () => {

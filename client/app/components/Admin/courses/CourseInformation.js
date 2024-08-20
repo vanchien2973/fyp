@@ -62,12 +62,13 @@ const CourseInformation = ({ courseInfor, setCourseInfor, active, setActive }) =
         <div className="mb-6">
           <label className="block text-sm font-medium mb-2" htmlFor="description">Course Description</label>
           <textarea
+            rows={8}
+            cols={30}
             type="text"
             id="description"
             value={courseInfor.description}
             onChange={(e) => setCourseInfor({ ...courseInfor, description: e.target.value })}
             className="w-full p-2 border border-[#343a46] dark:border-black rounded dark:bg-transparent dark:border-dark-700  bg-transparent"
-            rows="4"
           />
         </div>
         <div className="mb-6 flex justify-between">

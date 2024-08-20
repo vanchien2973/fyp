@@ -4,10 +4,11 @@ import CourseInformation from './CourseInformation';
 import CourseOptions from './CourseOptions';
 import { useTheme } from '@emotion/react';
 import CourseData from './CourseData';
+import CourseContent from './CourseContent';
 
 const CreateCourse = () => {
     const theme = useTheme();
-    const [active, setActive] = useState(0);
+    const [active, setActive] = useState(2);
     const [courseInfor, setCourseInfor] = useState({
         name: '',
         description: '',
@@ -20,7 +21,7 @@ const CreateCourse = () => {
     });
     const [benefits, setBenefits] = useState([{ title: '' }]);
     const [prerequisites, setPrerequisites] = useState([{ title: '' }]);
-    const [courseContentData, setCourseContentData] = useState({
+    const [courseContentData, setCourseContentData] = useState([{
         videoUrl: '',
         title: '',
         description: '',
@@ -30,9 +31,12 @@ const CreateCourse = () => {
             url: '',
         }],
         suggestion: '',
-    });
+    }]);
     const [courseData, setCourseData] = useState({});
     
+    const handleSubmit = async () => {
+
+    }
 
     return (
         <div className='w-full flex min-h-screen'>
@@ -54,6 +58,17 @@ const CreateCourse = () => {
                             setBenefits={setBenefits}
                             prerequisites={prerequisites}
                             setPrerequisites={setPrerequisites}
+                            active={active}
+                            setActive={setActive}
+                            handleSubmit={handleSubmit}
+                        />
+                    )
+                }
+                {
+                    active === 2 && (
+                        <CourseContent
+                            courseContentData={courseContentData}
+                            setCourseContentData={setCourseContentData}
                             active={active}
                             setActive={setActive}
                         />
