@@ -1,6 +1,7 @@
 import CatchAsyncError from "../middlewares/CatchAsyncError";
 import ErrorHandler from "../utils/ErrorHandler";
 import cloudinary from "cloudinary";
+import axios from 'axios';
 import redis from "../utils/redis";
 import mongoose from "mongoose";
 import ejs from "ejs";
@@ -243,7 +244,7 @@ export const addAnswer = CatchAsyncError(async (req, res, next) => {
                     data
                 });
             } catch (error) {
-                return next(new ErrorHandler(error.message, 500));
+                return next(new ErrorHandler(error.message, 400));
             }
         }
 
@@ -252,6 +253,27 @@ export const addAnswer = CatchAsyncError(async (req, res, next) => {
             course
         });
     } catch (error) {
-        return next(new ErrorHandler(error.message, 500));
+        return next(new ErrorHandler(error.message, 400));
+    }
+});
+
+// Generate Video Url
+export const generateVideoUrl = CatchAsyncError(async (req, res, next) => {
+    try {
+        const { videoId } = req.body;
+        const response = await axios.post(
+            `https://dev.vdocipher.com/api/videos/${videoId}/otp`,
+            { ttl: 300 },
+            {
+                headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${process.env.VDOCIPHER_API_SECRET}`,
+                },
+            }
+        );
+        res.json(response.data)
+    } catch (error) {
+        return next(new ErrorHandler(error.message, 400));
     }
 });

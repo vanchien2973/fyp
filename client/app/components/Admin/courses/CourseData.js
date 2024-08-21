@@ -83,14 +83,14 @@ const CourseData = ({ benefits, setBenefits, prerequisites, setPrerequisites, ac
                 <div className='flex justify-between items-center'>
                     <button
                         className="px-4 py-2 bg-[#58c4dc] rounded text-white mt-4 cursor-pointer dark:bg-[#58c4dc] disabled:opacity-50 disabled:cursor-not-allowed"
-                        onClick={prevButton}
+                        onClick={() => prevButton()}
                         disabled={active === 0}
                     >
                         Prev
                     </button>
                     <button
                         className="px-4 py-2 bg-[#58c4dc] rounded text-white mt-4 cursor-pointer dark:bg-[#58c4dc]"
-                        onClick={handleOptions}
+                        onClick={() => handleOptions()}
                     >
                         Next
                     </button>

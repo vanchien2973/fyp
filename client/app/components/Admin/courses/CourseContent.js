@@ -9,7 +9,7 @@ const CourseContent = ({
     setActive,
     courseContentData,
     setCourseContentData,
-    handleSubmit: handleCourseSubmit,
+    handleSubmit: handlleCourseSubmit,
 }) => {
     const [isCollapsed, setIsCollapsed] = useState(
         Array(courseContentData.length).fill(false)
@@ -94,7 +94,7 @@ const CourseContent = ({
             toast.error(`Secsion can't be empty`);
         } else {
             setActive(active + 1);
-            handleCourseSubmit();
+            handlleCourseSubmit();
         }
     };
 
@@ -287,14 +287,13 @@ const CourseContent = ({
                 <div className='flex justify-between items-center'>
                     <button
                         className="px-4 py-2 bg-[#58c4dc] rounded text-white mt-4 cursor-pointer dark:bg-[#58c4dc] disabled:opacity-50 disabled:cursor-not-allowed"
-                        onClick={prevButton}
-                        disabled={active === 0}
+                        onClick={() => prevButton()}
                     >
                         Prev
                     </button>
                     <button
                         className="px-4 py-2 bg-[#58c4dc] rounded text-white mt-4 cursor-pointer dark:bg-[#58c4dc]"
-                        onClick={handleOptions}
+                        onClick={() => handleOptions()}
                     >
                         Next
                     </button>
