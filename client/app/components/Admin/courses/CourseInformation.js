@@ -116,6 +116,17 @@ const CourseInformation = ({ courseInfor, setCourseInfor, active, setActive }) =
           />
         </div>
         <div className="mb-6">
+          <label className="block text-sm font-medium mb-2" htmlFor="level">Demo URL</label>
+          <input
+            type="text"
+            id="demoUrl"
+            required
+            value={courseInfor.demoUrl}
+            onChange={(e) => setCourseInfor({ ...courseInfor, demoUrl: e.target.value })}
+            className="w-full p-2 border border-[#343a46] dark:border-black rounded dark:bg-transparent dark:border-dark-700  bg-transparent"
+          />
+        </div>
+        <div className="mb-6">
           <input
             type="file"
             accept="image/*"

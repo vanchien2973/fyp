@@ -9,7 +9,7 @@ const CourseContent = ({
     setActive,
     courseContentData,
     setCourseContentData,
-    handleSubmit: handlleCourseSubmit,
+    handleSubmit: handleCourseSubmit,
 }) => {
     const [isCollapsed, setIsCollapsed] = useState(
         Array(courseContentData.length).fill(false)
@@ -40,21 +40,27 @@ const CourseContent = ({
 
     const handleNewContent = () => {
         const lastContent = courseContentData[courseContentData.length - 1];
-        if (lastContent.title === '' || lastContent.description === '' || lastContent.videoUrl === '' || lastContent.links.some(link => link.title === '' || link.url === '')) {
+        if (lastContent.title === '' || lastContent.description === '' || lastContent.videoUrl === '' || lastContent.links[0].title === '' || lastContent.links[0].url === '') {
             toast.error('Please fill all the fields');
         } else {
-            const newVideoSection = lastContent.videoSection || 'Untitled Section';
-            const newCourseContentData = {
+            let newVideoSection = '';
+            if (courseContentData.length > 0) {
+                const lastVideoSection = courseContentData[courseContentData.length - 1].videoSection;
+                if (lastVideoSection) {
+                    newVideoSection = lastVideoSection;
+                };
+            }
+            const newContent = {
                 videoUrl: '',
                 title: '',
                 description: '',
                 videoSection: newVideoSection,
                 links: [{ title: '', url: '' }],
             };
-            setCourseContentData([...courseContentData, newCourseContentData]);
+            setCourseContentData([...courseContentData, newContent]);
         }
     };
-
+  
     const handleAddNewSection = () => {
         if (
             courseContentData[courseContentData.length - 1].title === '' ||
@@ -94,7 +100,7 @@ const CourseContent = ({
             toast.error(`Secsion can't be empty`);
         } else {
             setActive(active + 1);
-            handlleCourseSubmit();
+            handleCourseSubmit();
         }
     };
 

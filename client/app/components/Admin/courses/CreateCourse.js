@@ -2,14 +2,12 @@
 import React, { useState } from 'react'
 import CourseInformation from './CourseInformation';
 import CourseOptions from './CourseOptions';
-import { useTheme } from '@emotion/react';
 import CourseData from './CourseData';
 import CourseContent from './CourseContent';
 import CoursePreview from './CoursePreview';
 
 const CreateCourse = () => {
-    const theme = useTheme();
-    const [active, setActive] = useState(2);
+    const [active, setActive] = useState(0);
     const [courseInfor, setCourseInfor] = useState({
         name: '',
         description: '',
