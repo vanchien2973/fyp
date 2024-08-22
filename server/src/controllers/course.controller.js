@@ -4,11 +4,12 @@ import cloudinary from "cloudinary";
 import axios from 'axios';
 import redis from "../utils/redis";
 import mongoose from "mongoose";
-import ejs from "ejs";
+import ejs from 'ejs';
 import SendMail from "../utils/SendMail";
 import path from "path";
 import CourseModel from "../models/course.model";
 import { createCourse } from "../services/course.service";
+require('dotenv').config();
 
 // Create Course
 export const uploadCourse = CatchAsyncError(async (req, res, next) => {
@@ -170,12 +171,12 @@ export const addQuestion = CatchAsyncError(async (req, res, next) => {
         };
         courseContent.questions.push(newQuestion);
 
-        // Add notification
-        NotificationModel.create({
-            user: req.user?._id,
-            title: "New Question Received",
-            message: `You have a new question in ${courseContent.title}`
-        });
+        // // Add notification
+        // NotificationModel.create({
+        //     user: req.user?._id,
+        //     title: "New Question Received",
+        //     message: `You have a new question in ${courseContent.title}`
+        // });
 
         await course.save();
         res.status(200).json({
@@ -268,7 +269,7 @@ export const generateVideoUrl = CatchAsyncError(async (req, res, next) => {
                 headers: {
                     Accept: 'application/json',
                     'Content-Type': 'application/json',
-                    Authorization: `Bearer ${process.env.VDOCIPHER_API_SECRET}`,
+                    Authorization: `Apisecret ${process.env.VDOCIPHER_API_SECRET}`,
                 },
             }
         );

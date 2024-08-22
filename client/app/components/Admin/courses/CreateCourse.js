@@ -9,7 +9,7 @@ import CoursePreview from './CoursePreview';
 
 const CreateCourse = () => {
     const theme = useTheme();
-    const [active, setActive] = useState(0);
+    const [active, setActive] = useState(2);
     const [courseInfor, setCourseInfor] = useState({
         name: '',
         description: '',

@@ -9,9 +9,6 @@ const CoursePreview = ({ active, setActive, courseData, handleCourseCreate }) =>
                     <CourseVideoPlay 
                         videoUrl={courseData?.demoUrl} 
                         title={courseData?.title}
-                        // description={courseData?.description}
-                        // duration={courseData?.duration}
-                        // handleCourseCreate={handleCourseCreate}
                     />
                 </div>
             </div>
