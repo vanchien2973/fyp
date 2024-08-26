@@ -13,14 +13,16 @@ userRouter.get("/logout", isAuthenticated, logoutUser);
 
 userRouter.get("/refresh", updateToken);
 
-userRouter.get("/me", isAuthenticated, getUserInfo);
+userRouter.get("/me", updateToken, isAuthenticated, getUserInfo);
 
 userRouter.post("/social-auth", socialAuth);
 
-userRouter.put("/update-user-profile", isAuthenticated, updateUser);
+userRouter.put("/update-user-profile", updateToken, isAuthenticated, updateUser);
 
-userRouter.put("/update-user-password", isAuthenticated, updatePassword);
+userRouter.put("/update-user-password", updateToken, isAuthenticated, updatePassword);
 
-userRouter.put("/update-user-avatar", isAuthenticated, updateAvatar);
+userRouter.put("/update-user-avatar", updateToken, isAuthenticated, updateAvatar);
+
+// route + updateToken
 
 export default userRouter;

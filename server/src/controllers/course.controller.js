@@ -123,7 +123,6 @@ export const getCourseByUser = CatchAsyncError(async (req, res, next) => {
     try {
         const userCourseList = req.user?.courses;
         const courseId = req.params.id;
-
         const courseExists = userCourseList?.find((course) => course._id.toString() === courseId);
 
         if (!courseExists) {
@@ -222,21 +221,19 @@ export const addAnswer = CatchAsyncError(async (req, res, next) => {
 
         question.questionReplies.push(newAnswer);
         await course?.save();
-        
+
         if (req.user._id === question.user._id) {
-            NotificationModel.create({
-                user: req.user?._id,
-                title: "New Question Reply Received",
-                message: `You have a new question reply in ${courseContent.title}`
-            });
+            // NotificationModel.create({
+            //     user: req.user?._id,
+            //     title: "New Question Reply Received",
+            //     message: `You have a new question reply in ${courseContent.title}`
+            // });
         } else {
             const data = {
                 name: question.user.name,
                 title: courseContent.title,
             };
-
             const html = await ejs.renderFile(path.join(__dirname, "../mails/QuestionReply.ejs"), data);
-
             try {
                 await SendMail({
                     email: question.user.email,
@@ -245,7 +242,7 @@ export const addAnswer = CatchAsyncError(async (req, res, next) => {
                     data
                 });
             } catch (error) {
-                return next(new ErrorHandler(error.message, 400));
+                return next(new ErrorHandler(error.message, 500));
             }
         }
 
@@ -254,7 +251,82 @@ export const addAnswer = CatchAsyncError(async (req, res, next) => {
             course
         });
     } catch (error) {
-        return next(new ErrorHandler(error.message, 400));
+        return next(new ErrorHandler(error.message, 500));
+    }
+});
+
+// Add Review in Course
+export const addReview = CatchAsyncError(async (req, res, next) => {
+    try {
+        const userCourseList = req.user?.courses;
+        const courseId = req.params.id;
+        const courseExists = userCourseList.some((course) => course._id.toString() === courseId.toString());
+
+        if (!courseExists) {
+            return next(new ErrorHandler("You are not authorized to access this course", 404));
+        }
+
+        const course = await CourseModel.findById(courseId);
+        const { review, rating } = req.body;
+        const reviewData = {
+            user: req.user,
+            comment: review,
+            rating
+        }
+        course.reviews.push(reviewData);
+        await course.save();
+
+        let average = 0;
+        course?.reviews.forEach((review) => {
+            average += review.rating;
+        });
+        if (course) {
+            average = average / course.reviews.length;
+            course.ratings = average;
+        }
+        await course.save();
+        const notification = {
+            title: 'New Review Received in Course',
+            message: `${req.user?.name} has given a review in ${course?.name}!`
+        }
+        // Create Notification
+
+        res.status(200).json({
+            success: true,
+            course
+        })
+    } catch (error) {
+        return next(new ErrorHandler(error.message, 500));
+    }
+});
+
+// Add Reply in Review (for Admin)
+export const addReplyForReview = CatchAsyncError(async (req, res, next) => {
+    try {
+        const { comment, courseId, reviewId } = req.body;
+        const course = await CourseModel.findById(courseId);
+        if (!course) {
+            return next(new ErrorHandler("Course not found", 404));
+        }
+        const review = course.reviews.find((review) => review._id.toString() === reviewId);
+        if (!review) {
+            return next(new ErrorHandler("Review not found", 404));
+        }
+        const replyData = {
+            user: req.user,
+            comment
+        }
+        if (!review.commentReplies) {
+            review.commentReplies = [];
+        }
+        review.commentReplies?.push(replyData);
+        await course?.save();
+        res.status(200).json({
+            success: true,
+            course
+        })
+    } catch (error) {
+        return next(new ErrorHandler(error.message, 500));
     }
 });
 

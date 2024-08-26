@@ -178,10 +178,7 @@ export const updateToken = CatchAsyncError(async (req, res, next) => {
         res.cookie("access_token", accessToken, accessTokenOptions);
         res.cookie("refresh_token", refreshToken, refreshTokenOptions);
 
-        res.status(200).json({
-            success: true,
-            accessToken,
-        });
+        next();
     } catch (error) {
         return next(new ErrorHandler(error.message, 400));
     }
