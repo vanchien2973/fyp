@@ -9,6 +9,7 @@ import SendMail from "../utils/SendMail";
 import path from "path";
 import CourseModel from "../models/course.model";
 import { createCourse } from "../services/course.service";
+import NotificationModel from "../models/notification.model";
 require('dotenv').config();
 
 // Create Course
@@ -170,12 +171,12 @@ export const addQuestion = CatchAsyncError(async (req, res, next) => {
         };
         courseContent.questions.push(newQuestion);
 
-        // // Add notification
-        // NotificationModel.create({
-        //     user: req.user?._id,
-        //     title: "New Question Received",
-        //     message: `You have a new question in ${courseContent.title}`
-        // });
+        // Add notification
+        NotificationModel.create({
+            user: req.user?._id,
+            title: "New Question Received",
+            message: `You have a new question in ${courseContent.title}`
+        });
 
         await course.save();
         res.status(200).json({
@@ -223,11 +224,11 @@ export const addAnswer = CatchAsyncError(async (req, res, next) => {
         await course?.save();
 
         if (req.user._id === question.user._id) {
-            // NotificationModel.create({
-            //     user: req.user?._id,
-            //     title: "New Question Reply Received",
-            //     message: `You have a new question reply in ${courseContent.title}`
-            // });
+            NotificationModel.create({
+                user: req.user?._id,
+                title: "New Question Reply Received",
+                message: `You have a new question reply in ${courseContent.title}`
+            });
         } else {
             const data = {
                 name: question.user.name,
@@ -289,7 +290,7 @@ export const addReview = CatchAsyncError(async (req, res, next) => {
             title: 'New Review Received in Course',
             message: `${req.user?.name} has given a review in ${course?.name}!`
         }
-        // Create Notification
+        await NotificationModel.create(notification);
 
         res.status(200).json({
             success: true,
