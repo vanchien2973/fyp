@@ -5,7 +5,7 @@ import SendMail from "../utils/SendMail";
 import path from "path";
 import CourseModel from "../models/course.model";
 import UserModel from "../models/user.model";
-import { createOrderService } from "../services/order.service";
+import { createOrderService, getAllOrdersService } from "../services/order.service";
 import NotificationModel from "../models/notification.model";
 require('dotenv').config();
 
@@ -79,6 +79,15 @@ export const createOrder = CatchAsyncError(async (req, res, next) => {
         course.purchased = (course.purchased || 0) + 1;
         await course.save();
         createOrderService(data, res, next);
+    } catch (error) {
+        return next(new ErrorHandler(error.message, 500));
+    }
+});
+
+// Get All Orders (for Admin)
+export const getAllOrdersInSystem = CatchAsyncError(async (req, res, next) => {
+    try {
+        getAllOrdersService(res);
     } catch (error) {
         return next(new ErrorHandler(error.message, 500));
     }

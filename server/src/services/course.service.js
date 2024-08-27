@@ -1,6 +1,5 @@
 import CatchAsyncError from '../middlewares/CatchAsyncError';
 import CourseModel from '../models/course.model';
-import redis from '../utils/redis';
 
 // Create Course
 export const createCourse = CatchAsyncError(async (data, res) => {
@@ -8,5 +7,14 @@ export const createCourse = CatchAsyncError(async (data, res) => {
     res.status(201).json({
         success: true,
         course
+    });
+});
+
+// Get All Courses
+export const getAllCoursService = CatchAsyncError(async (res) => {
+    const courses = await CourseModel.find().sort({ createAt: - 1 });
+    res.status(201).json({
+        success: true,
+        courses,
     });
 });

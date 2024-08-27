@@ -1,6 +1,7 @@
 import CatchAsyncError from "../middlewares/CatchAsyncError";
 import NotificationModel from "../models/notification.model";
 import ErrorHandler from "../utils/ErrorHandler";
+import cron from 'node-cron';
 
 // Get All Notifications
 export const getNotifications = CatchAsyncError(async (req, res, next) => {
@@ -34,4 +35,10 @@ export const updateNotificationStatus = CatchAsyncError(async (req, res, next) =
     } catch (error) {
         return next(new ErrorHandler(error.message, 500));
     }
+});
+
+// Delete Notification (for Admin)
+cron.schedule('0 0 0 * * *', async () => {
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    await NotificationModel.deleteMany({ status: 'read', createdAt: { $lt: thirtyDaysAgo } });
 });

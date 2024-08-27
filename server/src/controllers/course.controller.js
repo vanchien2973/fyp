@@ -2,13 +2,13 @@ import CatchAsyncError from "../middlewares/CatchAsyncError";
 import ErrorHandler from "../utils/ErrorHandler";
 import cloudinary from "cloudinary";
 import axios from 'axios';
-import redis from "../utils/redis";
+import { redis } from "../utils/redis";
 import mongoose from "mongoose";
 import ejs from 'ejs';
 import SendMail from "../utils/SendMail";
 import path from "path";
 import CourseModel from "../models/course.model";
-import { createCourse } from "../services/course.service";
+import { createCourse, getAllCoursService } from "../services/course.service";
 import NotificationModel from "../models/notification.model";
 require('dotenv').config();
 
@@ -347,6 +347,34 @@ export const generateVideoUrl = CatchAsyncError(async (req, res, next) => {
             }
         );
         res.json(response.data)
+    } catch (error) {
+        return next(new ErrorHandler(error.message, 400));
+    }
+});
+
+// Get All Courses (for Admin)
+export const getAllCoursesInSystem = CatchAsyncError(async (req, res, next) => {
+    try {
+        getAllCoursService(res);
+    } catch (error) {
+        return next(new ErrorHandler(error.message, 500));
+    }
+});
+
+// Delete Course (for Admin)
+export const deleteCourse = CatchAsyncError(async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const course = await CourseModel.findById(id);
+        if (!course) {
+            return next(new ErrorHandler("Course not found", 404));
+        }
+        await course.deleteOne({ id });
+        await redis.del(id);
+        res.status(200).json({
+            success: true,
+            message: "Course deleted successfully",
+        })
     } catch (error) {
         return next(new ErrorHandler(error.message, 400));
     }
