@@ -28,10 +28,10 @@ export const registerUser = CatchAsyncError(async (req, res, next) => {
     const activationCode = activationToken.activationCode;
     const data = { user: { name: user.name }, activationCode };
 
-    // const html = await ejs.renderFile(
-    //     path.join(__dirname, "../mails/ActivationMail.ejs"),
-    //     data,
-    // );
+    const html = await ejs.renderFile(
+        path.join(__dirname, "../mails/ActivationMail.ejs"),
+        data,
+    );
     // Send the activation email
     try {
         await SendMail({
@@ -160,7 +160,7 @@ export const updateToken = CatchAsyncError(async (req, res, next) => {
         const session = await redis.get(decoded.id);
 
         if (!session) {
-            return next(new ErrorHandler('Could not refresh token!', 400));
+            return next(new ErrorHandler('Please login to access this resourse!', 400));
         };
 
         const user = JSON.parse(session);
@@ -177,6 +177,8 @@ export const updateToken = CatchAsyncError(async (req, res, next) => {
 
         res.cookie("access_token", accessToken, accessTokenOptions);
         res.cookie("refresh_token", refreshToken, refreshTokenOptions);
+
+        await redis.set(user._id, JSON.stringify(user), 'EX', 604800); //604800s = 7 days
 
         next();
     } catch (error) {
