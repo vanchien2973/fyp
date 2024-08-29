@@ -25,8 +25,15 @@ export const userApi = apiSlice.injectEndpoints({
                 body: { currentPassword, newPassword },
                 credentials: "include",
             })
+        }),
+        getAllUsers: builder.query({
+            query: () => ({
+                method: 'GET',
+                url: 'get-all-users',
+                credentials: 'include'
+            })
         })
     })
 });
 
-export const { useUpdateAvatarMutation, useEditProfileMutation, useUpdatePasswordMutation } = userApi;
+export const { useUpdateAvatarMutation, useEditProfileMutation, useUpdatePasswordMutation, useGetAllUsersQuery } = userApi;
