@@ -7,6 +7,7 @@ import { useLoadUserQuery } from "./redux/features/api/apiSlice";
 import { Providers } from "./Provider";
 import { Toaster } from "react-hot-toast";
 import { SessionProvider } from "next-auth/react";
+import NextTopLoader from "nextjs-toploader";
 
 const roboto = Roboto({
   subsets: ['latin'],
@@ -16,17 +17,18 @@ const roboto = Roboto({
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={roboto.variable}>
-      <Providers>
-          <SessionProvider>
-            <ThemeProvider>
+    <html lang="en">
+      <body className={roboto.variable} suppressHydrationWarning={true}>
+        <NextTopLoader showSpinner={false} />
+        <Providers>
+          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+            <SessionProvider>
               <Loading>
                 {children}
               </Loading>
               <Toaster position="top-center" reverseOrder={false} />
-            </ThemeProvider>
-          </SessionProvider>
+            </SessionProvider>
+          </ThemeProvider>
         </Providers>
       </body>
     </html>

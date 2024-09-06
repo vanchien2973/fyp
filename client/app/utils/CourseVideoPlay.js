@@ -22,7 +22,7 @@ const CourseVideoPlay = ({ videoUrl }) => {
     }, [videoUrl]);
 
     return (
-        <div style={{ paddingTop: '41%', position: 'relative' }}>
+        <div style={{ paddingTop: '50%', position: 'relative' }}>
             {videoData.otp && videoData.playbackInfo !== '' && (
                 <iframe
                     src={`https://player.vdocipher.com/v2/?otp=${videoData.otp}&playbackInfo=${videoData.playbackInfo}&player=bCOfBDVJgrAB82Er`}

@@ -1,66 +1,49 @@
 "use client";
-import { PencilIcon, PlusCircleIcon } from "@heroicons/react/24/outline";
-import { DeleteOutline, KeyboardArrowDown, LinkOutlined } from "@mui/icons-material";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "../../ui/form";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { courseContentSchema } from "@/lib/form-schema";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "../../ui/accordion";
+import { cn } from "@/lib/utils";
+import { AlertTriangleIcon, PlusCircle, Trash2, Trash2Icon } from "lucide-react";
+import { Input } from "../../ui/input";
+import { Button } from "../../ui/button";
+import { Textarea } from "../../ui/textarea";
 
 const CourseContent = ({
-    active,
-    setActive,
+    currentStep,
+    setCurrentStep,
     courseContentData,
     setCourseContentData,
     handleSubmit: handleCourseSubmit,
 }) => {
-    const [isCollapsed, setIsCollapsed] = useState(
-        Array(courseContentData.length).fill(false)
-    );
     const [activeSection, setActiveSection] = useState(1);
+    const form = useForm({
+        resolver: zodResolver(courseContentSchema),
+        defaultValues: courseContentData,
+        mode: 'onChange'
+    });
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
-    };
-
-    const handleCollapseToggle = (index) => {
-        const newIsCollapsed = [...isCollapsed];
-        newIsCollapsed[index] = !newIsCollapsed[index];
-        setIsCollapsed(newIsCollapsed);
-    };
-
-    const handleRemoveLink = (index, linkIndex) => {
-        const newCourseContentData = [...courseContentData];
-        newCourseContentData[index].links.splice(linkIndex, 1);
-        setCourseContentData(newCourseContentData);
-    };
-
-    const handleAddLink = (index) => {
-        const newCourseContentData = [...courseContentData];
-        newCourseContentData[index].links.push({ title: '', url: '' });
-        setCourseContentData(newCourseContentData);
-    };
+    const { control, formState: { errors } } = form;
 
     const handleNewContent = () => {
         const lastContent = courseContentData[courseContentData.length - 1];
         if (lastContent.title === '' || lastContent.description === '' || lastContent.videoUrl === '' || lastContent.links[0].title === '' || lastContent.links[0].url === '') {
             toast.error('Please fill all the fields');
         } else {
-            let newVideoSection = '';
-            if (courseContentData.length > 0) {
-                const lastVideoSection = courseContentData[courseContentData.length - 1].videoSection;
-                if (lastVideoSection) {
-                    newVideoSection = lastVideoSection;
-                };
-            }
             const newContent = {
                 videoUrl: '',
                 title: '',
                 description: '',
-                videoSection: newVideoSection,
                 links: [{ title: '', url: '' }],
             };
             setCourseContentData([...courseContentData, newContent]);
         }
     };
-  
+
+
     const handleAddNewSection = () => {
         if (
             courseContentData[courseContentData.length - 1].title === '' ||
@@ -84,12 +67,24 @@ const CourseContent = ({
     };
 
     const prevButton = () => {
-        if (active > 0) {
-            setActive(active - 1);
+        if (currentStep > 0) {
+            setCurrentStep(currentStep - 1);
         }
     };
 
-    const handleOptions = () => {
+    const handleAddLink = (index) => {
+        const newCourseContentData = [...courseContentData];
+        newCourseContentData[index].links.push({ title: '', url: '' });
+        setCourseContentData(newCourseContentData);
+    };
+
+    const handleRemoveLink = (index, linkIndex) => {
+        const newCourseContentData = [...courseContentData];
+        newCourseContentData[index].links.splice(linkIndex, 1);
+        setCourseContentData(newCourseContentData);
+    };
+
+    const next = async () => {
         if (
             courseContentData[courseContentData.length - 1].title === '' ||
             courseContentData[courseContentData.length - 1].description === '' ||
@@ -97,215 +92,308 @@ const CourseContent = ({
             courseContentData[courseContentData.length - 1].links[0].title === '' ||
             courseContentData[courseContentData.length - 1].links[0].url === ''
         ) {
-            toast.error(`Secsion can't be empty`);
+            toast.error(`Section can't be empty`);
         } else {
-            setActive(active + 1);
+            setCurrentStep(currentStep + 1);
             handleCourseSubmit();
         }
     };
 
+    console.log(courseContentData)
+
     return (
-        <div className="w-[80%] m-auto mt-18 p-3">
-            <form onSubmit={handleSubmit}>
-                {courseContentData.map((item, index) => {
-                    const showSectionInput =
-                        index === 0 ||
-                        item.videoSection !== courseContentData[index - 1].videoSection;
-                    return (
-                        <>
-                            <div
-                                className={`w-full p-4 bg-[#1f2530] ${showSectionInput ? "mt-10" : "mb-0"
-                                    }`}
-                            >
-                                {showSectionInput && (
-                                    <>
-                                        <div className="flex w-full items-center">
-                                            <input
-                                                type="text"
-                                                className={`text-[20px] ${item.videoSection === "Untitled Section"
-                                                    ? "w-[100px]"
-                                                    : "w-min"
-                                                    } cursor-pointer bg-transparent outline-none`}
-                                                value={item.videoSection}
-                                                onChange={(e) => {
-                                                    const newCourseContentData = [...courseContentData];
-                                                    newCourseContentData[index].videoSection =
-                                                        e.target.value;
-                                                    setCourseContentData(newCourseContentData);
-                                                }}
-                                            />
-                                            <PencilIcon className="cursor-pointer w-5 h-5" />
-                                        </div>
-                                        <br />
-                                    </>
-                                )}
-                                <div className="w-full flex items-center justify-between my-0">
-                                    {isCollapsed[index] ? (
-                                        <>
-                                            {item.title ? (
-                                                <p>
-                                                    {index + 1}. {item.title}
-                                                </p>
-                                            ) : (
-                                                <></>
-                                            )}
-                                        </>
-                                    ) : (
-                                        <div></div>
-                                    )}
-                                    <div className="flex items-center">
-                                        <DeleteOutline
-                                            className={`text-[20px] mr-2 ${index > 0 ? "cursor-pointer" : "cursor-no-drop"
-                                                }`}
-                                            onClick={() => {
-                                                if (index > 0) {
-                                                    const updateData = [...courseContentData];
-                                                    updateData.splice(index, 1);
-                                                    setCourseContentData(updateData);
-                                                }
-                                            }}
-                                        />
-                                        <KeyboardArrowDown
-                                            fontSize="large"
-                                            className={`text-[20px] ${isCollapsed[index] ? "rotate-180" : "rotate-0"
-                                                } transition-all duration-300`}
-                                            onClick={() => handleCollapseToggle(index)}
-                                        />
-                                    </div>
-                                </div>
-                                {!isCollapsed[index] && (
-                                    <>
-                                        <div className="my-3">
-                                            <label className="block text-sm font-medium mb-2">
-                                                Video Title
-                                            </label>
-                                            <input
-                                                type="text"
-                                                className="w-full mt-4 p-2 border border-[#343a46] rounded bg-transparent"
-                                                value={item.title}
-                                                onChange={(e) => {
-                                                    const updateData = [...courseContentData];
-                                                    updateData[index].title = e.target.value;
-                                                    setCourseContentData(updateData);
-                                                }}
-                                            />
-                                        </div>
-                                        <div className="mb-3">
-                                            <label className="block text-sm font-medium mb-2">
-                                                Video URL
-                                            </label>
-                                            <input
-                                                type="text"
-                                                className="w-full mt-4 p-2 border border-[#343a46] rounded bg-transparent"
-                                                value={item.videoUrl}
-                                                onChange={(e) => {
-                                                    const updateData = [...courseContentData];
-                                                    updateData[index].videoUrl = e.target.value;
-                                                    setCourseContentData(updateData);
-                                                }}
-                                            />
-                                        </div>
-                                        <div className="mb-3">
-                                            <label className="block text-sm font-medium mb-2">
-                                                Video Description
-                                            </label>
-                                            <textarea
-                                                rows={8}
-                                                cols={30}
-                                                type="text"
-                                                className="w-full mt-4 p-2 border border-[#343a46] rounded bg-transparent"
-                                                value={item.description}
-                                                onChange={(e) => {
-                                                    const updateData = [...courseContentData];
-                                                    updateData[index].description = e.target.value;
-                                                    setCourseContentData(updateData);
-                                                }}
-                                            />
-                                        </div>
-                                        {item?.links.map((link, linkIndex) => (
-                                            <div key={linkIndex} className="mb-3 block">
-                                                <div className="w-full flex items-center justify-between">
-                                                    <label className="block text-sm font-medium mb-2">
-                                                        Link {linkIndex + 1}
-                                                    </label>
-                                                    <DeleteOutline
-                                                        className={`${linkIndex > 0
-                                                            ? "cursor-pointer"
-                                                            : "cursor-no-drop"
-                                                            } text-[20px]`}
-                                                        onClick={() =>
-                                                            linkIndex > 0 &&
-                                                            handleRemoveLink(index, linkIndex)
+        <>
+            <Form {...form}>
+                <form className="space-y-8" onSubmit={form.handleSubmit(next)}>
+                    <div
+                        className={cn(
+                            currentStep === 2
+                                ? 'w-full md:inline-block'
+                                : 'gap-8 md:grid md:grid-cols-3'
+                        )}
+                    >
+                        <div className="border border-gray-300 rounded-md p-4 mb-4 space-y-4">
+                            {courseContentData.map((item, index) => (
+                                <>
+                                    <Accordion type="single" collapsible key={index}>
+                                        <AccordionItem value={`item-${index}`}>
+
+                                            <AccordionTrigger
+                                                className={cn(
+                                                    'relative !no-underline [&[data-state=closed]>button]:hidden [&[data-state=open]>.alert]:hidden',
+                                                    errors?.courseContentData?.[index] && 'text-red-700'
+                                                )}
+                                            >
+                                                {item.videoSection ? (
+                                                    <FormField
+                                                        control={form.control}
+                                                        name={`courseContentData.${index}.videoSection`}
+                                                        render={({ field }) => (
+                                                            <FormItem>
+                                                                <FormControl>
+                                                                    <Input
+                                                                        {...field}
+                                                                        value={item.videoSection}
+                                                                        onChange={(e) => {
+                                                                            const newCourseContentData = [...courseContentData];
+                                                                            newCourseContentData[index].videoSection = e.target.value;
+                                                                            setCourseContentData(newCourseContentData);
+                                                                            field.onChange(e);
+                                                                        }}
+                                                                    />
+                                                                </FormControl>
+                                                                <FormMessage />
+                                                            </FormItem>
+                                                        )}
+                                                    />
+                                                ) : (
+                                                    <span></span>
+                                                )}
+                                                <Button
+                                                    variant="outline"
+                                                    size="icon"
+                                                    className="absolute right-8"
+                                                    onClick={() => {
+                                                        if (index > 0) {
+                                                            const updateData = [...courseContentData];
+                                                            updateData.splice(index, 1);
+                                                            setCourseContentData(updateData);
                                                         }
+                                                    }}
+                                                >
+                                                    <Trash2Icon className="h-4 w-4 " />
+                                                </Button>
+                                                {errors?.courseContentData?.[index] && (
+                                                    <span className="alert absolute right-8">
+                                                        <AlertTriangleIcon className="h-4 w-4   text-red-700" />
+                                                    </span>
+                                                )}
+                                            </AccordionTrigger>
+                                            <AccordionContent>
+                                                <div className='relative mb-4 gap-8 rounded-md border p-4 md:grid md:grid-cols-2'>
+                                                    <FormField
+                                                        control={form.control}
+                                                        name={`courseContentData.${index}.title`}
+                                                        render={({ field }) => (
+                                                            <FormItem>
+                                                                <FormLabel>Title</FormLabel>
+                                                                <FormControl>
+                                                                    <Input
+                                                                        {...field}
+                                                                        value={item.title}
+                                                                        onChange={(e) => {
+                                                                            const updateData = [...courseContentData];
+                                                                            updateData[index].title = e.target.value;
+                                                                            setCourseContentData(updateData);
+                                                                            field.onChange(e);
+                                                                        }}
+                                                                    />
+                                                                </FormControl>
+                                                                <FormMessage />
+                                                            </FormItem>
+                                                        )}
+                                                    />
+                                                    <FormField
+                                                        control={form.control}
+                                                        name={`courseContentData.${index}.videoUrl`}
+                                                        render={({ field }) => (
+                                                            <FormItem>
+                                                                <FormLabel>Video Url</FormLabel>
+                                                                <FormControl>
+                                                                    <Input
+                                                                        {...field}
+                                                                        value={item.videoUrl}
+                                                                        onChange={(e) => {
+                                                                            const updateData = [...courseContentData];
+                                                                            updateData[index].videoUrl = e.target.value;
+                                                                            setCourseContentData(updateData);
+                                                                            field.onChange(e);
+                                                                        }}
+                                                                    />
+                                                                </FormControl>
+                                                                <FormMessage />
+                                                            </FormItem>
+                                                        )}
                                                     />
                                                 </div>
-                                                <input
-                                                    type="text"
-                                                    className="w-full mt-4 p-2 border border-[#343a46] rounded bg-transparent"
-                                                    value={link.title}
-                                                    placeholder="Title"
-                                                    onChange={(e) => {
-                                                        const updateData = [...courseContentData];
-                                                        updateData[index].links[linkIndex].title =
-                                                            e.target.value;
-                                                        setCourseContentData(updateData);
-                                                    }}
-                                                />
-                                                <input
-                                                    type="text"
-                                                    className="w-full mt-4 p-2 border border-[#343a46] rounded bg-transparent"
-                                                    value={link.url}
-                                                    placeholder="Link URL"
-                                                    onChange={(e) => {
-                                                        const updateData = [...courseContentData];
-                                                        updateData[index].links[linkIndex].url =
-                                                            e.target.value;
-                                                        setCourseContentData(updateData);
-                                                    }}
-                                                />
-                                            </div>
-                                        ))}
-                                        <div className="inline-block mb-2 mt-3">
-                                            <p className="flex items-center text-[14px] cursor-pointer" onClick={() => handleAddLink(index)}>
-                                                <LinkOutlined className="mr-2" />Add Link
-                                            </p>
-                                        </div>
-                                    </>
-                                )}
-                                {
-                                    index === courseContentData.length - 1 && (
-                                        <div>
-                                            <p className="flex items-center text-[14px] mt-3 cursor-pointer" onClick={() => handleNewContent(item)}>
-                                                <PlusCircleIcon className="mr-2 h-5" />Add New Content
-                                            </p>
-                                        </div>
-                                    )
-                                }
-                            </div>
-                        </>
-                    );
-                })}
-                <div className="flex mt-4 items-center text-[14px] cursor-pointer" onClick={() => handleAddNewSection()}>
-                    <PlusCircleIcon className="mr-2 h-5" />Add New Section
-                </div>
-            </form>
-            <div className='mb-6 mt-3'>
-                <div className='flex justify-between items-center'>
+                                                <div className='relative mb-4 gap-8 rounded-md border p-4 md:grid md:grid-cols-1'>
+                                                    <FormField
+                                                        control={form.control}
+                                                        name={`courseContentData.${index}.description`}
+                                                        render={({ field }) => (
+                                                            <FormItem>
+                                                                <FormLabel>Description</FormLabel>
+                                                                <FormControl>
+                                                                    <Textarea
+                                                                        {...field}
+                                                                        value={item.description}
+                                                                        onChange={(e) => {
+                                                                            const updateData = [...courseContentData];
+                                                                            updateData[index].description = e.target.value;
+                                                                            setCourseContentData(updateData);
+                                                                            field.onChange(e);
+                                                                        }}
+                                                                    />
+                                                                </FormControl>
+                                                                <FormMessage />
+                                                            </FormItem>
+                                                        )}
+                                                    />
+                                                </div>
+                                                {item?.links.map((link, linkIndex) => (
+                                                    <Accordion type="single" collapsible key={linkIndex}>
+                                                        <AccordionItem value={`courseContentData.${index}.links.${linkIndex}`}>
+                                                            <AccordionTrigger className={cn(
+                                                                'relative !no-underline [&[data-state=closed]>button]:hidden [&[data-state=open]>.alert]:hidden',
+                                                                errors?.courseContentData?.[index]?.links?.[linkIndex] && 'text-red-700'
+                                                            )}>
+                                                                {`Link ${linkIndex + 1}`}
+                                                                <Button
+                                                                    variant="outline"
+                                                                    size="icon"
+                                                                    className="absolute right-8"
+                                                                    onClick={() =>
+                                                                        linkIndex > 0 &&
+                                                                        handleRemoveLink(index, linkIndex)
+                                                                    }
+                                                                >
+                                                                    <Trash2 className="h-4 w-4" />
+                                                                </Button>
+                                                                {errors?.courseContentData?.[index]?.links?.[linkIndex] && (
+                                                                    <span className="alert absolute right-8">
+                                                                        <AlertTriangleIcon className="h-4 w-4 text-red-700" />
+                                                                    </span>
+                                                                )}
+                                                            </AccordionTrigger>
+                                                            <AccordionContent>
+                                                                <div key={linkIndex} className="relative mb-4 gap-8 rounded-md border p-4 md:grid md:grid-cols-2">
+                                                                    <FormField
+                                                                        control={form.control}
+                                                                        name={`courseContentData.${index}.links.${linkIndex}.title`}
+                                                                        render={({ field }) => (
+                                                                            <FormItem>
+                                                                                <FormLabel>Link Title</FormLabel>
+                                                                                <FormControl>
+                                                                                    <Input
+                                                                                        {...field}
+                                                                                        value={link.title}
+                                                                                        onChange={(e) => {
+                                                                                            const updateData = [...courseContentData];
+                                                                                            updateData[index].links[linkIndex].title = e.target.value;
+                                                                                            setCourseContentData(updateData);
+                                                                                            field.onChange(e);
+                                                                                        }}
+                                                                                    />
+                                                                                </FormControl>
+                                                                                <FormMessage />
+                                                                            </FormItem>
+                                                                        )}
+                                                                    />
+                                                                    <FormField
+                                                                        control={form.control}
+                                                                        name={`courseContentData.${index}.links.${linkIndex}.url`}
+                                                                        render={({ field }) => (
+                                                                            <FormItem>
+                                                                                <FormLabel>Link URL</FormLabel>
+                                                                                <FormControl>
+                                                                                    <Input
+                                                                                        {...field}
+                                                                                        value={link.url}
+                                                                                        onChange={(e) => {
+                                                                                            const updateData = [...courseContentData];
+                                                                                            updateData[index].links[linkIndex].url = e.target.value;
+                                                                                            setCourseContentData(updateData);
+                                                                                            field.onChange(e);
+                                                                                        }}
+                                                                                    />
+                                                                                </FormControl>
+                                                                                <FormMessage />
+                                                                            </FormItem>
+                                                                        )}
+                                                                    />
+                                                                </div>
+                                                            </AccordionContent>
+                                                        </AccordionItem>
+                                                    </Accordion>
+                                                ))}
+                                                <Button variant="outline" onClick={() => handleAddLink(index)} className="mt-4">
+                                                    <PlusCircle className="h-4 w-4 mr-2" /> Add Link
+                                                </Button>
+                                            </AccordionContent>
+
+                                        </AccordionItem>
+
+                                    </Accordion>
+                                    {index === courseContentData.length - 1 && (
+                                        <Button variant="outline" onClick={() => handleNewContent()} className="mt-4">
+                                            <PlusCircle className="h-4 w-4 mr-2" /> Add New Content
+                                        </Button>
+                                    )}
+                                </>
+                            ))}
+                        </div>
+                    </div>
+                    <div className="mt-4 flex justify-center">
+                        <Button
+                            type="button"
+                            className="flex justify-center"
+                            size={'lg'}
+                            onClick={handleAddNewSection}
+                        >
+                            Add More
+                        </Button>
+                    </div>
+                </form>
+            </Form>
+
+            {/* Navigation */}
+            <div className="mt-8 pt-5">
+                <div className="flex justify-between">
                     <button
-                        className="px-4 py-2 bg-[#58c4dc] rounded text-white mt-4 cursor-pointer dark:bg-[#58c4dc] disabled:opacity-50 disabled:cursor-not-allowed"
+                        type="button"
                         onClick={() => prevButton()}
+                        disabled={currentStep === 0}
+                        className="rounded bg-white px-2 py-1 text-sm font-semibold text-sky-900 shadow-sm ring-1 ring-inset ring-sky-300 hover:bg-sky-50 disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                        Prev
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            strokeWidth="1.5"
+                            stroke="currentColor"
+                            className="h-6 w-6"
+                        >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M15.75 19.5L8.25 12l7.5-7.5"
+                            />
+                        </svg>
                     </button>
                     <button
-                        className="px-4 py-2 bg-[#58c4dc] rounded text-white mt-4 cursor-pointer dark:bg-[#58c4dc]"
-                        onClick={() => handleOptions()}
+                        type="button"
+                        onClick={next}
+                        disabled={currentStep === 3}
+                        className="rounded bg-white px-2 py-1 text-sm font-semibold text-sky-900 shadow-sm ring-1 ring-inset ring-sky-300 hover:bg-sky-50 disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                        Next
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            strokeWidth="1.5"
+                            stroke="currentColor"
+                            className="h-6 w-6"
+                        >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M8.25 4.5l7.5 7.5-7.5 7.5"
+                            />
+                        </svg>
                     </button>
                 </div>
             </div>
-        </div>
+        </>
     );
 };
 

@@ -1,30 +1,25 @@
 'use client'
-import ListCourses from '@/app/components/Admin/courses/ListCourses';
-import Topbar from '@/app/components/Admin/dashboard/Topbar';
-import AdminSidebar from '@/app/components/Admin/sidebar/AdminSidebar';
-import AdminProtected from '@/app/hooks/AdminProtected';
-import Heading from '@/app/utils/Heading';
+import ListCourses from '@/app/components/Admin/courses/courses-table/ListCourses';
+import { Breadcrumbs } from '@/app/components/Admin/layouts/Breadcrumbs';
+import PageContainer from '@/app/components/Admin/layouts/PageContainer';
 import React from 'react';
 
+const breadcrumbItems = [
+    { title: 'Courses', link: '/admin/dashboard' },
+    { title: 'List Courses', link: '/admin/courses' }
+  ];
+
 const page = () => {
-  return (
-    <div>
-    <AdminProtected>
-        <Heading
-            title={`ELP - Admin`}
-            description="LMS using MERN"
-            keywords="MERN, Redux, Redis"
-        />
-        <div className='w-full h-full flex relative scrollbar-thin scrollbar-track-slate-800 scrollbar-thumb-slate-500'>
-            <AdminSidebar />
-            <main className='w-full h-full'>
-                <Topbar />
-                <ListCourses />
-            </main>
-        </div>
-    </AdminProtected>
-</div>
-  )
+    return (
+        <>
+            <PageContainer>
+                <div className="space-y-2">
+                    <Breadcrumbs items={breadcrumbItems} />
+                    <ListCourses />
+                </div>
+            </PageContainer>
+        </>
+    )
 }
 
 export default page;

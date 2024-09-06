@@ -13,10 +13,9 @@ export const store = configureStore({
         getDefaultMiddleware().concat(apiSlice.middleware),
 });
 
-// Call the refresh token function on every page load
+// Call the load user function on every page load
 const initializeApp = async () => {
     try {
-        await store.dispatch(apiSlice.endpoints.refreshToken.initiate({}, { forceRefetch: true }));
         await store.dispatch(apiSlice.endpoints.loadUser.initiate({}, { forceRefetch: true }));
     } catch (error) {
         console.error("Initialization error:", error);

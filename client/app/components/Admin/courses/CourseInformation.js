@@ -1,13 +1,23 @@
 'use client';
 import React, { useState } from 'react';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../../ui/form';
+import { courseSchema } from '@/lib/form-schema';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Input } from '../../ui/input';
+import { Textarea } from '../../ui/textarea';
+import { Image } from '../../ui/image';
+import toast from 'react-hot-toast';
 
-const CourseInformation = ({ courseInfor, setCourseInfor, active, setActive }) => {
+const CourseInformation = ({ courseInfor, setCourseInfor, setCurrentStep, currentStep }) => {
+  const [loading, setLoading] = useState(false);
   const [dragging, setDragging] = useState(false);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setActive(active + 1);
-  };
+  const form = useForm({
+    resolver: zodResolver(courseSchema),
+    defaultValues: courseInfor,
+    mode: 'onChange'
+  });
 
   const handleChangeFile = (e) => {
     const file = e.target.files[0];
@@ -16,6 +26,7 @@ const CourseInformation = ({ courseInfor, setCourseInfor, active, setActive }) =
       reader.onload = (e) => {
         if (reader.readyState === 2) {
           setCourseInfor({ ...courseInfor, thumbnail: reader.result });
+          form.setValue('thumbnail', reader.result);
         }
       };
       reader.readAsDataURL(file);
@@ -25,148 +36,267 @@ const CourseInformation = ({ courseInfor, setCourseInfor, active, setActive }) =
   const handleDragOver = (e) => {
     e.preventDefault();
     setDragging(true);
-  }
+  };
 
   const handleDragLeave = (e) => {
     e.preventDefault();
     setDragging(false);
-  }
+  };
 
   const handleDragDrop = (e) => {
     e.preventDefault();
     setDragging(false);
-    const file = e.dataTransfer.file[0];
+    const file = e.dataTransfer.files[0];
     if (file) {
       const reader = new FileReader();
       reader.onload = (e) => {
         setCourseInfor({ ...courseInfor, thumbnail: reader.result });
+        form.setValue('thumbnail', reader.result);
       };
       reader.readAsDataURL(file);
     }
-  }
+  };
+
+  const next = async (e) => {
+    e.preventDefault();
+    const isValid = await form.trigger();
+    if (isValid) {
+        setCurrentStep(currentStep + 1);
+    } 
+  };
 
   return (
-    <div className="w-[80%] m-auto mt-24">
-      <form onSubmit={handleSubmit}>
-        <div className="mb-6">
-          <label className="block text-sm font-medium mb-2" htmlFor="name">Course Name</label>
-          <input
-            type="text"
-            id="name"
-            required
-            value={courseInfor.name}
-            onChange={(e) => setCourseInfor({ ...courseInfor, name: e.target.value })}
-            className="w-full p-2 border border-[#343a46] dark:border-black rounded dark:bg-transparent dark:border-dark-700  bg-transparent"
-          />
-        </div>
-        <div className="mb-6">
-          <label className="block text-sm font-medium mb-2" htmlFor="description">Course Description</label>
-          <textarea
-            rows={8}
-            cols={30}
-            type="text"
-            id="description"
-            value={courseInfor.description}
-            onChange={(e) => setCourseInfor({ ...courseInfor, description: e.target.value })}
-            className="w-full p-2 border border-[#343a46] dark:border-black rounded dark:bg-transparent dark:border-dark-700  bg-transparent"
-          />
-        </div>
-        <div className="mb-6 flex justify-between">
-          <div className="w-[48%]">
-            <label className="block text-sm font-medium mb-2" htmlFor="price">Price</label>
-            <input
-              type="number"
-              id="price"
-              required
-              value={courseInfor.price}
-              onChange={(e) => setCourseInfor({ ...courseInfor, price: e.target.value })}
-              className="w-full p-2 border border-[#343a46] dark:border-black rounded dark:bg-transparent dark:border-dark-700  bg-transparent"
-            />
-          </div>
-          <div className="w-[48%]">
-            <label className="block text-sm font-medium mb-2" htmlFor="estimatedPrice">Estimated Price (optional)</label>
-            <input
-              type="number"
-              id="estimatedPrice"
-              value={courseInfor.estimatedPrice}
-              onChange={(e) => setCourseInfor({ ...courseInfor, estimatedPrice: e.target.value })}
-              className="w-full p-2 border border-[#343a46] dark:border-black rounded dark:bg-transparent dark:border-dark-700  bg-transparent"
-            />
-          </div>
-        </div>
-        <div className="mb-6">
-          <label className="block text-sm font-medium mb-2" htmlFor="tags">Course Tags</label>
-          <input
-            type="text"
-            id="tags"
-            value={courseInfor.tags}
-            onChange={(e) => setCourseInfor({ ...courseInfor, tags: e.target.value })}
-            className="w-full p-2 border border-[#343a46] dark:border-black rounded dark:bg-transparent dark:border-dark-700  bg-transparent"
-          />
-        </div>
-        <div className="mb-6">
-          <label className="block text-sm font-medium mb-2" htmlFor="level">Course Level</label>
-          <input
-            type="text"
-            id="level"
-            required
-            value={courseInfor.level}
-            onChange={(e) => setCourseInfor({ ...courseInfor, level: e.target.value })}
-            className="w-full p-2 border border-[#343a46] dark:border-black rounded dark:bg-transparent dark:border-dark-700  bg-transparent"
-          />
-        </div>
-        <div className="mb-6">
-          <label className="block text-sm font-medium mb-2" htmlFor="level">Demo URL</label>
-          <input
-            type="text"
-            id="demoUrl"
-            required
-            value={courseInfor.demoUrl}
-            onChange={(e) => setCourseInfor({ ...courseInfor, demoUrl: e.target.value })}
-            className="w-full p-2 border border-[#343a46] dark:border-black rounded dark:bg-transparent dark:border-dark-700  bg-transparent"
-          />
-        </div>
-        <div className="mb-6">
-          <input
-            type="file"
-            accept="image/*"
-            id="file"
-            className="hidden"
-            onChange={handleChangeFile}
-          />
-          <label
-            htmlFor="file"
-            className={`w-full min-h-[10vh] p-3 flex items-center justify-center border border-[#343a46] dark:border-black rounded dark:border-dark-700 ${dragging ? "bg-blue-500" : "bg-transparent"
-              }`}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDragDrop}
-          >
-            {courseInfor.thumbnail ? (
-              <img
-                src={courseInfor.thumbnail}
-                alt=""
-                className="max-h-full w-full object-cover"
-              />
-            ) : (
-              <span>
-                Drag and drop your thumbnail here or click to browse
-              </span>
+    <>
+    <Form {...form}>
+      <form className="w-full space-y-8" onSubmit={form.handleSubmit(next)}>
+        <div className="relative mb-4 gap-8 rounded-md border p-4 md:grid md:grid-cols-2">
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Course Name</FormLabel>
+                <FormControl>
+                  <Input
+                    disabled={loading}
+                    {...field}
+                    value={courseInfor.name}
+                    onChange={(e) => {
+                      field.onChange(e);
+                      setCourseInfor({ ...courseInfor, name: e.target.value });
+                    }}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
             )}
-          </label>
+          />
+          <FormField
+            control={form.control}
+            name="tags"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Course Tags</FormLabel>
+                <FormControl>
+                  <Input
+                    disabled={loading}
+                    {...field}
+                    value={courseInfor.tags}
+                    onChange={(e) => {
+                      field.onChange(e);
+                      setCourseInfor({ ...courseInfor, tags: e.target.value });
+                    }}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </div>
-        <div className='mb-6'>
-          <div className='flex items-center justify-end'>
-            <input
-              type="submit"
-              value="Next"
-              className="px-4 py-2 bg-[#58c4dc] rounded text-center mt-4 cursor-pointer dark:bg-[#58c4dc]"
-            />
-          </div>
+        <div className='relative mb-4 gap-8 rounded-md border p-4 md:grid md:grid-cols-1'>
+          <FormField
+            control={form.control}
+            name="description"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Course Description</FormLabel>
+                <FormControl>
+                  <Textarea
+                    {...field}
+                    disabled={loading}
+                    value={courseInfor.description}
+                    onChange={(e) => {
+                      field.onChange(e);
+                      setCourseInfor({ ...courseInfor, description: e.target.value });
+                    }}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        <div className="relative mb-4 gap-8 rounded-md border p-4 md:grid md:grid-cols-2">
+          <FormField
+            control={form.control}
+            name="price"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Course Price</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    disabled={loading}
+                    {...field}
+                    value={courseInfor.price}
+                    onChange={(e) => {
+                      field.onChange(e);
+                      setCourseInfor({ ...courseInfor, price: e.target.value });
+                    }}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="estimatedPrice"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Estimated Price (optional)</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    disabled={loading}
+                    {...field}
+                    value={courseInfor.estimatedPrice}
+                    onChange={(e) => {
+                      field.onChange(e);
+                      setCourseInfor({ ...courseInfor, estimatedPrice: e.target.value });
+                    }}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        <div className="relative mb-4 gap-8 rounded-md border p-4 md:grid md:grid-cols-2">
+          <FormField
+            control={form.control}
+            name="level"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Course Level</FormLabel>
+                <FormControl>
+                  <Input
+                    disabled={loading}
+                    {...field}
+                    value={courseInfor.level}
+                    onChange={(e) => {
+                      field.onChange(e);
+                      setCourseInfor({ ...courseInfor, level: e.target.value });
+                    }}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="demoUrl"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Demo Url</FormLabel>
+                <FormControl>
+                  <Input
+                    disabled={loading}
+                    {...field}
+                    value={courseInfor.demoUrl}
+                    onChange={(e) => {
+                      field.onChange(e);
+                      setCourseInfor({ ...courseInfor, demoUrl: e.target.value });
+                    }}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        <div className="relative mb-4 gap-8 rounded-md border p-4 md:grid md:grid-cols-1">
+          <FormField
+            control={form.control}
+            name="thumbnail"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Course Thumbnail</FormLabel>
+                <FormControl>
+                  <div
+                    className={`relative border-2 border-dashed rounded-lg p-4 ${dragging ? 'border-blue-500 bg-blue-50' : 'border-gray-300'
+                      }`}
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDragDrop}
+                  >
+                    <input
+                      type="file"
+                      accept="image/*"
+                      id="file"
+                      className="hidden"
+                      onChange={handleChangeFile}
+                    />
+                    <label htmlFor="file" className="cursor-pointer block text-center">
+                      {courseInfor.thumbnail ? (
+                        <Image
+                          src={courseInfor.thumbnail}
+                          alt="Thumbnail Preview"
+                          className="max-h-70 w-auto mx-auto object-cover"
+                        />
+                      ) : (
+                        <span>Drag and drop your thumbnail here or click to browse</span>
+                      )}
+                    </label>
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
         </div>
       </form>
-    </div>
-  )
+    </Form>
+     {/* Navigation */}
+     <div className="mt-8 pt-5">
+     <div className="flex justify-end">
+          <button
+             type="button"
+            onClick={next}
+            disabled={currentStep === 1}
+            className="rounded bg-white px-2 py-1 text-sm font-semibold text-sky-900 shadow-sm ring-1 ring-inset ring-sky-300 hover:bg-sky-50 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth="1.5"
+              stroke="currentColor"
+              className="h-6 w-6"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M8.25 4.5l7.5 7.5-7.5 7.5"
+              />
+            </svg>
+          </button>
+        </div>
+        </div>
+    </>
+  );
 };
 
 export default CourseInformation;
