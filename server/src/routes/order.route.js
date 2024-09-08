@@ -5,7 +5,7 @@ import { updateToken } from "../controllers/user.controller";
 
 const orderRouter = express.Router();
 
-orderRouter.post('/create-order', updateToken, isAuthenticated, createOrder);
+orderRouter.post('/create-order', isAuthenticated, createOrder);
 
 orderRouter.get('/get-all-orders', updateToken, isAuthenticated, authorizeRoles('admin'), getAllOrdersInSystem);
 

@@ -8,16 +8,14 @@ import { useCreateCourseMutation } from "@/app/redux/features/courses/coursesApi
 import toast from "react-hot-toast";
 import { redirect } from "next/navigation";
 import { HeadingAdmin } from "../../ui/heading";
-import { Button } from "../../ui/button";
-import { Trash } from "lucide-react";
 import { Separator } from "../../ui/separator";
-import { cn } from "@/lib/utils";
 
 const CreateCourse = () => {
   const [createCourse, { isLoading, isSuccess, error }] = useCreateCourseMutation();
   const title = "Create Course";
   const description = "To create course, we first need some basic information about this course.";
   const [currentStep, setCurrentStep] = useState(0);
+  
 
   useEffect(() => {
     if (isSuccess) {
@@ -46,18 +44,21 @@ const CreateCourse = () => {
   const [prerequisites, setPrerequisites] = useState([{ title: "" }]);
   const [courseContentData, setCourseContentData] = useState([
     {
-      videoUrl: "",
-      title: "",
-      description: "",
       videoSection: "Untitled Section",
-      links: [
+      content: [
         {
+          videoUrl: "",
           title: "",
-          url: "",
-        },
-      ],
-      suggestion: "",
-    },
+          description: "",
+          links: [
+            {
+              title: "",
+              url: "",
+            },
+          ],
+        }
+      ]
+    }
   ]);
   const [courseData, setCourseData] = useState({});
 
@@ -71,16 +72,18 @@ const CreateCourse = () => {
       title: prerequisite.title,
     }));
     // Format Course Content Array
-    const formattedCourseContent = courseContentData.map((courseContent) => ({
-      videoUrl: courseContent.videoUrl,
-      title: courseContent.title,
-      description: courseContent.description,
-      videoSection: courseContent.videoSection,
-      links: courseContent.links.map((link) => ({
-        title: link.title,
-        url: link.url,
+    const formattedCourseContent = courseContentData.map((section) => ({
+      videoSection: section.videoSection,
+      content: section.content.map((courseContent) => ({
+        videoUrl: courseContent.videoUrl,
+        title: courseContent.title,
+        description: courseContent.description,
+        links: courseContent.links.map((link) => ({
+          title: link.title,
+          url: link.url,
+        })),
+        suggestion: courseContent.suggestion,
       })),
-      suggestion: courseContent.suggestion,
     }));
     // Prepare Course Data Object
     const data = {
@@ -97,7 +100,6 @@ const CreateCourse = () => {
       prerequisites: formattedPrerequisites,
       courseData: formattedCourseContent,
     };
-    console.log(data);
     setCourseData(data);
   };
 
@@ -196,8 +198,8 @@ const CreateCourse = () => {
       )}
       {currentStep === 3 && (
         <CoursePreview
-         currentStep={currentStep}
-         setCurrentStep={setCurrentStep}
+          currentStep={currentStep}
+          setCurrentStep={setCurrentStep}
           courseData={courseData}
           handleCourse={handleCourse}
         />

@@ -6,34 +6,35 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger
 } from '@/app/components/ui/dropdown-menu';
-import { Edit, MoreHorizontal, Trash } from 'lucide-react';
+import {  Mail, MoreHorizontal, Trash } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { AlertModal } from '../../modal/alert-modal';
 import { Button } from '@/app/components/ui/button';
 import { useDeleteCourseMutation, useGetAllCoursesQuery } from '@/app/redux/features/courses/coursesApi';
 import toast from 'react-hot-toast';
+import { AlertModal } from '../modal/alert-modal';
+import { useDeleteUserMutation, useGetAllUsersQuery } from '@/app/redux/features/user/userApi';
 
 export const CellAction = ({ data }) => {
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const router = useRouter();
-  const [deleteCourse, { error, isSuccess }] = useDeleteCourseMutation({});
-  const { refetch } = useGetAllCoursesQuery({}, { refetchOnMountOrArgChange: true });
+  const { refetch } = useGetAllUsersQuery({}, { refetchOnMountOrArgChange: true });
+    const [deleteUser, { error, isSuccess }] = useDeleteUserMutation({});
 
-  useEffect(() => {
-    if (isSuccess) {
-        setOpen(false);
-        refetch();
-        toast.success('Course deleted successfully');
-    }
-    if (error && 'data' in error) {
-      toast.error(error.data?.message || 'An error occurred while deleting the course');
-    }
-}, [isSuccess, error, refetch]);
+    useEffect(() => {
+      if (isSuccess) {
+          setOpen(false);
+          refetch();
+          toast.success('User deleted successfully');
+      }
+      if (error && 'data' in error) {
+          toast.error(error.data.message);
+      }
+  }, [isSuccess, error, refetch]);
 
   const handleDelete = async () => {
-    await deleteCourse(data.id).unwrap();
+    await deleteUser(data.id).unwrap();
   };
 
   return (
@@ -54,9 +55,9 @@ export const CellAction = ({ data }) => {
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>Actions</DropdownMenuLabel>
           <DropdownMenuItem
-            onClick={() => router.push(`/admin/edit-course/${data.id}`)}
+            onClick={() => router.push(`mailto:${data.id}`)}
           >
-            <Edit className="mr-2 h-4 w-4" /> Update
+            <Mail className="mr-2 h-4 w-4" /> Send Mail
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => setOpen(true)}>
             <Trash className="mr-2 h-4 w-4"/> Delete

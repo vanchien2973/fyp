@@ -41,7 +41,7 @@ const CoursePreview = ({ currentStep, setCurrentStep, courseData, handleCourse, 
                             title={courseData?.title}
                         />
                     </div>
-                    <div className="flex items-center space-x-4">
+                    <div className="flex items-center space-x-5 mb-4 mt-4">
                         <span className="text-3xl font-bold">
                             {courseData?.price === 0 ? 'Free' : `$${courseData?.price}`}
                         </span>
@@ -52,17 +52,12 @@ const CoursePreview = ({ currentStep, setCurrentStep, courseData, handleCourse, 
                             {discountPercentagePrice}% Off
                         </Badge>
                     </div>
-
-                    <div className="space-y-2">
+                    <div className='space-y-3'>
                         <Button className="w-full">Buy Now ${courseData?.price}</Button>
-                        <div className="flex space-x-2">
-                            <Input placeholder="Discount Code" />
-                            <Button variant="outline">Apply</Button>
-                        </div>
                     </div>
-
+                    <Separator />
                     <div>
-                        <h3 className="text-xl font-semibold mb-2">Commitment to Quality:</h3>
+                        <h3 className="text-xl font-semibold mb-3 mt-4">Commitment to Quality:</h3>
                         <ul className="list-disc pl-5 space-y-1">
                             <li>Commitment to ensure reputable zero-risk output</li>
                             <li>Complete learning material system</li>
@@ -71,7 +66,7 @@ const CoursePreview = ({ currentStep, setCurrentStep, courseData, handleCourse, 
                     </div>
                     <Separator />
                     <div>
-                        <h2 className="text-2xl font-bold mb-4">What will you learn from this course?</h2>
+                        <h2 className="text-2xl font-bold mb-4 mt-4">What will you learn from this course?</h2>
                         {courseData?.benefits?.map((item, index) => (
                             <div className="flex items-center space-x-2 mb-2" key={index}>
                                 <CircleCheck className="text-green-500" size={20} />
@@ -81,7 +76,7 @@ const CoursePreview = ({ currentStep, setCurrentStep, courseData, handleCourse, 
                     </div>
                     <Separator />
                     <div>
-                        <h2 className="text-2xl font-bold mb-4">Course Details</h2>
+                        <h2 className="text-2xl font-bold mb-4 mt-4">Course Details</h2>
                         <p className="whitespace-pre-line">{courseData?.description}</p>
                     </div>
                 </CardContent>

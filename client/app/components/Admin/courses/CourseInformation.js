@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../../ui/form';
 import { courseSchema } from '@/lib/form-schema';
 import { useForm } from 'react-hook-form';
@@ -18,9 +18,14 @@ const CourseInformation = ({ courseInfor, setCourseInfor, setCurrentStep, curren
     defaultValues: courseInfor,
     mode: 'onChange'
   });
+  
+  useEffect(() => {
+    form.reset(courseInfor);
+  }, [courseInfor, form]);
+  
 
   const handleChangeFile = (e) => {
-    const file = e.target.files[0];
+    const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -46,7 +51,7 @@ const CourseInformation = ({ courseInfor, setCourseInfor, setCurrentStep, curren
   const handleDragDrop = (e) => {
     e.preventDefault();
     setDragging(false);
-    const file = e.dataTransfer.files[0];
+    const file = e.dataTransfer.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onload = (e) => {

@@ -7,7 +7,6 @@ const CourseVideoPlay = ({ videoUrl }) => {
         otp: '',
         playbackInfo: '',
     });
-    console.log(videoUrl)
 
     useEffect(() => {
         axios.post(`${process.env.NEXT_PUBLIC_SERVER_URI}getVdoCipherOtp`, {

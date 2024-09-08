@@ -1,5 +1,5 @@
 'use client'
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { benfits_prerequisitesSchema } from '@/lib/form-schema';
@@ -19,7 +19,7 @@ const CourseData = ({ benefits, setBenefits, prerequisites, setPrerequisites, cu
     });
 
     const { control, formState: { errors } } = form;
-
+    
     const handleBenefitChange = (index, value) => {
         const updatedBenefits = [...benefits];
         updatedBenefits[index] = { title: value };
@@ -46,7 +46,8 @@ const CourseData = ({ benefits, setBenefits, prerequisites, setPrerequisites, cu
         }
     };
 
-    const next = async () => {
+    const next = async (e) => {
+        e.preventDefault();
         const isValid = await form.trigger();
         if (isValid) {
             setCurrentStep(currentStep + 1);

@@ -34,8 +34,8 @@ const ListCourses = () => {
                 <>
                     <div className="flex items-start justify-between">
                         <HeadingAdmin
-                            title={`Users (${rows.length})`}
-                            description="Manage users (Client side table functionalities.)"
+                            title={`Courses (${rows.length})`}
+                            description="Manage courses."
                         />
                         <Button
                             className="text-xs md:text-sm"

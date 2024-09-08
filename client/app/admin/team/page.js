@@ -1,30 +1,25 @@
 'use client'
-import Topbar from '@/app/components/Admin/dashboard/Topbar';
-import AdminSidebar from '@/app/components/Admin/sidebar/AdminSidebar';
+import { Breadcrumbs } from '@/app/components/Admin/layouts/Breadcrumbs';
+import PageContainer from '@/app/components/Admin/layouts/PageContainer';
 import ListUsers from '@/app/components/Admin/users/ListUsers';
-import AdminProtected from '@/app/hooks/AdminProtected';
-import Heading from '@/app/utils/Heading';
 import React from 'react';
 
+const breadcrumbItems = [
+    { title: 'Dashboard', link: '/admin/dashboard' },
+    { title: 'List Users', link: 'admin/users' }
+];
+
 const page = () => {
-  return (
-    <div>
-    <AdminProtected>
-        <Heading
-            title={`ELP - Admin`}
-            description="LMS using MERN"
-            keywords="MERN, Redux, Redis"
-        />
-        <div className='w-full h-full flex relative scrollbar-thin scrollbar-track-slate-800 scrollbar-thumb-slate-500'>
-            <AdminSidebar />
-            <main className='w-full h-full'>
-                <Topbar />
-                <ListUsers isTeam={true}/>
-            </main>
-        </div>
-    </AdminProtected>
-</div>
-  )
+    return (
+        <>
+            <PageContainer scrollable={true}>
+                <div className="space-y-4">
+                    <Breadcrumbs items={breadcrumbItems} />
+                    <ListUsers isTeam={true}/>
+                </div>
+            </PageContainer>
+        </>
+    )
 }
 
 export default page;

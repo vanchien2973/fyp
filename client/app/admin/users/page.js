@@ -1,17 +1,25 @@
 'use client'
-import Topbar from '@/app/components/Admin/dashboard/Topbar';
-import AdminSidebar from '@/app/components/Admin/sidebar/AdminSidebar';
+import { Breadcrumbs } from '@/app/components/Admin/layouts/Breadcrumbs';
+import PageContainer from '@/app/components/Admin/layouts/PageContainer';
 import ListUsers from '@/app/components/Admin/users/ListUsers';
-import AdminProtected from '@/app/hooks/AdminProtected';
-import Heading from '@/app/utils/Heading';
 import React from 'react';
 
+const breadcrumbItems = [
+    { title: 'Dashboard', link: '/admin/dashboard' },
+    { title: 'List Users', link: 'admin/users' }
+];
+
 const page = () => {
-  return (
-    <>
-        
-    </>
-  )
+    return (
+        <>
+            <PageContainer scrollable={true}>
+                <div className="space-y-4">
+                    <Breadcrumbs items={breadcrumbItems} />
+                    <ListUsers />
+                </div>
+            </PageContainer>
+        </>
+    )
 }
 
 export default page;

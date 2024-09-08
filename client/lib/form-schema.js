@@ -3,10 +3,10 @@ import * as z from 'zod';
 export const courseSchema = z.object({
   name: z
     .string()
-    .min(3, { message: 'Course Name must be at least 3 characters' }),
+    .min(3, { message: 'Course Name is required' }),
   description: z
     .string()
-    .min(10, { message: 'Description must be at least 10 characters' }),
+    .min(10, { message: 'Description must is required' }),
   price: z.coerce
     .number()
     .min(0, { message: 'Price must be a non-negative number' }),
@@ -19,9 +19,9 @@ export const courseSchema = z.object({
     .min(1, { message: 'At least one tag is required' }),
   level: z
     .string()
-    .min(1, { message: 'Please select a course level' }),
+    .min(1, { message: 'Course Level is required' }),
   demoUrl: z
-    .string({ message: 'Demo URL must be a valid URL' })
+    .string({ message: 'Demo URL is required' })
     .optional(),
 });
 
@@ -43,23 +43,32 @@ export const benfits_prerequisitesSchema = z.object({
 });
 
 export const courseContentSchema = z.object({
-  courseContentData: z.array(z.object({
-    videoUrl: z
-      .string()
-      .min(1, { message: 'Video URL cannot be empty' }),
-    title: z
-      .string()
-      .min(1, { message: 'Title is required' }),
-    videoSection: z
-    .string()
-    .optional()
-    .default('Untitled Section'),
-    description: z
-      .string()
-      .min(5, { message: 'Description must be at least 5 characters' }),
-    links: z.array(z.object({
-      title: z.string().nonempty({ message: "Link title is required" }),
-      url: z.string().nonempty({ message: "Link URL is required" }).url({ message: "Must be a valid URL" })
-    }))
-  }))
+  courseContentData: z.array(
+    z.object({
+      videoSection: z
+        .string()
+        .min(1, { message: 'Section name cannot be empty' })
+        .default('Untitled Section'),
+      content: z.array(
+        z.object({
+          videoUrl: z
+            .string()
+            .min(1, { message: 'Video URL cannot be empty' }),
+          title: z
+            .string()
+            .min(1, { message: 'Title is required' }),
+          description: z
+            .string()
+            .min(5, { message: 'Description is required' }),
+          links: z.array(
+            z.object({
+              title: z.string().nonempty({ message: "Link title is required" }),
+              url: z.string().nonempty({ message: "Link URL is required" }).url({ message: "Must be a valid URL" })
+            })
+          )
+        })
+      )
+    })
+  )
 });
+
