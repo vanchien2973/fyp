@@ -12,8 +12,8 @@ const breadcrumbItems = [
 const page = () => {
     return (
         <>
-            <PageContainer scrollable={true}>
-                <div className="space-y-4">
+            <PageContainer>
+                <div className="space-y-2">
                     <Breadcrumbs items={breadcrumbItems} />
                     <ListUsers />
                 </div>

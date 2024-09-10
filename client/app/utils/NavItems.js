@@ -13,7 +13,7 @@ export const navItems = [
     },
     {
         title: 'Invoices',
-        href: '/admin/users',
+        href: '/admin/invoices',
         icon: 'billing',
         label: 'billing'
     },

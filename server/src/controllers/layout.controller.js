@@ -12,17 +12,18 @@ export const createLayout = CatchAsyncError(async (req, res, next) => {
             return next(new ErrorHandler(`${type} already exist`, 400));
         }
         if (type === 'Banner') {
-            const { image, title, subtitle } = req.body;
+            const { image, title, subTitle } = req.body;
             const myCloud = await cloudinary.v2.uploader.upload(image, { folder: 'layout' });
             const banner = {
+                type: 'Banner',
                 image: {
                     public_id: myCloud.public_id,
                     url: myCloud.secure_url
                 },
                 title,
-                subtitle
+                subTitle,
             }
-            await LayoutModel.create({ banner: { image, title, subtitle } });
+            await LayoutModel.create(banner);
         }
         if (type === 'FAQ') {
             const { faq } = req.body;
@@ -62,24 +63,43 @@ export const editLayout = CatchAsyncError(async (req, res, next) => {
         const { type } = req.body;
         if (type === 'Banner') {
             const bannerData = await LayoutModel.findOne({ type: 'Banner' });
-            const { image, title, subtitle } = req.body;
-            if (bannerData) {
-                await cloudinary.v2.uploader.destroy(bannerData.image.public_id);
+            const { image, title, subTitle } = req.body;
+            let bannerImage = bannerData?.image;
+
+            // Check if the image is a file or a URL
+            if (image && typeof image === 'string' && !image.startsWith("https")) {
+                // Image is a file, upload it to Cloudinary
+                const uploadedImage = await cloudinary.v2.uploader.upload(image, {
+                    folder: 'layout'
+                });
+                bannerImage = {
+                    public_id: uploadedImage.public_id,
+                    url: uploadedImage.secure_url
+                };
+            } else if (image && typeof image === 'string' && image.startsWith("https")) {
+                // Image is a URL, check if it has changed
+                if (bannerData?.image?.url !== image) {
+                    bannerImage = {
+                        public_id: bannerData?.image?.public_id,
+                        url: image
+                    };
+                }
+            } else {
+                // No image change, keep the existing image
+                bannerImage = bannerData?.image;
             }
-            const myCloud = await cloudinary.v2.uploader.upload(image, { folder: 'layout' });
+
             const banner = {
-                image: {
-                    public_id: myCloud.public_id,
-                    url: myCloud.secure_url
-                },
+                type: "Banner",
+                image: bannerImage,
                 title,
-                subtitle
-            }
+                subTitle
+            };
             await LayoutModel.findByIdAndUpdate(bannerData._id, { banner });
         }
         if (type === 'FAQ') {
             const { faq } = req.body;
-            const faqData = await LayoutModel.findOne({ type: 'FAQ'});
+            const faqData = await LayoutModel.findOne({ type: 'FAQ' });
             const faqItems = await Promise.all(
                 faq.map(async (item) => {
                     return {
@@ -92,7 +112,7 @@ export const editLayout = CatchAsyncError(async (req, res, next) => {
         }
         if (type === 'Categories') {
             const { categories } = req.body;
-            const categoriesData = await LayoutModel.findOne({ type: 'Categories'});
+            const categoriesData = await LayoutModel.findOne({ type: 'Categories' });
             const categoriesItems = await Promise.all(
                 categories.map(async (item) => {
                     return {
@@ -114,7 +134,7 @@ export const editLayout = CatchAsyncError(async (req, res, next) => {
 // Get Layout by Type (for Admin)
 export const getLayout = CatchAsyncError(async (req, res, next) => {
     try {
-        const { type } = req.body;
+        const { type } = req.params;
         const layout = await LayoutModel.findOne({ type });
         res.status(200).json({
             success: true,

@@ -40,6 +40,7 @@ const CourseContent = ({ currentStep, setCurrentStep, courseContentData, setCour
             !lastContent.title ||
             !lastContent.description ||
             !lastContent.videoUrl ||
+            !lastContent.videoLength ||
             !lastContent.links ||
             lastContent.links.length === 0 ||
             !lastContent.links[0].title ||
@@ -51,6 +52,7 @@ const CourseContent = ({ currentStep, setCurrentStep, courseContentData, setCour
 
         const newContent = {
             videoUrl: '',
+            videoLength: '',
             title: '',
             description: '',
             links: [{ title: '', url: '' }],
@@ -69,44 +71,6 @@ const CourseContent = ({ currentStep, setCurrentStep, courseContentData, setCour
         setCourseContentData(newCourseContentData);
     };
 
-    // const handleNewContent = (sectionIndex) => {
-    //     const lastSection = courseContentData[courseContentData.length - 1];
-    //     if (!lastSection || !lastSection.content || lastSection.content.length === 0) {
-    //         toast.error('Please add content to the current section first');
-    //         return;
-    //     }
-
-    //     const lastContent = lastSection.content[lastSection.content.length - 1];
-    //     if (!lastContent) {
-    //         toast.error('Unable to add new content. Please try again.');
-    //         return;
-    //     }
-
-    //     if (
-    //         !lastContent.title ||
-    //         !lastContent.description ||
-    //         !lastContent.videoUrl ||
-    //         !lastContent.links ||
-    //         lastContent.links.length === 0 ||
-    //         !lastContent.links[0].title ||
-    //         !lastContent.links[0].url
-    //     ) {
-    //         toast.error('Please fill all the fields in the current content');
-    //         return;
-    //     }
-
-    //     const newContent = {
-    //         videoUrl: '',
-    //         title: '',
-    //         description: '',
-    //         links: [{ title: '', url: '' }],
-    //     };
-
-    //     const newCourseContentData = [...courseContentData];
-    //     newCourseContentData[sectionIndex].content.push(newContent);
-    //     setCourseContentData(newCourseContentData);
-    // };
-
     const handleAddNewSection = () => {
         const lastSection = courseContentData[courseContentData.length - 1];
         const lastContent = lastSection.content[lastSection.content.length - 1];
@@ -115,6 +79,7 @@ const CourseContent = ({ currentStep, setCurrentStep, courseContentData, setCour
             !lastContent.title ||
             !lastContent.description ||
             !lastContent.videoUrl ||
+            !lastContent.videoLength ||
             !lastContent.links ||
             lastContent.links.length === 0 ||
             !lastContent.links[0].title ||
@@ -132,6 +97,7 @@ const CourseContent = ({ currentStep, setCurrentStep, courseContentData, setCour
             videoSection: `Untitled Section ${activeSection}`,
             content: [{
                 videoUrl: '',
+                videoLength: '',
                 title: '',
                 description: '',
                 links: [{ title: '', url: '' }],
@@ -178,6 +144,7 @@ const CourseContent = ({ currentStep, setCurrentStep, courseContentData, setCour
             !lastContent.title ||
             !lastContent.description ||
             !lastContent.videoUrl ||
+            !lastContent.videoLength ||
             !lastContent.links ||
             lastContent.links.length === 0 ||
             !lastContent.links[0].title ||
@@ -185,8 +152,8 @@ const CourseContent = ({ currentStep, setCurrentStep, courseContentData, setCour
         ) {
             toast.error(`Section can't be empty`);
         } else {
-        setCurrentStep(currentStep + 1);
-        handleCourseSubmit();
+            setCurrentStep(currentStep + 1);
+            handleCourseSubmit();
         }
     };
     return (
@@ -195,341 +162,379 @@ const CourseContent = ({ currentStep, setCurrentStep, courseContentData, setCour
                 <form className="space-y-8" onSubmit={form.handleSubmit(next)}>
                     {courseContentData.map((section, sectionIndex) => (
                         <div className="border border-gray-300 rounded-md p-4 mb-4 space-y-4">
-                        <Accordion type="single" collapsible key={sectionIndex}>
-                            <AccordionItem value={`section-${sectionIndex}`}>
-                                <AccordionTrigger className={cn(
-                                    'relative !no-underline [&[data-state=closed]>button]:hidden [&[data-state=open]>.alert]:hidden',
-                                    errors?.courseContentData?.[sectionIndex] && 'text-red-700'
-                                )}>
-                                    <FormField
-                                        control={form.control}
-                                        name={`courseContentData.${sectionIndex}.videoSection`}
-                                        render={({ field }) => (
-                                            <FormItem className="w-full">
-                                                <FormControl>
-                                                    <Input
-                                                    className="w-1/3"
-                                                        {...field}
-                                                        value={section.videoSection}
-                                                        onChange={(e) => {
-                                                            const newCourseContentData = courseContentData.map((section, index) => {
-                                                                if (index === sectionIndex) {
-                                                                    return { ...section, videoSection: e.target.value };
-                                                                }
-                                                                return section;
-                                                            });
-                                                            setCourseContentData(newCourseContentData);
-                                                            field.onChange(e);
-                                                        }}
-                                                    />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
+                            <Accordion type="single" collapsible key={sectionIndex}>
+                                <AccordionItem value={`section-${sectionIndex}`}>
+                                    <AccordionTrigger className={cn(
+                                        'relative !no-underline [&[data-state=closed]>button]:hidden [&[data-state=open]>.alert]:hidden',
+                                        errors?.courseContentData?.[sectionIndex] && 'text-red-700'
+                                    )}>
+                                        <FormField
+                                            control={form.control}
+                                            name={`courseContentData.${sectionIndex}.videoSection`}
+                                            render={({ field }) => (
+                                                <FormItem className="w-full">
+                                                    <FormControl>
+                                                        <Input
+                                                            className="w-1/3"
+                                                            {...field}
+                                                            value={section.videoSection}
+                                                            onChange={(e) => {
+                                                                const newCourseContentData = courseContentData.map((section, index) => {
+                                                                    if (index === sectionIndex) {
+                                                                        return { ...section, videoSection: e.target.value };
+                                                                    }
+                                                                    return section;
+                                                                });
+                                                                setCourseContentData(newCourseContentData);
+                                                                field.onChange(e);
+                                                            }}
+                                                        />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="icon"
+                                            className="absolute right-8"
+                                            onClick={(e) => {
+                                                if (sectionIndex > 0) {
+                                                    handleRemoveSection(sectionIndex)
+                                                }
+                                            }}
+                                        >
+                                            <Trash2Icon className="h-4 w-4" />
+                                        </Button>
+                                        {errors?.courseContentData?.[sectionIndex] && (
+                                            <span className="alert absolute right-8">
+                                                <AlertTriangleIcon className="h-4 w-4 text-red-700" />
+                                            </span>
                                         )}
-                                    />
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        size="icon"
-                                        className="absolute right-8"
-                                        onClick={(e) => {
-                                            if (sectionIndex > 0) {
-                                                handleRemoveSection(sectionIndex)
-                                            }
-                                        }}
-                                    >
-                                        <Trash2Icon className="h-4 w-4" />
-                                    </Button>
-                                    {errors?.courseContentData?.[sectionIndex] && (
-                                        <span className="alert absolute right-8">
-                                            <AlertTriangleIcon className="h-4 w-4 text-red-700" />
-                                        </span>
-                                    )}
-                                </AccordionTrigger>
-                                <AccordionContent>
-                                    {section.content.map((item, contentIndex) => (
-                                        <Accordion type="single" collapsible key={contentIndex}>
-                                            <AccordionItem value={`courseContentData.${sectionIndex}.content.${contentIndex}`}>
-                                                <AccordionTrigger
-                                                    className={cn(
-                                                        'relative !no-underline [&[data-state=closed]>button]:hidden [&[data-state=open]>.alert]:hidden',
-                                                        errors?.courseContentData?.[sectionIndex]?.content?.[contentIndex] && 'text-red-700'
-                                                    )}
-                                                >
-                                                    <FormLabel>
-                                                        {`${contentIndex + 1}. ${item.title}`}
-                                                    </FormLabel>
-                                                    <Button
-                                                        type="button"
-                                                        variant="outline"
-                                                        size="icon"
-                                                        className="absolute right-8"
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            if (contentIndex > 0) {
-                                                                handleRemoveContent(sectionIndex, contentIndex);
-                                                            }
-                                                        }}
+                                    </AccordionTrigger>
+                                    <AccordionContent>
+                                        {section.content.map((item, contentIndex) => (
+                                            <Accordion type="single" collapsible key={contentIndex}>
+                                                <AccordionItem value={`courseContentData.${sectionIndex}.content.${contentIndex}`}>
+                                                    <AccordionTrigger
+                                                        className={cn(
+                                                            'relative !no-underline [&[data-state=closed]>button]:hidden [&[data-state=open]>.alert]:hidden',
+                                                            errors?.courseContentData?.[sectionIndex]?.content?.[contentIndex] && 'text-red-700'
+                                                        )}
                                                     >
-                                                        <Trash2Icon className="h-4 w-4" />
-                                                    </Button>
-                                                    {errors?.courseContentData?.[sectionIndex]?.content?.[contentIndex] && (
-                                                        <span className="alert absolute right-8">
-                                                            <AlertTriangleIcon className="h-4 w-4 text-red-700" />
-                                                        </span>
-                                                    )}
-                                                </AccordionTrigger>
-                                                <AccordionContent>
-                                                    <div className="border border-gray-300 rounded-md p-4 mb-4 space-y-4">
-                                                        <div className='relative mb-4 gap-8 rounded-md border p-4 md:grid md:grid-cols-2'>
-                                                            <FormField
-                                                                control={form.control}
-                                                                name={`courseContentData.${sectionIndex}.content.${contentIndex}.title`}
-                                                                render={({ field }) => (
-                                                                    <FormItem>
-                                                                        <FormLabel>Title</FormLabel>
-                                                                        <FormControl>
-                                                                            <Input
-                                                                                {...field}
-                                                                                value={item.title}
-                                                                                onChange={(e) => {
-                                                                                    const newCourseContentData = courseContentData.map((section, idx) => {
-                                                                                        if (idx === sectionIndex) {
-                                                                                            return {
-                                                                                                ...section,
-                                                                                                content: section.content.map((content, contentIdx) => {
-                                                                                                    if (contentIdx === contentIndex) {
-                                                                                                        return {
-                                                                                                            ...content,
-                                                                                                            title: e.target.value
-                                                                                                        };
-                                                                                                    }
-                                                                                                    return content;
-                                                                                                })
-                                                                                            };
-                                                                                        }
-                                                                                        return section;
-                                                                                    });
-                                                                                    setCourseContentData(newCourseContentData);
-                                                                                    field.onChange(e);
-                                                                                }}
-                                                                            />
-                                                                        </FormControl>
-                                                                        <FormMessage />
-                                                                    </FormItem>
-                                                                )}
-                                                            />
-                                                            <FormField
-                                                                control={form.control}
-                                                                name={`courseContentData.${sectionIndex}.content.${contentIndex}.videoUrl`}
-                                                                render={({ field }) => (
-                                                                    <FormItem>
-                                                                        <FormLabel>Video URL</FormLabel>
-                                                                        <Input
-                                                                            {...field}
-                                                                            value={item.videoUrl}
-                                                                            onChange={(e) => {
-                                                                                const newCourseContentData = courseContentData.map((section, idx) => {
-                                                                                    if (idx === sectionIndex) {
-                                                                                        return {
-                                                                                            ...section,
-                                                                                            content: section.content.map((content, contentIdx) => {
-                                                                                                if (contentIdx === contentIndex) {
-                                                                                                    return {
-                                                                                                        ...content,
-                                                                                                        videoUrl: e.target.value
-                                                                                                    };
-                                                                                                }
-                                                                                                return content;
-                                                                                            })
-                                                                                        };
-                                                                                    }
-                                                                                    return section;
-                                                                                });
-                                                                                setCourseContentData(newCourseContentData);
-                                                                                field.onChange(e);
-                                                                            }}
-                                                                        />
-                                                                        <FormMessage />
-                                                                    </FormItem>
-                                                                )}
-                                                            />
-                                                        </div>
-                                                        <div className='relative mb-4 gap-8 rounded-md border p-4 md:grid md:grid-cols-1'>
-                                                            <FormField
-                                                                control={form.control}
-                                                                name={`courseContentData.${sectionIndex}.content.${contentIndex}.description`}
-                                                                render={({ field }) => (
-                                                                    <FormItem>
-                                                                        <FormLabel>Description</FormLabel>
-                                                                        <FormControl>
-                                                                            <Textarea
-                                                                                {...field}
-                                                                                value={item.description}
-                                                                                onChange={(e) => {
-                                                                                    const newCourseContentData = courseContentData.map((section, idx) => {
-                                                                                        if (idx === sectionIndex) {
-                                                                                            return {
-                                                                                                ...section,
-                                                                                                content: section.content.map((content, contentIdx) => {
-                                                                                                    if (contentIdx === contentIndex) {
-                                                                                                        return {
-                                                                                                            ...content,
-                                                                                                            description: e.target.value
-                                                                                                        };
-                                                                                                    }
-                                                                                                    return content;
-                                                                                                })
-                                                                                            };
-                                                                                        }
-                                                                                        return section;
-                                                                                    });
-                                                                                    setCourseContentData(newCourseContentData);
-                                                                                    field.onChange(e);
-                                                                                }}
-                                                                            />
-                                                                        </FormControl>
-                                                                        <FormMessage />
-                                                                    </FormItem>
-                                                                )}
-                                                            />
-                                                        </div>
-                                                        {item.links.map((link, linkIndex) => (
-                                                            <Accordion type="single" collapsible key={linkIndex}>
-                                                                <AccordionItem value={`courseContentData.${sectionIndex}.content.${contentIndex}.links.${linkIndex}`}>
-                                                                    <AccordionTrigger className={cn(
-                                                                        'relative !no-underline [&[data-state=closed]>button]:hidden [&[data-state=open]>.alert]:hidden',
-                                                                        errors?.courseContentData?.[sectionIndex]?.content?.[contentIndex]?.links?.[linkIndex] && 'text-red-700'
-                                                                    )}>
-                                                                        {`Link ${linkIndex + 1}`}
-                                                                        <Button
-                                                                            type="button"
-                                                                            variant="outline"
-                                                                            size="icon"
-                                                                            className="absolute right-8"
-                                                                            onClick={() => linkIndex > 0 && handleRemoveLink(sectionIndex, contentIndex, linkIndex)}
-                                                                        >
-                                                                            <Trash2Icon className="h-4 w-4" />
-                                                                        </Button>
-                                                                        {errors?.courseContentData?.[sectionIndex]?.content?.[contentIndex]?.links?.[linkIndex] && (
-                                                                            <span className="alert absolute right-8">
-                                                                                <AlertTriangleIcon className="h-4 w-4 text-red-700" />
-                                                                            </span>
-                                                                        )}
-                                                                    </AccordionTrigger>
-                                                                    <AccordionContent>
-                                                                        <div className='relative mb-4 gap-8 rounded-md border p-4 md:grid md:grid-cols-2'>
-                                                                            <FormField
-                                                                                control={form.control}
-                                                                                name={`courseContentData.${sectionIndex}.content.${contentIndex}.links.${linkIndex}.title`}
-                                                                                render={({ field }) => (
-                                                                                    <FormItem>
-                                                                                        <FormLabel>Link Title</FormLabel>
-                                                                                        <FormControl>
-                                                                                            <Input
-                                                                                                {...field}
-                                                                                                value={link.title}
-                                                                                                onChange={(e) => {
-                                                                                                    const newCourseContentData = courseContentData.map((section, sIdx) => {
-                                                                                                        if (sIdx === sectionIndex) {
-                                                                                                            return {
-                                                                                                                ...section,
-                                                                                                                content: section.content.map((content, cIdx) => {
-                                                                                                                    if (cIdx === contentIndex) {
-                                                                                                                        return {
-                                                                                                                            ...content,
-                                                                                                                            links: content.links.map((link, lIdx) => {
-                                                                                                                                if (lIdx === linkIndex) {
-                                                                                                                                    return { ...link, title: e.target.value };
-                                                                                                                                }
-                                                                                                                                return link;
-                                                                                                                            })
-                                                                                                                        };
-                                                                                                                    }
-                                                                                                                    return content;
-                                                                                                                })
-                                                                                                            };
-                                                                                                        }
-                                                                                                        return section;
-                                                                                                    });
-                                                                                                    setCourseContentData(newCourseContentData);
-                                                                                                }}
-                                                                                            />
-                                                                                        </FormControl>
-                                                                                        <FormMessage />
-                                                                                    </FormItem>
-                                                                                )}
-                                                                            />
-                                                                            <FormField
-                                                                                control={form.control}
-                                                                                name={`courseContentData.${sectionIndex}.content.${contentIndex}.links.${linkIndex}.url`}
-                                                                                render={({ field }) => (
-                                                                                    <FormItem>
-                                                                                        <FormLabel>Link URL</FormLabel>
-                                                                                        <FormControl>
-                                                                                            <Input
-                                                                                                {...field}
-                                                                                                value={link.url}
-                                                                                                onChange={(e) => {
-                                                                                                    const newCourseContentData = courseContentData.map((section, sIdx) => {
-                                                                                                        if (sIdx === sectionIndex) {
-                                                                                                            return {
-                                                                                                                ...section,
-                                                                                                                content: section.content.map((content, cIdx) => {
-                                                                                                                    if (cIdx === contentIndex) {
-                                                                                                                        return {
-                                                                                                                            ...content,
-                                                                                                                            links: content.links.map((link, lIdx) => {
-                                                                                                                                if (lIdx === linkIndex) {
-                                                                                                                                    return { ...link, url: e.target.value };
-                                                                                                                                }
-                                                                                                                                return link;
-                                                                                                                            })
-                                                                                                                        };
-                                                                                                                    }
-                                                                                                                    return content;
-                                                                                                                })
-                                                                                                            };
-                                                                                                        }
-                                                                                                        return section;
-                                                                                                    });
-                                                                                                    setCourseContentData(newCourseContentData);
-                                                                                                }}
-                                                                                            />
-                                                                                        </FormControl>
-                                                                                        <FormMessage />
-                                                                                    </FormItem>
-                                                                                )}
-                                                                            />
-                                                                        </div>
-                                                                    </AccordionContent>
-                                                                </AccordionItem>
-                                                            </Accordion>
-                                                        ))}
+                                                        <FormLabel>
+                                                            {`${contentIndex + 1}. ${item.title}`}
+                                                        </FormLabel>
                                                         <Button
                                                             type="button"
                                                             variant="outline"
-                                                            onClick={() => handleAddLink(sectionIndex, contentIndex)}
-                                                            className="mt-4"
+                                                            size="icon"
+                                                            className="absolute right-8"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                if (contentIndex > 0) {
+                                                                    handleRemoveContent(sectionIndex, contentIndex);
+                                                                }
+                                                            }}
                                                         >
-                                                            <PlusCircle className="h-4 w-4 mr-2" /> Add Link
+                                                            <Trash2Icon className="h-4 w-4" />
                                                         </Button>
-                                                    </div>
-                                                </AccordionContent>
-                                            </AccordionItem>
-                                        </Accordion>
-                                    ))}
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        onClick={() => handleNewContent(sectionIndex)}
-                                        className="mt-4"
-                                    >
-                                        <PlusCircle className="h-4 w-4 mr-2" /> Add New Content
-                                    </Button>
-                                </AccordionContent>
-                            </AccordionItem>
-                        </Accordion>
+                                                        {errors?.courseContentData?.[sectionIndex]?.content?.[contentIndex] && (
+                                                            <span className="alert absolute right-8">
+                                                                <AlertTriangleIcon className="h-4 w-4 text-red-700" />
+                                                            </span>
+                                                        )}
+                                                    </AccordionTrigger>
+                                                    <AccordionContent>
+                                                        <div className="border border-gray-300 rounded-md p-4 mb-4 space-y-4">
+                                                            <div className='relative mb-4 gap-8 rounded-md border p-4 md:grid md:grid-cols-1'>
+                                                                <FormField
+                                                                    control={form.control}
+                                                                    name={`courseContentData.${sectionIndex}.content.${contentIndex}.title`}
+                                                                    render={({ field }) => (
+                                                                        <FormItem>
+                                                                            <FormLabel>Title</FormLabel>
+                                                                            <FormControl>
+                                                                                <Input
+                                                                                    {...field}
+                                                                                    value={item.title}
+                                                                                    onChange={(e) => {
+                                                                                        const newCourseContentData = courseContentData.map((section, idx) => {
+                                                                                            if (idx === sectionIndex) {
+                                                                                                return {
+                                                                                                    ...section,
+                                                                                                    content: section.content.map((content, contentIdx) => {
+                                                                                                        if (contentIdx === contentIndex) {
+                                                                                                            return {
+                                                                                                                ...content,
+                                                                                                                title: e.target.value
+                                                                                                            };
+                                                                                                        }
+                                                                                                        return content;
+                                                                                                    })
+                                                                                                };
+                                                                                            }
+                                                                                            return section;
+                                                                                        });
+                                                                                        setCourseContentData(newCourseContentData);
+                                                                                        field.onChange(e);
+                                                                                    }}
+                                                                                />
+                                                                            </FormControl>
+                                                                            <FormMessage />
+                                                                        </FormItem>
+                                                                    )}
+                                                                />
+                                                            </div>
+                                                            <div className='relative mb-4 gap-8 rounded-md border p-4 md:grid md:grid-cols-1'>
+                                                                <FormField
+                                                                    control={form.control}
+                                                                    name={`courseContentData.${sectionIndex}.content.${contentIndex}.description`}
+                                                                    render={({ field }) => (
+                                                                        <FormItem>
+                                                                            <FormLabel>Description</FormLabel>
+                                                                            <FormControl>
+                                                                                <Textarea
+                                                                                    {...field}
+                                                                                    value={item.description}
+                                                                                    onChange={(e) => {
+                                                                                        const newCourseContentData = courseContentData.map((section, idx) => {
+                                                                                            if (idx === sectionIndex) {
+                                                                                                return {
+                                                                                                    ...section,
+                                                                                                    content: section.content.map((content, contentIdx) => {
+                                                                                                        if (contentIdx === contentIndex) {
+                                                                                                            return {
+                                                                                                                ...content,
+                                                                                                                description: e.target.value
+                                                                                                            };
+                                                                                                        }
+                                                                                                        return content;
+                                                                                                    })
+                                                                                                };
+                                                                                            }
+                                                                                            return section;
+                                                                                        });
+                                                                                        setCourseContentData(newCourseContentData);
+                                                                                        field.onChange(e);
+                                                                                    }}
+                                                                                />
+                                                                            </FormControl>
+                                                                            <FormMessage />
+                                                                        </FormItem>
+                                                                    )}
+                                                                />
+                                                            </div>
+                                                            <div className='relative mb-4 gap-8 rounded-md border p-4 md:grid md:grid-cols-2'>
+                                                                <FormField
+                                                                    control={form.control}
+                                                                    name={`courseContentData.${sectionIndex}.content.${contentIndex}.videoUrl`}
+                                                                    render={({ field }) => (
+                                                                        <FormItem>
+                                                                            <FormLabel>Video URL</FormLabel>
+                                                                            <Input
+                                                                                {...field}
+                                                                                value={item.videoUrl}
+                                                                                onChange={(e) => {
+                                                                                    const newCourseContentData = courseContentData.map((section, idx) => {
+                                                                                        if (idx === sectionIndex) {
+                                                                                            return {
+                                                                                                ...section,
+                                                                                                content: section.content.map((content, contentIdx) => {
+                                                                                                    if (contentIdx === contentIndex) {
+                                                                                                        return {
+                                                                                                            ...content,
+                                                                                                            videoUrl: e.target.value
+                                                                                                        };
+                                                                                                    }
+                                                                                                    return content;
+                                                                                                })
+                                                                                            };
+                                                                                        }
+                                                                                        return section;
+                                                                                    });
+                                                                                    setCourseContentData(newCourseContentData);
+                                                                                    field.onChange(e);
+                                                                                }}
+                                                                            />
+                                                                            <FormMessage />
+                                                                        </FormItem>
+                                                                    )}
+                                                                />
+                                                                <FormField
+                                                                    control={form.control}
+                                                                    name={`courseContentData.${sectionIndex}.content.${contentIndex}.videoLength`}
+                                                                    render={({ field }) => (
+                                                                        <FormItem>
+                                                                            <FormLabel>Video Length (in minutes)</FormLabel>
+                                                                            <Input
+                                                                                {...field}
+                                                                                type="number"
+                                                                                value={item.videoLength}
+                                                                                onChange={(e) => {
+                                                                                    const newCourseContentData = courseContentData.map((section, idx) => {
+                                                                                        if (idx === sectionIndex) {
+                                                                                            return {
+                                                                                                ...section,
+                                                                                                content: section.content.map((content, contentIdx) => {
+                                                                                                    if (contentIdx === contentIndex) {
+                                                                                                        return {
+                                                                                                            ...content,
+                                                                                                            videoLength: e.target.value
+                                                                                                        };
+                                                                                                    }
+                                                                                                    return content;
+                                                                                                })
+                                                                                            };
+                                                                                        }
+                                                                                        return section;
+                                                                                    });
+                                                                                    setCourseContentData(newCourseContentData);
+                                                                                    field.onChange(e);
+                                                                                }}
+                                                                            />
+                                                                            <FormMessage />
+                                                                        </FormItem>
+                                                                    )}
+                                                                />
+                                                            </div>
+                                                            {item.links.map((link, linkIndex) => (
+                                                                <Accordion type="single" collapsible key={linkIndex}>
+                                                                    <AccordionItem value={`courseContentData.${sectionIndex}.content.${contentIndex}.links.${linkIndex}`}>
+                                                                        <AccordionTrigger className={cn(
+                                                                            'relative !no-underline [&[data-state=closed]>button]:hidden [&[data-state=open]>.alert]:hidden',
+                                                                            errors?.courseContentData?.[sectionIndex]?.content?.[contentIndex]?.links?.[linkIndex] && 'text-red-700'
+                                                                        )}>
+                                                                            {`Link ${linkIndex + 1}`}
+                                                                            <Button
+                                                                                type="button"
+                                                                                variant="outline"
+                                                                                size="icon"
+                                                                                className="absolute right-8"
+                                                                                onClick={() => linkIndex > 0 && handleRemoveLink(sectionIndex, contentIndex, linkIndex)}
+                                                                            >
+                                                                                <Trash2Icon className="h-4 w-4" />
+                                                                            </Button>
+                                                                            {errors?.courseContentData?.[sectionIndex]?.content?.[contentIndex]?.links?.[linkIndex] && (
+                                                                                <span className="alert absolute right-8">
+                                                                                    <AlertTriangleIcon className="h-4 w-4 text-red-700" />
+                                                                                </span>
+                                                                            )}
+                                                                        </AccordionTrigger>
+                                                                        <AccordionContent>
+                                                                            <div className='relative mb-4 gap-8 rounded-md border p-4 md:grid md:grid-cols-2'>
+                                                                                <FormField
+                                                                                    control={form.control}
+                                                                                    name={`courseContentData.${sectionIndex}.content.${contentIndex}.links.${linkIndex}.title`}
+                                                                                    render={({ field }) => (
+                                                                                        <FormItem>
+                                                                                            <FormLabel>Link Title</FormLabel>
+                                                                                            <FormControl>
+                                                                                                <Input
+                                                                                                    {...field}
+                                                                                                    value={link.title}
+                                                                                                    onChange={(e) => {
+                                                                                                        const newCourseContentData = courseContentData.map((section, sIdx) => {
+                                                                                                            if (sIdx === sectionIndex) {
+                                                                                                                return {
+                                                                                                                    ...section,
+                                                                                                                    content: section.content.map((content, cIdx) => {
+                                                                                                                        if (cIdx === contentIndex) {
+                                                                                                                            return {
+                                                                                                                                ...content,
+                                                                                                                                links: content.links.map((link, lIdx) => {
+                                                                                                                                    if (lIdx === linkIndex) {
+                                                                                                                                        return { ...link, title: e.target.value };
+                                                                                                                                    }
+                                                                                                                                    return link;
+                                                                                                                                })
+                                                                                                                            };
+                                                                                                                        }
+                                                                                                                        return content;
+                                                                                                                    })
+                                                                                                                };
+                                                                                                            }
+                                                                                                            return section;
+                                                                                                        });
+                                                                                                        setCourseContentData(newCourseContentData);
+                                                                                                    }}
+                                                                                                />
+                                                                                            </FormControl>
+                                                                                            <FormMessage />
+                                                                                        </FormItem>
+                                                                                    )}
+                                                                                />
+                                                                                <FormField
+                                                                                    control={form.control}
+                                                                                    name={`courseContentData.${sectionIndex}.content.${contentIndex}.links.${linkIndex}.url`}
+                                                                                    render={({ field }) => (
+                                                                                        <FormItem>
+                                                                                            <FormLabel>Link URL</FormLabel>
+                                                                                            <FormControl>
+                                                                                                <Input
+                                                                                                    {...field}
+                                                                                                    value={link.url}
+                                                                                                    onChange={(e) => {
+                                                                                                        const newCourseContentData = courseContentData.map((section, sIdx) => {
+                                                                                                            if (sIdx === sectionIndex) {
+                                                                                                                return {
+                                                                                                                    ...section,
+                                                                                                                    content: section.content.map((content, cIdx) => {
+                                                                                                                        if (cIdx === contentIndex) {
+                                                                                                                            return {
+                                                                                                                                ...content,
+                                                                                                                                links: content.links.map((link, lIdx) => {
+                                                                                                                                    if (lIdx === linkIndex) {
+                                                                                                                                        return { ...link, url: e.target.value };
+                                                                                                                                    }
+                                                                                                                                    return link;
+                                                                                                                                })
+                                                                                                                            };
+                                                                                                                        }
+                                                                                                                        return content;
+                                                                                                                    })
+                                                                                                                };
+                                                                                                            }
+                                                                                                            return section;
+                                                                                                        });
+                                                                                                        setCourseContentData(newCourseContentData);
+                                                                                                    }}
+                                                                                                />
+                                                                                            </FormControl>
+                                                                                            <FormMessage />
+                                                                                        </FormItem>
+                                                                                    )}
+                                                                                />
+                                                                            </div>
+                                                                        </AccordionContent>
+                                                                    </AccordionItem>
+                                                                </Accordion>
+                                                            ))}
+                                                            <Button
+                                                                type="button"
+                                                                variant="outline"
+                                                                onClick={() => handleAddLink(sectionIndex, contentIndex)}
+                                                                className="mt-4"
+                                                            >
+                                                                <PlusCircle className="h-4 w-4 mr-2" /> Add Link
+                                                            </Button>
+                                                        </div>
+                                                    </AccordionContent>
+                                                </AccordionItem>
+                                            </Accordion>
+                                        ))}
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            onClick={() => handleNewContent(sectionIndex)}
+                                            className="mt-4"
+                                        >
+                                            <PlusCircle className="h-4 w-4 mr-2" /> Add New Content
+                                        </Button>
+                                    </AccordionContent>
+                                </AccordionItem>
+                            </Accordion>
                         </div>
                     ))}
                 </form>

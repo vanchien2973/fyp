@@ -2,6 +2,7 @@ import { cn } from '@/lib/utils';
 import ThemeToggle from './ThemeToggle';
 import { UserNav } from './UserNav';
 import { MobileSidebar } from './MobileSidebar';
+import DropdownNotifications from '../dashboard/DropdownNotification';
 
 export default function Header() {
   return (
@@ -11,6 +12,7 @@ export default function Header() {
           <MobileSidebar />
         </div>
         <div className="flex items-center gap-2">
+          {/* <DropdownNotifications/> */}
           <UserNav />
           <ThemeToggle />
         </div>

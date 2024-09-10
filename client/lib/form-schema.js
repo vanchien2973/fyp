@@ -6,14 +6,15 @@ export const courseSchema = z.object({
     .min(3, { message: 'Course Name is required' }),
   description: z
     .string()
-    .min(10, { message: 'Description must is required' }),
-  price: z.coerce
-    .number()
-    .min(0, { message: 'Price must be a non-negative number' }),
+    .min(10, { message: 'Description is required' }),
+price: z.coerce
+  .number({ invalid_type_error: 'Price is required' })
+  .min(0, { message: 'Price must be a non-negative number' }),
   estimatedPrice: z.coerce
     .number()
     .min(0, { message: 'Estimated Price must be a non-negative number' })
     .optional(),
+  categories: z.string().min(1, { message: 'Please select a category' }),
   tags: z
     .string()
     .min(1, { message: 'At least one tag is required' }),
@@ -54,6 +55,9 @@ export const courseContentSchema = z.object({
           videoUrl: z
             .string()
             .min(1, { message: 'Video URL cannot be empty' }),
+          videoLength: z.coerce
+            .number()
+            .min(0, { message: 'Video Lenth be a non-negative number' }),
           title: z
             .string()
             .min(1, { message: 'Title is required' }),

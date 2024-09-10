@@ -35,7 +35,7 @@ const layoutSchema = new mongoose.Schema({
         title: {
             type: String,
         },
-        subtitle: {
+        subTitle: {
             type: String,
         }
     }

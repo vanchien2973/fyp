@@ -1,7 +1,5 @@
 'use client'
-import { Button } from '@/app/components/ui/button';
-import { useRouter } from 'next/navigation';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { columns } from './Columns';
 import { Separator } from '@/app/components/ui/separator';
 import { DataTable } from '@/app/components/ui/data-table';
@@ -12,6 +10,7 @@ import { useGetAllUsersQuery } from '@/app/redux/features/user/userApi';
 
 const ListUsers = ({ isTeam }) => {
     const { isLoading, data, refetch } = useGetAllUsersQuery({}, { refetchOnMountOrArgChange: true });
+
     const rows = React.useMemo(() => {
         if (isTeam) {
             const newData = data && data.users.filter((item) => item.role === 'admin');
@@ -44,12 +43,12 @@ const ListUsers = ({ isTeam }) => {
     }, [data, isTeam]);
 
     return (
-        <> {
-            isLoading ? (
+        <>
+            {isLoading ? (
                 <Loader />
             ) : (
                 <>
-                    <div className="flex items-start justify-start">
+                    <div className="flex items-start justify-between">
                         <HeadingAdmin
                             title={`Users (${rows.length})`}
                             description="Manage users."
@@ -58,9 +57,7 @@ const ListUsers = ({ isTeam }) => {
                     <Separator />
                     <DataTable searchKey="name" columns={columns} data={rows} />
                 </>
-            )
-        }
-
+            )}
         </>
     )
 }

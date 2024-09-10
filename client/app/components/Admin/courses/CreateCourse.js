@@ -33,6 +33,7 @@ const CreateCourse = () => {
   const [courseInfor, setCourseInfor] = useState({
     name: "",
     description: "",
+    categories: "",
     price: "",
     estimatedPrice: "",
     thumbnail: "",
@@ -40,6 +41,7 @@ const CreateCourse = () => {
     level: "",
     demoUrl: "",
   });
+
   const [benefits, setBenefits] = useState([{ title: "" }]);
   const [prerequisites, setPrerequisites] = useState([{ title: "" }]);
   const [courseContentData, setCourseContentData] = useState([
@@ -48,6 +50,7 @@ const CreateCourse = () => {
       content: [
         {
           videoUrl: "",
+          videoLength: "",
           title: "",
           description: "",
           links: [
@@ -76,6 +79,7 @@ const CreateCourse = () => {
       videoSection: section.videoSection,
       content: section.content.map((courseContent) => ({
         videoUrl: courseContent.videoUrl,
+        videoLength: courseContent.videoLength,
         title: courseContent.title,
         description: courseContent.description,
         links: courseContent.links.map((link) => ({
@@ -89,6 +93,7 @@ const CreateCourse = () => {
     const data = {
       name: courseInfor.name,
       description: courseInfor.description,
+      categories: courseInfor.categories,
       price: courseInfor.price,
       estimatedPrice: courseInfor.estimatedPrice,
       thumbnail: courseInfor.thumbnail,

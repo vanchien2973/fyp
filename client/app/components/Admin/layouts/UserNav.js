@@ -13,6 +13,7 @@ import { signOut } from 'next-auth/react';
 import { Button } from '../../ui/button';
 import { UserAvatar } from '../../ui/avatar';
 import { useSelector } from 'react-redux';
+import DropdownNotifications from '../dashboard/DropdownNotification';
 
 export function UserNav() {
     const { user } = useSelector((state) => state.auth);

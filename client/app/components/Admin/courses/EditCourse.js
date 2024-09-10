@@ -33,25 +33,28 @@ const EditCourse = ({ id }) => {
 
     useEffect(() => {
         if (editCourseData) {
-            setCourseInfor({
+            console.log(editCourseData.categories)
+            setCourseInfor((prev) => ({
+                ...prev,
                 name: editCourseData.name,
                 description: editCourseData.description,
+                categories: editCourseData.categories,
                 price: editCourseData.price,
                 estimatedPrice: editCourseData?.estimatedPrice,
                 thumbnail: editCourseData?.thumbnail?.url,
                 tags: editCourseData.tags,
                 level: editCourseData.level,
                 demoUrl: editCourseData.demoUrl,
-            }),
-                setBenefits(editCourseData.benefits),
-                setPrerequisites(editCourseData.prerequisites),
-                setCourseContentData(editCourseData.courseData)
+            }));
+            setBenefits(editCourseData.benefits);
+            setPrerequisites(editCourseData.prerequisites);
+            setCourseContentData(editCourseData.courseData);
         }
     }, [editCourseData]);
-
     const [courseInfor, setCourseInfor] = useState({
         name: "",
         description: "",
+        categories: "",
         price: "",
         estimatedPrice: "",
         thumbnail: "",
@@ -67,6 +70,7 @@ const EditCourse = ({ id }) => {
             content: [
                 {
                     videoUrl: "",
+                    videoLength: "",
                     title: "",
                     description: "",
                     links: [
@@ -95,6 +99,7 @@ const EditCourse = ({ id }) => {
             videoSection: section.videoSection,
             content: section.content.map((courseContent) => ({
                 videoUrl: courseContent.videoUrl,
+                videoLength: courseContent.videoLength,
                 title: courseContent.title,
                 description: courseContent.description,
                 links: courseContent.links.map((link) => ({
@@ -108,6 +113,7 @@ const EditCourse = ({ id }) => {
         const data = {
             name: courseInfor.name,
             description: courseInfor.description,
+            categories: courseInfor.categories,
             price: courseInfor.price,
             estimatedPrice: courseInfor.estimatedPrice,
             thumbnail: courseInfor.thumbnail,
