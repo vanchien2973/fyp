@@ -236,7 +236,6 @@ const CourseInformation = ({ courseInfor, setCourseInfor, setCurrentStep, curren
                       onValueChange={(value) => {
                         if (!isEdit) {
                           field.onChange(value);
-                          // setSelectedCategory(value);
                           setCourseInfor((prev) => ({
                             ...prev,
                             category: { ...prev.category, title: value },

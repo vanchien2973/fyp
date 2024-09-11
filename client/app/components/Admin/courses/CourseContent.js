@@ -107,16 +107,48 @@ const CourseContent = ({ currentStep, setCurrentStep, courseContentData, setCour
     };
 
     const handleAddLink = (sectionIndex, contentIndex) => {
-        const newCourseContentData = [...courseContentData];
-        newCourseContentData[sectionIndex].content[contentIndex].links.push({ title: '', url: '' });
-        setCourseContentData(newCourseContentData);
-    };
+        const newCourseContentData = courseContentData.map((section, sIdx) => {
+            if (sIdx === sectionIndex) {
+                return {
+                    ...section,
+                    content: section.content.map((content, cIdx) => {
+                        if (cIdx === contentIndex) {
+                            return {
+                                ...content,
+                                links: [...content.links, { title: '', url: '' }] 
+                            };
+                        }
+                        return content;
+                    })
+                };
+            }
+            return section;
+        });
 
-    const handleRemoveLink = (sectionIndex, contentIndex, linkIndex) => {
-        const newCourseContentData = [...courseContentData];
-        newCourseContentData[sectionIndex].content[contentIndex].links.splice(linkIndex, 1);
         setCourseContentData(newCourseContentData);
     };
+    
+    const handleRemoveLink = (sectionIndex, contentIndex, linkIndex) => {
+        const newCourseContentData = courseContentData.map((section, sIdx) => {
+            if (sIdx === sectionIndex) {
+                return {
+                    ...section,
+                    content: section.content.map((content, cIdx) => {
+                        if (cIdx === contentIndex) {
+                            return {
+                                ...content,
+                                links: content.links.filter((_, lIdx) => lIdx !== linkIndex)
+                            };
+                        }
+                        return content;
+                    })
+                };
+            }
+            return section;
+        });
+        setCourseContentData(newCourseContentData);
+    };
+    
 
     const handleRemoveSection = (index) => {
         const updateData = [...courseContentData];

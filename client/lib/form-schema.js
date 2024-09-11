@@ -30,20 +30,8 @@ export const courseSchema = z.object({
 });
 
 export const benfits_prerequisitesSchema = z.object({
-  benefits: z
-    .array(
-      z.object({
-        title: z.string().min(1, { message: 'Benefit cannot be empty' })
-      })
-    )
-    .min(1, { message: 'At least one benefit is required' }),
-  prerequisites: z
-    .array(
-      z.object({
-        title: z.string().min(1, { message: 'Prerequisite cannot be empty' })
-      })
-    )
-    .min(1, { message: 'At least one prerequisite is required' })
+  benefits: z.array(z.object({ title: z.string().min(1, "Benefit is required") })).min(1, "At least one benefit is required"),
+  prerequisites: z.array(z.object({ title: z.string().min(1, "Prerequisite is required") })).min(1, "At least one prerequisite is required"),
 });
 
 export const courseContentSchema = z.object({
