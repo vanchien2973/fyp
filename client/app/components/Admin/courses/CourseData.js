@@ -40,6 +40,14 @@ const CourseData = ({ benefits, setBenefits, prerequisites, setPrerequisites, cu
         setPrerequisites([...prerequisites, { title: '' }]);
     };
 
+    const handleRemoveBenefit = (index) => {
+        setBenefits(benefits => benefits.filter((_, i) => i !== index));
+    };
+    
+    const handleRemovePrerequisite = (index) => {
+        setPrerequisites(prerequisites => prerequisites.filter((_, i) => i !== index));
+    };
+
     const prevButton = () => {
         if (currentStep > 0) {
             setCurrentStep(currentStep - 1);
@@ -52,21 +60,8 @@ const CourseData = ({ benefits, setBenefits, prerequisites, setPrerequisites, cu
         if (isValid) {
             setCurrentStep(currentStep + 1);
         } else {
-            toast.error("Please fill in all required fields");
+            console.log(errors)
         }
-    };
-
-    const handleRemoveBenefit = (index) => {
-        const updatedBenefits = [...benefits];
-        updatedBenefits.splice(index, 1);
-        setBenefits(updatedBenefits);
-    };
-    
-
-    const handleRemovePrerequisite = (index) => {
-        const updatedPrerequisites = [...prerequisites];
-        updatedPrerequisites.splice(index, 1);
-        setPrerequisites(updatedPrerequisites);
     };
 
     return (

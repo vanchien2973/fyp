@@ -7,20 +7,23 @@ export const courseSchema = z.object({
   description: z
     .string()
     .min(10, { message: 'Description is required' }),
-price: z.coerce
-  .number({ invalid_type_error: 'Price is required' })
-  .min(0, { message: 'Price must be a non-negative number' }),
+  category: z.object({
+    title: z.string().min(1, { message: 'Category is required' }),
+    level: z.string().min(1, { message: 'Level is required' })
+  }).refine((category) => !!category.title && !!category.level, {
+    message: 'Both category and level must be selected',
+    path: ['category'], // Points to the category object
+  }),
+  price: z.coerce
+    .number({ invalid_type_error: 'Price is required' })
+    .min(0, { message: 'Price must be a non-negative number' }),
   estimatedPrice: z.coerce
     .number()
     .min(0, { message: 'Estimated Price must be a non-negative number' })
     .optional(),
-  categories: z.string().min(1, { message: 'Please select a category' }),
   tags: z
     .string()
     .min(1, { message: 'At least one tag is required' }),
-  level: z
-    .string()
-    .min(1, { message: 'Course Level is required' }),
   demoUrl: z
     .string({ message: 'Demo URL is required' })
     .optional(),

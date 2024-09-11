@@ -7,21 +7,30 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Input } from '../../ui/input';
 import { Textarea } from '../../ui/textarea';
 import { Image } from '../../ui/image';
-import toast from 'react-hot-toast';
 import { Button } from '../../ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
 import { useGetHeroDataQuery } from '@/app/redux/features/layout/layoutApi';
 
-const CourseInformation = ({ courseInfor, setCourseInfor, setCurrentStep, currentStep }) => {
+const CourseInformation = ({ courseInfor, setCourseInfor, setCurrentStep, currentStep, isEdit }) => {
   const [dragging, setDragging] = useState(false);
   const { data } = useGetHeroDataQuery("Categories", {});
   const [categories, setCategories] = useState([]);
+  const [levels, setLevels] = useState([]);
 
   useEffect(() => {
     if (data) {
       setCategories(data.layout.categories);
     }
   }, [data]);
+
+  useEffect(() => {
+    if (courseInfor.category.title) {
+      const category = categories.find(cat => cat.title === courseInfor.category.title);
+      setLevels(category ? category.levels : []);
+    } else {
+      setLevels([]);
+    }
+  }, [courseInfor.category.title, categories]);
 
   const form = useForm({
     resolver: zodResolver(courseSchema),
@@ -174,17 +183,17 @@ const CourseInformation = ({ courseInfor, setCourseInfor, setCurrentStep, curren
           <div className="relative mb-4 gap-8 rounded-md border p-4 md:grid md:grid-cols-2">
             <FormField
               control={form.control}
-              name="level"
+              name="tags"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Course Level</FormLabel>
+                  <FormLabel>Course Tags</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
-                      value={courseInfor.level}
+                      value={courseInfor.tags}
                       onChange={(e) => {
                         field.onChange(e);
-                        setCourseInfor({ ...courseInfor, level: e.target.value });
+                        setCourseInfor({ ...courseInfor, tags: e.target.value });
                       }}
                     />
                   </FormControl>
@@ -216,27 +225,36 @@ const CourseInformation = ({ courseInfor, setCourseInfor, setCurrentStep, curren
           <div className="relative mb-4 gap-8 rounded-md border p-4 md:grid md:grid-cols-2">
             <FormField
               control={form.control}
-              name="categories"
+              name="category.title"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Course Category</FormLabel>
                   <FormControl>
                     <Select
-                      value={courseInfor.categories}
+                      disabled={isEdit}
+                      value={courseInfor.category.title}
                       onValueChange={(value) => {
-                        field.onChange(value);
-                        setCourseInfor((prev) => ({ ...prev, categories: value }));
+                        if (!isEdit) {
+                          field.onChange(value);
+                          // setSelectedCategory(value);
+                          setCourseInfor((prev) => ({
+                            ...prev,
+                            category: { ...prev.category, title: value },
+                          }));
+                        }
                       }}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Select your category"/>
+                        <SelectValue placeholder="Select your category" />
                       </SelectTrigger>
                       <SelectContent>
-                        {categories.map((category) => (
-                          <SelectItem key={category.title} value={category.title}>
-                            {category.title}
-                          </SelectItem>
-                        ))}
+                        {categories
+                          .filter(category => category.title)
+                          .map((category) => (
+                            <SelectItem key={category.title} value={category.title}>
+                              {category.title}
+                            </SelectItem>
+                          ))}
                       </SelectContent>
                     </Select>
                   </FormControl>
@@ -246,19 +264,35 @@ const CourseInformation = ({ courseInfor, setCourseInfor, setCurrentStep, curren
             />
             <FormField
               control={form.control}
-              name="tags"
+              name="category.level"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Course Tags</FormLabel>
+                  <FormLabel>Course Level</FormLabel>
                   <FormControl>
-                    <Input
-                      {...field}
-                      value={courseInfor.tags}
-                      onChange={(e) => {
-                        field.onChange(e);
-                        setCourseInfor({ ...courseInfor, tags: e.target.value });
+                    <Select
+                      disabled={isEdit}
+                      value={courseInfor.category.level}
+                      onValueChange={(value) => {
+                        if (!isEdit) {
+                          field.onChange(value);
+                          setCourseInfor((prev) => ({
+                            ...prev,
+                            category: { ...prev.category, level: value },
+                          }));
+                        }
                       }}
-                    />
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select your level" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {levels.map((lev) => (
+                          <SelectItem key={lev} value={lev}>
+                            {lev}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -304,7 +338,6 @@ const CourseInformation = ({ courseInfor, setCourseInfor, setCurrentStep, curren
                 </FormItem>
               )}
             />
-
           </div>
         </form>
       </Form>

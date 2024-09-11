@@ -15,6 +15,7 @@ const linkSchema = new mongoose.Schema({
     url: String,
 });
 
+
 const commentSchema = new mongoose.Schema({
     user: Object,
     question: String,
@@ -37,6 +38,7 @@ const sectionSchema = new mongoose.Schema({
     content: [courseContentSchema]
 });
 
+
 const courseSchema = new mongoose.Schema({
     name: {
         type: String,
@@ -46,9 +48,15 @@ const courseSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-    categories: {
-        type: String,
-        required: true,
+    category: {
+        title: {
+            type: String,
+            required: true,
+        }, 
+        level: {
+            type: String,
+            required: true,
+        }, 
     },
     price: {
         type: Number,
@@ -66,10 +74,6 @@ const courseSchema = new mongoose.Schema({
         },
     },
     tags: {
-        type: String,
-        required: true,
-    },
-    level: {
         type: String,
         required: true,
     },

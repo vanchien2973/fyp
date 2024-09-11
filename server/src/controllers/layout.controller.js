@@ -43,6 +43,7 @@ export const createLayout = CatchAsyncError(async (req, res, next) => {
                 categories.map(async (item) => {
                     return {
                         title: item.title,
+                        levels: item.levels
                     }
                 })
             )
@@ -117,6 +118,7 @@ export const editLayout = CatchAsyncError(async (req, res, next) => {
                 categories.map(async (item) => {
                     return {
                         title: item.title,
+                        levels: item.levels
                     }
                 })
             )

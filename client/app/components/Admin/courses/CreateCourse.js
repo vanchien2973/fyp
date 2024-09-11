@@ -33,15 +33,13 @@ const CreateCourse = () => {
   const [courseInfor, setCourseInfor] = useState({
     name: "",
     description: "",
-    categories: "",
+    category: { title: "", level: "" },
     price: "",
     estimatedPrice: "",
     thumbnail: "",
     tags: "",
-    level: "",
     demoUrl: "",
   });
-
   const [benefits, setBenefits] = useState([{ title: "" }]);
   const [prerequisites, setPrerequisites] = useState([{ title: "" }]);
   const [courseContentData, setCourseContentData] = useState([
@@ -93,20 +91,20 @@ const CreateCourse = () => {
     const data = {
       name: courseInfor.name,
       description: courseInfor.description,
-      categories: courseInfor.categories,
       price: courseInfor.price,
       estimatedPrice: courseInfor.estimatedPrice,
       thumbnail: courseInfor.thumbnail,
       tags: courseInfor.tags,
-      level: courseInfor.level,
       demoUrl: courseInfor.demoUrl,
       totalVideos: courseContentData.length,
+      category: courseInfor.category,
       benefits: formattedBenefits,
       prerequisites: formattedPrerequisites,
       courseData: formattedCourseContent,
     };
     setCourseData(data);
   };
+
 
   const handleCourse = async (e) => {
     const data = courseData;

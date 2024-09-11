@@ -33,12 +33,12 @@ const EditCourse = ({ id }) => {
 
     useEffect(() => {
         if (editCourseData) {
-            console.log(editCourseData.categories)
+            console.log('editCourseData.category:', editCourseData.category);
             setCourseInfor((prev) => ({
                 ...prev,
                 name: editCourseData.name,
                 description: editCourseData.description,
-                categories: editCourseData.categories,
+                category: editCourseData.category,
                 price: editCourseData.price,
                 estimatedPrice: editCourseData?.estimatedPrice,
                 thumbnail: editCourseData?.thumbnail?.url,
@@ -54,7 +54,7 @@ const EditCourse = ({ id }) => {
     const [courseInfor, setCourseInfor] = useState({
         name: "",
         description: "",
-        categories: "",
+        category: { title: "", level: "" },
         price: "",
         estimatedPrice: "",
         thumbnail: "",
@@ -113,7 +113,7 @@ const EditCourse = ({ id }) => {
         const data = {
             name: courseInfor.name,
             description: courseInfor.description,
-            categories: courseInfor.categories,
+            category: courseInfor.category,
             price: courseInfor.price,
             estimatedPrice: courseInfor.estimatedPrice,
             thumbnail: courseInfor.thumbnail,
@@ -198,6 +198,7 @@ const EditCourse = ({ id }) => {
                     setCourseInfor={setCourseInfor}
                     currentStep={currentStep}
                     setCurrentStep={setCurrentStep}
+                    isEdit={true}
                 />
             )}
             {currentStep === 1 && (

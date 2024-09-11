@@ -9,10 +9,15 @@ const faqSchema = new mongoose.Schema({
     }
 });
 
-const categorySchema = new mongoose.Schema({
+export const categorySchema = new mongoose.Schema({
     title: {
         type: String,
-    }
+        required: true
+    },
+    levels: [{
+        type: String,
+        required: true
+    }]
 });
 
 const bannerImageSchema = new mongoose.Schema({
