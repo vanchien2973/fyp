@@ -1,78 +1,61 @@
 "use client";
-
-import Image from "next/image";
-import { Button, Typography, Card } from "@material-tailwind/react";
-import image8 from "../../public/image/image8.svg";
-import logo_nextflix from "../../public/logos/logo-netflix.svg";
-import logo_pinterest from "../../public/logos/logo-pinterest.svg";
-import logo_coinbase from "../../public/logos/logo-coinbase.svg";
-import logo_google from "../../public/logos/logo-google.svg";
+import { useGetHeroDataQuery } from "../redux/features/layout/layoutApi";
+import { Label } from "./ui/label";
+import { Input } from "./ui/input";
+import { Button } from "./ui/button";
+import { Facebook, FacebookIcon, Instagram, InstagramIcon, VideoIcon, Youtube, YoutubeIcon } from "lucide-react";
 
 const Hero = () => {
+  const { data } = useGetHeroDataQuery("Banner", {});
   return (
-    <div className="!flex h-[55vh] w-full items-center justify-between px-10 mb-20">
-      <Image
-        width={1200}
-        height={1200}
-        src={image8}
-        alt="bg-img"
-        className="absolute inset-0 ml-auto w-[920px] h-[780px] rounded-bl-[100px] object-cover object-center"
-      />
-      <div className="container mx-auto mt-28">
-        <div className="grid grid-cols-12 text-center lg:text-left">
-          <Card className="col-span-full rounded-xl border border-white bg-white/90 py-10 p-8 shadow-lg shadow-black/10 backdrop-blur-sm backdrop-saturate-200 xl:col-span-7">
-            <Typography
-              variant="h1"
-              color="blue-gray"
-              className="lg:text-5xl !leading-snug text-3xl lg:max-w-3xl"
-            >
-              Unlock the Power of the Web with Our Expert Courses
-            </Typography>
-            <Typography variant="lead" className="mb-10 mt-6 !text-gray-900">
-              Are you ready to embark on an exciting journey into the world of
-              web development? Look no further! We are your trusted partner for
-              mastering the art of web development.
-            </Typography>
-            <div className="mb-8 flex justify-center gap-4 lg:justify-start">
-              <Button color="gray">view all courses</Button>
-              <Button color="gray" variant="outlined">
-                see pricing
-              </Button>
+    <>
+      {/* Hero */}
+      <div className="container py-24 lg:py-32">
+        {/* Grid */}
+        <div className="grid lg:grid-cols-7 lg:gap-x-8 xl:gap-x-12 lg:items-center">
+          <div className="lg:col-span-3">
+            <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
+              {data?.layout?.banner.title}
+            </h1>
+            <p className="mt-3 text-xl text-muted-foreground">
+              {data?.layout?.banner.subTitle}
+            </p>
+            <div className="mt-5 lg:mt-8 flex flex-col sm:items-center gap-2 sm:flex-row sm:gap-3">
+              <div className="w-full max-w-lg  lg:w-auto">
+              <Button size={"lg"}>View Courses</Button>
+              </div>
             </div>
-            <div className="grid grid-cols-2 lg:grid-cols-4 items-center justify-between gap-4 lg:justify-start">
-              <Image
-                width={144}
-                height={144}
-                className="w-36 grayscale opacity-60"
-                src={logo_pinterest}
-                alt="pinterest"
-              />
-              <Image
-                width={144}
-                height={144}
-                className="w-36 grayscale opacity-60"
-                src={logo_nextflix}
-                alt="netflix"
-              />
-              <Image
-                width={144}
-                height={144}
-                className="w-36 grayscale opacity-60"
-                src={logo_coinbase}
-                alt="coinbase"
-              />
-              <Image
-                width={144}
-                height={144}
-                className="w-36 grayscale opacity-60"
-                src={logo_google}
-                alt="google"
-              />
+            {/* Brands */}
+            <div className="mt-6 lg:mt-12">
+              <span className="text-xs font-medium uppercase">Contact us on:</span>
+              <div className="flex justify-start items-center space-x-8">
+                <a href="https://www.facebook.com" target="_blank" rel="noopener noreferrer">
+                  <Facebook className="w-10 h-10" />
+                </a>
+                <a href="https://www.youtube.com" target="_blank" rel="noopener noreferrer">
+                  <Youtube className="w-12 h-12" />
+                </a>
+                <a href="https://www.instagram.com" target="_blank" rel="noopener noreferrer">
+                  <Instagram className="w-10 h-10" />
+                </a>
+              </div>
             </div>
-          </Card>
+            {/* End Brands */}
+          </div>
+          {/* End Col */}
+          <div className="lg:col-span-4 mt-10 lg:mt-0">
+            <img
+              className="w-full rounded-xl"
+              src={data?.layout?.banner?.image?.url}
+              alt="Image Description"
+            />
+          </div>
+          {/* End Col */}
         </div>
+        {/* End Grid */}
       </div>
-    </div>
+      {/* End Hero */}
+    </>
   );
 }
 export default Hero;

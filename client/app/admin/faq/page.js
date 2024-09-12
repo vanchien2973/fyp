@@ -5,7 +5,7 @@ import PageContainer from '@/app/components/Admin/layouts/PageContainer';
 import React from 'react';
 
 const breadcrumbItems = [
-    { title: 'Dashboard', link: '/admin/dashboard' },
+    { title: 'Dashboard', link: '/admin' },
     { title: 'FAQ', link: 'admin/faq' }
 ];
 

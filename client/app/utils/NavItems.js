@@ -1,7 +1,7 @@
 export const navItems = [
     {
         title: 'Dashboard',
-        href: '/dashboard',
+        href: '/admin',
         icon: 'dashboard',
         label: 'Dashboard'
     },
@@ -71,10 +71,4 @@ export const navItems = [
         icon: 'users_analytics',
         label: 'users_analytics'
     },
-    {
-        title: 'Settings',
-        href: '/admin/settings',
-        icon: 'setting',
-        label: 'setting'
-    }
 ]

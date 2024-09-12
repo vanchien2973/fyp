@@ -13,7 +13,7 @@ import Loader from '@/app/components/Loader/Loader';
 
 const ListCourses = () => {
     const router = useRouter();
-    const { isLoading, data, refetch } = useGetAllCoursesQuery({}, { refetchOnMountOrArgChange: true });
+    const { isLoading, data } = useGetAllCoursesQuery({}, { refetchOnMountOrArgChange: true });
     const rows = React.useMemo(() => {
         if (data && data.courses) {
             return data.courses.map((item) => ({

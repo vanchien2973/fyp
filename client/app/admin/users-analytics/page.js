@@ -1,4 +1,5 @@
 'use client'
+import UserAnalytics from '@/app/components/Admin/analytics/UserAnalytics';
 import { Breadcrumbs } from '@/app/components/Admin/layouts/Breadcrumbs';
 import PageContainer from '@/app/components/Admin/layouts/PageContainer';
 import React from 'react';
@@ -14,7 +15,7 @@ const page = () => {
             <PageContainer scrollable={true}>
                 <div className="space-y-4">
                     <Breadcrumbs items={breadcrumbItems} />
-                    <EditFaq />
+                    <UserAnalytics />
                 </div>
             </PageContainer>
         </>

@@ -1,5 +1,4 @@
 'use client'
-import NextTopLoader from "nextjs-toploader";
 import AdminProtected from "../hooks/AdminProtected";
 import Heading from "../utils/Heading";
 import Sidebar from "../components/Admin/layouts/Sidebar";
