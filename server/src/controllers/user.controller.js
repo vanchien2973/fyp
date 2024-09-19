@@ -13,6 +13,7 @@ import {
 import { redis } from "../utils/redis";
 import { assignRoleService, getAllUsersService, getUserById } from "../services/user.service";
 import cloudinary from "cloudinary";
+import path from 'path';
 
 // Register User
 export const registerUser = CatchAsyncError(async (req, res, next) => {

@@ -21,6 +21,7 @@ export default function RootLayout({ children }) {
       <body className={roboto.variable} suppressHydrationWarning={true}>
         <NextTopLoader showSpinner={false} />
         <Providers>
+        {/* <ProtectedRoute> */}
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
             <SessionProvider>
               <Loading>
@@ -29,6 +30,7 @@ export default function RootLayout({ children }) {
               <Toaster position="top-center" reverseOrder={false} />
             </SessionProvider>
           </ThemeProvider>
+          {/* </ProtectedRoute> */}
         </Providers>
       </body>
     </html>

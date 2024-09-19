@@ -24,13 +24,13 @@ const CourseInformation = ({ courseInfor, setCourseInfor, setCurrentStep, curren
   }, [data]);
 
   useEffect(() => {
-    if (courseInfor.category.title) {
-      const category = categories.find(cat => cat.title === courseInfor.category.title);
+    if (courseInfor.category?.title) {
+      const category = categories.find(cat => cat.title === courseInfor.category?.title);
       setLevels(category ? category.levels : []);
     } else {
       setLevels([]);
     }
-  }, [courseInfor.category.title, categories]);
+  }, [courseInfor.category?.title, categories]);
 
   const form = useForm({
     resolver: zodResolver(courseSchema),
@@ -232,7 +232,7 @@ const CourseInformation = ({ courseInfor, setCourseInfor, setCurrentStep, curren
                   <FormControl>
                     <Select
                       disabled={isEdit}
-                      value={courseInfor.category.title}
+                      value={courseInfor.category?.title}
                       onValueChange={(value) => {
                         if (!isEdit) {
                           field.onChange(value);
@@ -270,7 +270,7 @@ const CourseInformation = ({ courseInfor, setCourseInfor, setCurrentStep, curren
                   <FormControl>
                     <Select
                       disabled={isEdit}
-                      value={courseInfor.category.level}
+                      value={courseInfor.category?.level}
                       onValueChange={(value) => {
                         if (!isEdit) {
                           field.onChange(value);

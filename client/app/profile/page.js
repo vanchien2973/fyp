@@ -2,8 +2,8 @@
 import React, { useState } from 'react'
 import Protected from '../hooks/UseProtected';
 import Heading from '../utils/Heading';
-import Header from '../components/Header';
-import Footer from '../components/Footer';
+import Header from '../components/Layouts/Header';
+import Footer from '../components/Layouts/Footer';
 import { useSelector } from 'react-redux';
 import Profile from '../components/Profile/Profile';
 

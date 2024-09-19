@@ -2,6 +2,7 @@ import React, { useMemo } from 'react'
 import { useGetAllInvoicesQuery } from '@/app/redux/features/orders/ordersApi'
 import { useGetAllUsersQuery } from '@/app/redux/features/user/userApi'
 import { UserAvatar } from '../../ui/avatar'
+import Loader from '../../Loader/Loader'
 
 const RecentSales = () => {
   const { isLoading: isLoadingInvoices, data: invoicesData } = useGetAllInvoicesQuery({});
@@ -26,7 +27,7 @@ const RecentSales = () => {
   }, [invoicesData, usersData]);
 
   if (isLoadingInvoices || isLoadingUsers) {
-    return <div>Loading recent sales...</div>;
+    return <Loader/>;
   }
 
   return (

@@ -10,7 +10,7 @@ const Profile = ({ user }) => {
     const [avatar, setAvatar] = useState(null)
     const [active, setActive] = useState(1);
     const [logout, setLogout] = useState(false);
-    const { } = useLogoutQuery(undefined, {
+    const {} = useLogoutQuery(undefined, {
         skip: !logout ? true : false
     });
 

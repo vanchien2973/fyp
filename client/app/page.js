@@ -1,10 +1,12 @@
 'use client'
 import React, { useState } from "react";
 import Heading from "./utils/Heading";
-import Header from "./components/Header";
-import Hero from "./components/Hero";
-import OutImpressiveStats from "./components/OutImpressiveStats";
-import Footer from "./components/Footer";
+import Header from "./components/Layouts/Header";
+import Footer from "./components/Layouts/Footer";
+import Courses from "./components/Layouts/Courses";
+import Reviews from "./components/Layouts/Reviews";
+import FAQ from "./components/Layouts/FAQ";
+import Hero from "./components/Layouts/Hero";
 
 
 const Page = () => {
@@ -27,8 +29,9 @@ const Page = () => {
         route={route}
       />
       <Hero />
-      <OutImpressiveStats />
-      <div className="h-[900px]"></div>
+      <Courses />
+      <Reviews />
+      <FAQ />
       <Footer />
     </>
   )

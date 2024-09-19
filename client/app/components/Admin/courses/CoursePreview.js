@@ -22,7 +22,7 @@ const CoursePreview = ({ currentStep, setCurrentStep, courseData, handleCourse, 
 
     return (
         <>
-            <Card className="w-full max-w-4xl mx-auto my-8">
+            <div className="w-full max-w-4xl mx-auto my-8">
                 <CardHeader>
                     <CardTitle className="text-3xl font-bold">{courseData?.name}</CardTitle>
                     <CardDescription>
@@ -45,20 +45,20 @@ const CoursePreview = ({ currentStep, setCurrentStep, courseData, handleCourse, 
                         <span className="text-3xl font-bold">
                             {courseData?.price === 0 ? 'Free' : `$${courseData?.price}`}
                         </span>
-                        <span className="text-xl line-through opacity-60">
+                        <span className="text-lg line-through ml-2 text-gray-600">
                             ${courseData?.estimatedPrice}
                         </span>
-                        <Badge variant="secondary" className="text-lg">
+                        <Badge variant="secondary" className="ml-2">
                             {discountPercentagePrice}% Off
                         </Badge>
                     </div>
-                    <div className='space-y-3'>
-                        <Button className="w-full">Buy Now ${courseData?.price}</Button>
-                    </div>
+                    <div className='mt-2'>
+                            <Button className="w-[90%]" size='lg'>Buy Now ${courseData?.price}</Button>
+                        </div>
                     <Separator />
                     <div>
-                        <h3 className="text-xl font-semibold mb-3 mt-4">Commitment to Quality:</h3>
-                        <ul className="list-disc pl-5 space-y-1">
+                        <h3 className="font-semibold mb-2">Commitment to Quality</h3>
+                        <ul className="list-disc list-inside mb-4">
                             <li>Commitment to ensure reputable zero-risk output</li>
                             <li>Complete learning material system</li>
                             <li>Personalized teaching methods</li>
@@ -66,21 +66,29 @@ const CoursePreview = ({ currentStep, setCurrentStep, courseData, handleCourse, 
                     </div>
                     <Separator />
                     <div>
-                        <h2 className="text-2xl font-bold mb-4 mt-4">What will you learn from this course?</h2>
-                        {courseData?.benefits?.map((item, index) => (
-                            <div className="flex items-center space-x-2 mb-2" key={index}>
-                                <CircleCheck className="text-green-500" size={20} />
-                                <p>{item.title}</p>
-                            </div>
-                        ))}
+                        <h2 className="font-semibold mb-2">1. Details</h2>
+                        <p className="whitespace-pre-line">{courseData?.description}</p>
                     </div>
                     <Separator />
                     <div>
-                        <h2 className="text-2xl font-bold mb-4 mt-4">Course Details</h2>
-                        <p className="whitespace-pre-line">{courseData?.description}</p>
+                        <h2 className="font-semibold mb-2">2. Course Objectives</h2>
+                        <ul className="list-disc list-inside mb-4">
+                        {courseData?.benefits?.map((benefit, index) => (
+                            <li key={index}>{benefit.title}</li>
+                        ))}
+                        </ul>
+                    </div>
+                    <Separator />
+                    <div>
+                        <h2 className="font-semibold mb-2">3. Course Information</h2>
+                        <ul className="list-disc list-inside mb-4">
+                        {courseData?.prerequisites?.map((prerequisite, index) => (
+                            <li key={index}>{prerequisite.title}</li>
+                        ))}
+                        </ul>
                     </div>
                 </CardContent>
-            </Card>
+            </div>
             {/* Navigation */}
             <div className="mt-8 pt-5">
                 <div className="flex justify-between">

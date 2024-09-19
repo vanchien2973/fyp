@@ -1,9 +1,7 @@
 "use client";
-import { useGetHeroDataQuery } from "../redux/features/layout/layoutApi";
-import { Label } from "./ui/label";
-import { Input } from "./ui/input";
-import { Button } from "./ui/button";
-import { Facebook, FacebookIcon, Instagram, InstagramIcon, VideoIcon, Youtube, YoutubeIcon } from "lucide-react";
+import { useGetHeroDataQuery } from "../../redux/features/layout/layoutApi";
+import { Button } from "../ui/button";
+import { Facebook, Instagram, Youtube } from "lucide-react";
 
 const Hero = () => {
   const { data } = useGetHeroDataQuery("Banner", {});

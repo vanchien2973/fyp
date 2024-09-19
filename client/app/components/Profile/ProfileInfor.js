@@ -14,6 +14,7 @@ import { useEditProfileMutation, useUpdateAvatarMutation } from "@/app/redux/fea
 import toast from "react-hot-toast";
 
 const ProfileInfor = ({ avatar = null, user }) => {
+    console.log(user)
     const [name, setName] = useState(user && user.name);
     const [phoneNumber, setPhoneNumber] = useState(user && user.phoneNumber);
     const [updateAvatar, {isSuccess, error}] = useUpdateAvatarMutation();
