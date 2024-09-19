@@ -11,9 +11,11 @@ import CourseContentList from './CourseContentList';
 import { Elements } from '@stripe/react-stripe-js';
 import CheckoutForm from '../Payment/CheckoutForm';
 import { UserAvatar } from '../ui/avatar';
+import { useLoadUserQuery } from '@/app/redux/features/api/apiSlice';
 
 const CourseDisplay = ({ data, clientSecret, stripePromise }) => {
-    const { user } = useSelector((state) => state.auth);
+    const { data: userData } = useLoadUserQuery(undefined, {});
+    const user = userData?.user;
     const [open, setOpen] = useState(false);
     const discountPercentage = ((data?.estimatedPrice - data?.price) / data?.estimatedPrice) * 100;
     const discountPercentagePrice = discountPercentage.toFixed(0);

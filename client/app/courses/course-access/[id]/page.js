@@ -1,5 +1,5 @@
 'use client'
-import CourseAccessDetail from '@/app/components/Course/CourseAccessDetail'
+import CourseContent from '@/app/components/Course/CourseContent';
 import Loader from '@/app/components/Loader/Loader';
 import { useLoadUserQuery } from '@/app/redux/features/api/apiSlice';
 import { redirect } from 'next/navigation';
@@ -7,7 +7,7 @@ import React, { useEffect } from 'react'
 
 const page = ({ params }) => {
   const id = params.id;
-  const {isLoading, error, data} = useLoadUserQuery(undefined);
+  const {isLoading, error, data} = useLoadUserQuery(undefined, {});
 
   useEffect(() =>{
     if (data) {
@@ -27,7 +27,7 @@ const page = ({ params }) => {
         isLoading ? (
           <Loader/>
         ) : (
-          <CourseAccessDetail id={id}/>
+          <CourseContent id={id}/>
         )
       }
     </>

@@ -142,11 +142,11 @@ export const getCourseByUser = CatchAsyncError(async (req, res, next) => {
 
         const course = await CourseModel.findById(courseId);
 
-        const content = course?.courseData;
+        const contents = course?.courseData;
 
         res.status(200).json({
             success: true,
-            content
+            contents
         });
     } catch (error) {
         return next(new ErrorHandler(error.message, 500));
