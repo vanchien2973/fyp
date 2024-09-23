@@ -168,7 +168,9 @@ export const addQuestion = CatchAsyncError(async (req, res, next) => {
             return next(new ErrorHandler("Course not found", 404));
         }
 
-        const courseContent = course?.courseData?.find((item) => item._id.equals(contentId));
+        const courseContent = course.courseData[0].content.find(
+            (item) => item._id.toString() === contentId
+        );
 
         if (!courseContent) {
             return next(new ErrorHandler("Invalid Content Id", 400));
@@ -179,10 +181,14 @@ export const addQuestion = CatchAsyncError(async (req, res, next) => {
             question,
             questionReplies: [],
         };
+        // Initialize questions array if it doesn't exist
+         if (!courseContent.questions) {
+            courseContent.questions = [];
+        }
         courseContent.questions.push(newQuestion);
 
         // Add notification
-        NotificationModel.create({
+        await NotificationModel.create({
             user: req.user?._id,
             title: "New Question Received",
             message: `You have a new question in ${courseContent.title}`
@@ -213,7 +219,9 @@ export const addAnswer = CatchAsyncError(async (req, res, next) => {
             return next(new ErrorHandler("Course not found", 404));
         };
 
-        const courseContent = course.courseData.find((item) => item._id.equals(contentId));
+        const courseContent = course.courseData[0].content.find(
+            (item) => item._id.toString() === contentId
+        );
 
         if (!courseContent) {
             return next(new ErrorHandler("Invalid Content Id", 400));
@@ -228,13 +236,14 @@ export const addAnswer = CatchAsyncError(async (req, res, next) => {
         const newAnswer = {
             user: req.user,
             answer,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
         };
-
         question.questionReplies.push(newAnswer);
         await course?.save();
 
         if (req.user._id === question.user._id) {
-            NotificationModel.create({
+            await NotificationModel.create({
                 user: req.user?._id,
                 title: "New Question Reply Received",
                 message: `You have a new question reply in ${courseContent.title}`
@@ -244,7 +253,7 @@ export const addAnswer = CatchAsyncError(async (req, res, next) => {
                 name: question.user.name,
                 title: courseContent.title,
             };
-            const html = await ejs.renderFile(path.join(__dirname, "../mails/QuestionReply.ejs"), data);
+            // const html = await ejs.renderFile(path.join(__dirname, "../mails/QuestionReply.ejs"), data);
             try {
                 await SendMail({
                     email: question.user.email,
@@ -296,11 +305,14 @@ export const addReview = CatchAsyncError(async (req, res, next) => {
             course.ratings = average;
         }
         await course.save();
-        const notification = {
+        await redis.set(courseId, JSON.stringify(course), 'EX', 604800); // 7 days
+
+        // Add notification
+        await NotificationModel.create({
+            user: req.user?._id,
             title: 'New Review Received in Course',
             message: `${req.user?.name} has given a review in ${course?.name}!`
-        }
-        await NotificationModel.create(notification);
+        });
 
         res.status(200).json({
             success: true,
@@ -325,13 +337,16 @@ export const addReplyForReview = CatchAsyncError(async (req, res, next) => {
         }
         const replyData = {
             user: req.user,
-            comment
+            comment,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
         }
         if (!review.commentReplies) {
             review.commentReplies = [];
         }
         review.commentReplies?.push(replyData);
         await course?.save();
+        await redis.set(courseId, JSON.stringify(course), 'EX', 604800); // 7 days
         res.status(200).json({
             success: true,
             course

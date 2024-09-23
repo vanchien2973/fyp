@@ -18,7 +18,7 @@ const CourseContentList = ({ data, activeVideo, setActiveVideo, isDemo }) => {
   return (
     <ScrollArea className={`mt-6 w-full ${!isDemo && 'sticky top-24 left-0 z-30'} max-h-[calc(100vh-200px)]`}>
       <Accordion type="multiple" value={openSections} onValueChange={setOpenSections} className="w-full">
-        {data.map((section, sectionIndex) => {
+        {data?.map((section, sectionIndex) => {
           const sectionVideos = section.content;
           const sectionVideoCount = sectionVideos.length;
           const sectionVideoLength = sectionVideos.reduce(
@@ -49,15 +49,16 @@ const CourseContentList = ({ data, activeVideo, setActiveVideo, isDemo }) => {
               </AccordionTrigger>
               <AccordionContent>
                 {sectionVideos.map((video, videoIndex) => {
+                  const globalVideoIndex = sectionIndex * 100 + videoIndex; // Unique index for each video
                   const contentLength = video.videoLength / 60;
                   return (
                     <Button
                       key={video._id}
                       variant="ghost"
                       className={`w-full justify-start text-left mb-2 ${
-                        videoIndex === activeVideo ? 'bg-gray-100 dark:bg-gray-800' : ''
+                        globalVideoIndex === activeVideo ? 'bg-gray-100 dark:bg-gray-800' : ''
                       }`}
-                      onClick={() => !isDemo && setActiveVideo(videoIndex)}
+                      onClick={() => !isDemo && setActiveVideo(globalVideoIndex)} // Set the global video index
                     >
                       <TvMinimalPlay size={20} className="mr-3 text-blue-500 flex-shrink-0" />
                       <div>

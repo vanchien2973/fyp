@@ -32,6 +32,7 @@ import {
   ChatBubbleLeftRightIcon,
   UserGroupIcon,
   QuestionMarkCircleIcon,
+  Bars3Icon,
 } from "@heroicons/react/24/solid";
 import { RiAccountCircleLine } from "react-icons/ri";
 import ThemeToggle from "../Admin/layouts/ThemeToggle";
@@ -48,10 +49,10 @@ const Header = ({ open, setOpen, activeItem, route, setRoute }) => {
   const [isFixed, setIsFixed] = useState(false);
   const { user } = useSelector((state) => state.auth);
   const { data } = useSession();
-  const [socialAuth, { isSuccess, error }] = useSocialAuthMutation();
+  const [socialAuth, { isSuccess }] = useSocialAuthMutation();
   const [logout, setLogout] = useState(false);
   const { } = useLogoutQuery(undefined, {
-    skip: !logout ? true : false
+    skip: !logout
   });
 
   useEffect(() => {
@@ -59,43 +60,34 @@ const Header = ({ open, setOpen, activeItem, route, setRoute }) => {
       socialAuth({ email: data?.user?.email, name: data?.user?.name, avatar: data?.user?.image });
     }
     if (isSuccess) {
-      toast.success("Login Succesffully!");
+      toast.success("Login Successfully!");
     }
-    // if (data === null) {
-    //   setLogout(true);
-    // }
-  }, [data, user]);
+  }, [data, user, socialAuth, isSuccess]);
 
   useEffect(() => {
     const handleScroll = () => {
-      if (window.scrollY > 85) {
-        setIsFixed(true);
-      } else {
-        setIsFixed(false);
-      }
+      setIsFixed(window.scrollY > 50);
     };
 
     window.addEventListener("scroll", handleScroll);
-
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-    };
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   return (
     <>
-      <div className={`${isFixed ? 'fixed top-0 left-0 right-0 z-50' : ''} px-10`}>
-        <div className="mx-auto container">
-          <nav className={`mt-6 rounded-lg border-0 pr-3 py-3 pl-6 flex items-center justify-between ${isFixed ? 'bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-md' : ''}`}>
-            <Link href='/' className="text-lg font-bold">ELP</Link>
+      <header className={`${isFixed ? 'fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-sm' : ''} transition-all duration-300`}>
+        <div className="container mx-auto px-4">
+          <nav className="flex items-center justify-between h-14 sm:h-16 md:h-20">
+            <Link href='/' className="text-lg sm:text-xl font-bold">ELP</Link>
+            
             <NavigationMenu className="hidden lg:flex">
               <NavigationMenuList>
                 {navItemsData.map((item) => (
                   <NavigationMenuItem key={item.name}>
                     <Link href={item.url} legacyBehavior passHref>
                       <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                        <item.icon className="h-5 w-5 mr-2" />
-                        {item.name}
+                        <item.icon className="h-4 w-4 mr-2" />
+                        <span className="hidden xl:inline">{item.name}</span>
                       </NavigationMenuLink>
                     </Link>
                   </NavigationMenuItem>
@@ -103,58 +95,47 @@ const Header = ({ open, setOpen, activeItem, route, setRoute }) => {
               </NavigationMenuList>
             </NavigationMenu>
 
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 sm:space-x-4">
               <ThemeToggle />
               {user ? (
-                <Link href="/profile">
+                <Link href="/profile" className="flex items-center">
                   <Image
                     src={user.avatar ? user.avatar.url : defaultAvatar}
-                    width={40}
-                    height={40}
-                    alt=""
-                    className="w-[30px] h-[30px] rounded-full border-2 border-primary"
+                    width={32}
+                    height={32}
+                    alt="User Avatar"
+                    className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-primary"
                   />
+                  <span className="hidden md:inline ml-2 text-sm">{user.name}</span>
                 </Link>
               ) : (
-                <Button variant="ghost" size="icon" onClick={() => setOpen(true)}>
-                  <RiAccountCircleLine size={25} />
+                <Button variant="ghost" size="sm" onClick={() => setOpen(true)} className="text-sm">
+                  <RiAccountCircleLine className="h-5 w-5 mr-2" />
+                  <span className="hidden sm:inline">Login</span>
                 </Button>
               )}
 
               <Sheet>
                 <SheetTrigger asChild>
                   <Button variant="outline" size="icon" className="lg:hidden">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      strokeWidth={1.5}
-                      stroke="currentColor"
-                      className="w-6 h-6"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
-                      />
-                    </svg>
+                    <Bars3Icon className="h-5 w-5" />
                   </Button>
                 </SheetTrigger>
                 <SheetContent>
-                  <div className="flex flex-col space-y-4 mt-4">
+                  <nav className="flex flex-col space-y-4 mt-4">
                     {navItemsData.map((item) => (
-                      <Link key={item.name} href={item.url} className="flex items-center space-x-2">
+                      <Link key={item.name} href={item.url} className="flex items-center space-x-2 p-2 rounded-md hover:bg-accent">
                         <item.icon className="h-5 w-5" />
                         <span>{item.name}</span>
                       </Link>
                     ))}
-                  </div>
+                  </nav>
                 </SheetContent>
               </Sheet>
             </div>
           </nav>
         </div>
-      </div>
+      </header>
 
       {route === "Login" && open && (
         <CustomModal

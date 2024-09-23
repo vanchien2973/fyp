@@ -19,7 +19,7 @@ const CourseDisplay = ({ data, clientSecret, stripePromise }) => {
     const [open, setOpen] = useState(false);
     const discountPercentage = ((data?.estimatedPrice - data?.price) / data?.estimatedPrice) * 100;
     const discountPercentagePrice = discountPercentage.toFixed(0);
-    const isPurchased = user && user?.courses?.find((item) => item._id === data._id);
+    const isPurchased = user && user?.courses?.find((item) => item._id === data?._id);
 
     const handleOrder = (e) => {
         setOpen(true);
@@ -43,28 +43,28 @@ const CourseDisplay = ({ data, clientSecret, stripePromise }) => {
                                 <CardHeader>
                                     <div className="flex justify-between items-center">
                                         <div>
-                                            <CardTitle className="text-2xl font-bold">{data.name}</CardTitle>
+                                            <CardTitle className="text-2xl font-bold">{data?.name}</CardTitle>
                                             <div className="flex items-center mt-2">
-                                                <Rating rating={data.rating} />
-                                                <span className="ml-2 text-sm text-gray-600">{data?.reviews.length} Reviews<span className="ml-2 text-sm text-black dark:text-white">({data.purchased} Students)</span></span>
+                                                <Rating rating={data?.rating} />
+                                                <span className="ml-2 text-sm text-gray-600">{data?.reviews.length} Reviews<span className="ml-2 text-sm text-black dark:text-white">({data?.purchased} Students)</span></span>
                                             </div>
                                         </div>
                                     </div>
                                 </CardHeader>
                                 <CardContent>
                                     <h3 className="font-semibold mb-2">1. Details</h3>
-                                    <p className="mb-4">{data.description}</p>
+                                    <p className="mb-4">{data?.description}</p>
 
                                     <h3 className="font-semibold mb-2">2. Objectives</h3>
                                     <ul className="list-disc list-inside mb-4">
-                                        {data.benefits?.map((benefit, index) => (
+                                        {data?.benefits?.map((benefit, index) => (
                                             <li key={index}>{benefit.title}</li>
                                         ))}
                                     </ul>
 
                                     <h3 className="font-semibold mb-2">3. Information</h3>
                                     <ul className="list-disc list-inside mb-4">
-                                        {data.prerequisites?.map((prerequisite, index) => (
+                                        {data?.prerequisites?.map((prerequisite, index) => (
                                             <li key={index}>{prerequisite.title}</li>
                                         ))}
                                     </ul>
@@ -135,10 +135,10 @@ const CourseDisplay = ({ data, clientSecret, stripePromise }) => {
                                 {
                                     isPurchased ? (
                                         <Link href={`/courses/course-access/${data._id}`} className="block mt-2">
-                                            <Button className="w-[90%]" size='lg'>Enter to Course</Button>
+                                            <Button className="w-full" size='lg'>Enter to Course</Button>
                                         </Link>
                                     ) : (
-                                        <Button className="w-[90%]" size='lg' onClick={handleOrder}>Buy Now ${data?.price}</Button>
+                                        <Button className="w-full" size='lg' onClick={handleOrder}>Buy Now ${data?.price}</Button>
                                     )
                                 }
                             </div>

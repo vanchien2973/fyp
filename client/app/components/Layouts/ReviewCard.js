@@ -26,7 +26,7 @@ const ReviewCard = (props) => {
     <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
         {props.item.comment} 
     </p>
-</Card>
+    </Card>
       
     </>
   )
