@@ -70,7 +70,7 @@ export const reviews = [
 const Reviews = () => {
     return (
         <>
-            <section className="bg-background py-12 md:py-16">
+            <section className="py-24 px-4 sm:px-6 lg:px-8">
                 <div className="container px-4 md:px-6">
                     <div className="grid gap-8">
                         <div className="grid gap-2 text-center">

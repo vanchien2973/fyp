@@ -11,6 +11,7 @@ import Login from "../Auth/Login";
 import SignUp from "../Auth/SignUp";
 import Verification from "../Auth/Verification";
 import { useLogoutQuery, useSocialAuthMutation } from "../../redux/features/auth/authApi";
+import { usePathname } from 'next/navigation';
 
 import {
   Sheet,
@@ -45,7 +46,7 @@ const navItemsData = [
   { name: "FAQ", url: "/faq", icon: QuestionMarkCircleIcon },
 ];
 
-const Header = ({ open, setOpen, activeItem, route, setRoute }) => {
+const Header = ({ open, setOpen, route, setRoute }) => {
   const [isFixed, setIsFixed] = useState(false);
   const { user } = useSelector((state) => state.auth);
   const { data } = useSession();
@@ -54,6 +55,7 @@ const Header = ({ open, setOpen, activeItem, route, setRoute }) => {
   const { } = useLogoutQuery(undefined, {
     skip: !logout
   });
+  const pathname = usePathname();
 
   useEffect(() => {
     if (!user && data) {
@@ -79,15 +81,15 @@ const Header = ({ open, setOpen, activeItem, route, setRoute }) => {
         <div className="container mx-auto px-4">
           <nav className="flex items-center justify-between h-14 sm:h-16 md:h-20">
             <Link href='/' className="text-lg sm:text-xl font-bold">ELP</Link>
-            
+
             <NavigationMenu className="hidden lg:flex">
               <NavigationMenuList>
                 {navItemsData.map((item) => (
                   <NavigationMenuItem key={item.name}>
                     <Link href={item.url} legacyBehavior passHref>
                       <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                        <item.icon className="h-4 w-4 mr-2" />
-                        <span className="hidden xl:inline">{item.name}</span>
+                        <item.icon className={`h-4 w-4 mr-2 ${pathname === item.url ? 'text-primary' : ''}`} />
+                        <span className={`hidden xl:inline ${pathname === item.url ? 'text-primary font-semibold' : ''}`}>{item.name}</span>
                       </NavigationMenuLink>
                     </Link>
                   </NavigationMenuItem>
@@ -96,23 +98,28 @@ const Header = ({ open, setOpen, activeItem, route, setRoute }) => {
             </NavigationMenu>
 
             <div className="flex items-center space-x-2 sm:space-x-4">
-              <ThemeToggle />
               {user ? (
-                <Link href="/profile" className="flex items-center">
-                  <Image
-                    src={user.avatar ? user.avatar.url : defaultAvatar}
-                    width={32}
-                    height={32}
-                    alt="User Avatar"
-                    className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-primary"
-                  />
-                  <span className="hidden md:inline ml-2 text-sm">{user.name}</span>
-                </Link>
+                <>
+                  <ThemeToggle />
+                  <Link href="/profile" className="flex items-center">
+                    <Image
+                      src={user.avatar ? user.avatar.url : defaultAvatar}
+                      width={32}
+                      height={32}
+                      alt="User Avatar"
+                      className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-primary"
+                    />
+                    <span className="hidden md:inline ml-2 text-sm">{user.name}</span>
+                  </Link>
+                </>
               ) : (
-                <Button variant="ghost" size="sm" onClick={() => setOpen(true)} className="text-sm">
-                  <RiAccountCircleLine className="h-5 w-5 mr-2" />
-                  <span className="hidden sm:inline">Login</span>
-                </Button>
+                <>
+                  <ThemeToggle />
+                  <Button variant="ghost" size="sm" onClick={() => setOpen(true)} className="text-sm">
+                    <RiAccountCircleLine className="h-5 w-5 mr-2" />
+                    <span className="hidden sm:inline">Login</span>
+                  </Button>
+                </>
               )}
 
               <Sheet>
@@ -124,7 +131,7 @@ const Header = ({ open, setOpen, activeItem, route, setRoute }) => {
                 <SheetContent>
                   <nav className="flex flex-col space-y-4 mt-4">
                     {navItemsData.map((item) => (
-                      <Link key={item.name} href={item.url} className="flex items-center space-x-2 p-2 rounded-md hover:bg-accent">
+                      <Link key={item.name} href={item.url} className={`flex items-center space-x-2 p-2 rounded-md hover:bg-accent ${pathname === item.url ? 'bg-accent text-primary font-semibold' : ''}`}>
                         <item.icon className="h-5 w-5" />
                         <span>{item.name}</span>
                       </Link>
@@ -142,7 +149,6 @@ const Header = ({ open, setOpen, activeItem, route, setRoute }) => {
           open={open}
           setOpen={setOpen}
           setRoute={setRoute}
-          activeItem={activeItem}
           component={Login}
         />
       )}
@@ -151,7 +157,6 @@ const Header = ({ open, setOpen, activeItem, route, setRoute }) => {
           open={open}
           setOpen={setOpen}
           setRoute={setRoute}
-          activeItem={activeItem}
           component={SignUp}
         />
       )}
@@ -160,7 +165,6 @@ const Header = ({ open, setOpen, activeItem, route, setRoute }) => {
           open={open}
           setOpen={setOpen}
           setRoute={setRoute}
-          activeItem={activeItem}
           component={Verification}
         />
       )}

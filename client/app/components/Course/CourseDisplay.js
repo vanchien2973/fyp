@@ -12,17 +12,27 @@ import { Elements } from '@stripe/react-stripe-js';
 import CheckoutForm from '../Payment/CheckoutForm';
 import { UserAvatar } from '../ui/avatar';
 import { useLoadUserQuery } from '@/app/redux/features/api/apiSlice';
+import { useEffect } from 'react';
 
-const CourseDisplay = ({ data, clientSecret, stripePromise }) => {
+const CourseDisplay = ({ data, clientSecret, stripePromise, setRoute, setOpen: openAuthModal }) => {
     const { data: userData } = useLoadUserQuery(undefined, {});
-    const user = userData?.user;
+    const [user, setUser] = useState();
     const [open, setOpen] = useState(false);
     const discountPercentage = ((data?.estimatedPrice - data?.price) / data?.estimatedPrice) * 100;
     const discountPercentagePrice = discountPercentage.toFixed(0);
     const isPurchased = user && user?.courses?.find((item) => item._id === data?._id);
 
+    useEffect(() =>{
+        setUser(userData?.user)
+    }, [userData])
+
     const handleOrder = (e) => {
+        if (user) {
         setOpen(true);
+        } else {
+            setRoute('Login')
+            openAuthModal(true);
+        }
     }
 
     const appearance = {

@@ -57,7 +57,13 @@ const CourseDetail = ({ id }) => {
                         />
                         {
                             stripePromise && (
-                                <CourseDisplay data={data?.course} stripePromise={stripePromise} clientSecret={clientSecret} />
+                                <CourseDisplay
+                                    data={data?.course}
+                                    stripePromise={stripePromise}
+                                    clientSecret={clientSecret}
+                                    setRoute={setRoute}
+                                    setOpen={setOpen}
+                                />
                             )
                         }
                         <Footer />
