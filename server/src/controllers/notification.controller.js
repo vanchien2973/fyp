@@ -38,6 +38,27 @@ export const updateNotificationStatus = CatchAsyncError(async (req, res, next) =
 });
 
 // Delete Notification (for Admin)
+export const deleteNotification = CatchAsyncError(async (req, res, next) => {
+    try {
+        const notificationId = req.params.id
+        const notification = await NotificationModel.findById(notificationId);
+        if (!notification) {
+            return next(new ErrorHandler('Notification not found', 404));
+        }
+        await notification.deleteOne({ notificationId });
+
+        const notifications = await NotificationModel.find().sort({ createdAt: -1 });
+        res.status(200).json({
+            success: true,
+            message: 'Notification deleted successfully',
+            notifications
+        });
+    } catch (error) {
+        return next(new ErrorHandler(error.message, 500));
+    }
+});
+
+// Delete Notification (for Admin)
 cron.schedule('0 0 0 * * *', async () => {
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     await NotificationModel.deleteMany({ status: 'read', createdAt: { $lt: thirtyDaysAgo } });

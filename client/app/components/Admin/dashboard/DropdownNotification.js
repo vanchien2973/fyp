@@ -1,107 +1,146 @@
-'use client';
-import React, { useState, useRef, useEffect } from 'react';
-import Link from 'next/link';
-import Transition from '@/app/utils/Transition';
-import NotificationsActiveOutlinedIcon from '@mui/icons-material/NotificationsActiveOutlined';
+import React, { useState, useEffect } from 'react';
+import { Bell, Check, Trash2 } from 'lucide-react';
+import { useGetAllNotificationsQuery, useUpdateNotificationStatusMutation, useDeleteNotificationMutation } from '@/app/redux/features/notifications/notificationsApi';
+import socketIO from 'socket.io-client';
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "../../ui/popover";
+import { Button } from "../../ui/button";
+import { ScrollArea } from "../../ui/scroll-area";
+import { Badge } from "../../ui/badge";
+import { format } from 'timeago.js';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../ui/tooltip";
 
-const DropdownNotifications = ({ align }) => {
-    const [dropdownOpen, setDropdownOpen] = useState(false);
+const ENDPOINT = process.env.NEXT_PUBLIC_SOCKET_SERVER_URI || '';
+const socketId = socketIO(ENDPOINT, { transports: ['websocket'] });
 
-    const trigger = useRef(null);
-    const dropdown = useRef(null);
+const DropdownNotifications = () => {
+    const { data, refetch } = useGetAllNotificationsQuery(undefined, { refetchOnMountOrArgChange: true });
+    const [updateNotificationStatus] = useUpdateNotificationStatusMutation();
+    const [deleteNotification] = useDeleteNotificationMutation();
+    const [notifications, setNotifications] = useState([]);
+    const [audio] = useState(new Audio('https://res.cloudinary.com/du3a3d1dh/video/upload/v1727277580/qscarlijg0ukeqk0bqwf.mp3'));
 
-    // Close on click outside
+    const playNotificationSound = () => {
+        audio.play();
+    };
+
     useEffect(() => {
-        const clickHandler = ({ target }) => {
-            if (!dropdown.current) return;
-            if (!dropdownOpen || dropdown.current.contains(target) || trigger.current.contains(target)) return;
-            setDropdownOpen(false);
-        };
-        document.addEventListener('click', clickHandler);
-        return () => document.removeEventListener('click', clickHandler);
-    }, [dropdownOpen]);
+        if (data) {
+            const sortedNotifications = [...data.notifications].sort((a, b) =>
+                new Date(b.createdAt) - new Date(a.createdAt)
+            );
+            setNotifications(sortedNotifications);
+        }
+        audio.load();
+    }, [data]);
 
-    // Close if the esc key is pressed
     useEffect(() => {
-        const keyHandler = ({ keyCode }) => {
-            if (!dropdownOpen || keyCode !== 27) return;
-            setDropdownOpen(false);
-        };
-        document.addEventListener('keydown', keyHandler);
-        return () => document.removeEventListener('keydown', keyHandler);
-    }, [dropdownOpen]);
+        socketId.on('newNotification', (data) => {
+            refetch();
+            playNotificationSound();
+        });
+    }, [refetch]);
+
+    const handleNotificationStatusChange = async (id) => {
+        await updateNotificationStatus(id).unwrap();
+        refetch();
+    };
+
+    const handleDeleteNotification = async (id) => {
+        await deleteNotification(id).unwrap();
+        refetch();
+    };
 
     return (
-        <div className="relative inline-flex">
-            <button
-                ref={trigger}
-                className={`w-8 h-8 flex items-center justify-center rounded-full ${dropdownOpen && 'bg-gray-200 dark:bg-gray-800'}`}
-                aria-haspopup="true"
-                onClick={() => setDropdownOpen(!dropdownOpen)}
-                aria-expanded={dropdownOpen}
-            >
-                <span className="sr-only">Notifications</span>
-                <NotificationsActiveOutlinedIcon />
-                <div className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 border-2 border-gray-100 dark:border-gray-900 rounded-full"></div>
-            </button>
-
-            <Transition
-                className={`origin-top-right z-10 absolute top-full -mr-48 sm:mr-0 min-w-80 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700/60 py-1.5 rounded-lg shadow-lg overflow-hidden mt-1 ${align === 'right' ? 'right-0' : 'left-0'}`}
-                show={dropdownOpen}
-                enter="transition ease-out duration-200 transform"
-                enterStart="opacity-0 -translate-y-2"
-                enterEnd="opacity-100 translate-y-0"
-                leave="transition ease-out duration-200"
-                leaveStart="opacity-100"
-                leaveEnd="opacity-0"
-            >
-                <div
-                    ref={dropdown}
-                    onFocus={() => setDropdownOpen(true)}
-                    onBlur={() => setDropdownOpen(false)}
-                >
-                    <div className="text-xs font-semibold text-black dark:text-white uppercase pt-1.5 pb-2 px-4">Notifications</div>
-                    <ul>
-                        <li className="border-b border-gray-200 dark:border-gray-700/60 last:border-0">
-                            <Link href="#0" className="block py-2 px-4 hover:bg-gray-50 dark:hover:bg-gray-700/20" onClick={() => setDropdownOpen(!dropdownOpen)}>
-                                <div className="flex justify-between items-center mb-2">
-                                    <span className="text-xs font-medium text-green-600 dark:text-green-400">New Question Received</span>
-                                    <span className="text-xs font-medium text-blue-600 dark:text-blue-400 cursor-pointer">Mark as read</span>
-                                </div>
-                                <span className="block text-sm mb-2 font-medium text-black dark:text-white">
-                                    Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type.
-                                </span>
-                                <span className="block text-xs font-medium text-black dark:text-white">Feb 12, 2024</span>
-                            </Link>
-                        </li>
-                        <li className="border-b border-gray-200 dark:border-gray-700/60 last:border-0">
-                            <Link href="#0" className="block py-2 px-4 hover:bg-gray-50 dark:hover:bg-gray-700/20" onClick={() => setDropdownOpen(!dropdownOpen)}>
-                                <div className="flex justify-between items-center mb-2">
-                                    <span className="text-xs font-medium text-green-600 dark:text-green-400">New Question Received</span>
-                                    <span className="text-xs font-medium text-blue-600 dark:text-blue-400 cursor-pointer">Mark as read</span>
-                                </div>
-                                <span className="block text-sm mb-2 font-medium text-black dark:text-white">
-                                    Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type.
-                                </span>
-                                <span className="block text-xs font-medium text-black dark:text-white">Feb 12, 2024</span>
-                            </Link>
-                        </li>
-                        <li className="border-b border-gray-200 dark:border-gray-700/60 last:border-0">
-                            <Link href="#0" className="block py-2 px-4 hover:bg-gray-50 dark:hover:bg-gray-700/20" onClick={() => setDropdownOpen(!dropdownOpen)}>
-                                <div className="flex justify-between items-center mb-2">
-                                    <span className="text-xs font-medium text-green-600 dark:text-green-400">New Question Received</span>
-                                    <span className="text-xs font-medium text-blue-600 dark:text-blue-400 cursor-pointer">Mark as read</span>
-                                </div>
-                                <span className="block text-sm mb-2 font-medium text-black dark:text-white">
-                                    Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type.
-                                </span>
-                                <span className="block text-xs font-medium text-black dark:text-white">Feb 12, 2024</span>
-                            </Link>
-                        </li>
-                    </ul>
+        <Popover>
+            <PopoverTrigger asChild>
+                <Button variant="ghost" size="icon" className="relative">
+                    <Bell className="h-6 w-6" />
+                    {notifications.filter(n => n.status === 'unread').length > 0 && (
+                        <Badge variant="destructive" className="absolute -top-1 -right-1 px-1 min-w-[1.25rem] h-5">
+                            {notifications.filter(n => n.status === 'unread').length}
+                        </Badge>
+                    )}
+                </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-96 p-0">
+                <div className="p-4 border-b bg-primary text-primary-foreground">
+                    <h4 className="font-semibold text-lg">Notifications</h4>
                 </div>
-            </Transition>
-        </div>
+                <ScrollArea className="h-[400px]">
+                    {notifications.length === 0 ? (
+                        <p className="p-4 text-center text-muted-foreground">No notifications</p>
+                    ) : (
+                        notifications.map((notification) => (
+                            <div
+                                key={notification._id}
+                                className={`border-b last:border-0 hover:bg-accent transition-colors duration-200 ${notification.status === 'unread' ? 'bg-accent/20' : ''
+                                    }`}
+                            >
+                                <div className="p-4">
+                                    <div className="flex justify-between items-center mb-2">
+                                        <span className={`text-sm font-medium ${notification.status === 'unread'
+                                                ? 'text-primary font-semibold'
+                                                : 'text-muted-foreground'
+                                            }`}>
+                                            {notification.title}
+                                        </span>
+                                        <div className="flex space-x-2">
+                                            <TooltipProvider>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            onClick={() => handleNotificationStatusChange(notification._id)}
+                                                            className={notification.status === 'read' ? 'text-primary' : 'text-muted-foreground'}
+                                                        >
+                                                            <Check className="h-4 w-4" />
+                                                        </Button>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>
+                                                        <p>{notification.status === 'read' ? 'Mark as unread' : 'Mark as read'}</p>
+                                                    </TooltipContent>
+                                                </Tooltip>
+                                            </TooltipProvider>
+                                            <TooltipProvider>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            onClick={() => handleDeleteNotification(notification._id)}
+                                                            className="text-destructive hover:bg-destructive/10"
+                                                        >
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </Button>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>
+                                                        <p>Delete notification</p>
+                                                    </TooltipContent>
+                                                </Tooltip>
+                                            </TooltipProvider>
+                                        </div>
+                                    </div>
+                                    <p className={`text-sm ${notification.status === 'unread'
+                                            ? 'text-foreground font-medium'
+                                            : 'text-muted-foreground'
+                                        } mb-1`}>
+                                        {notification.message}
+                                    </p>
+                                    <span className="text-xs text-muted-foreground">
+                                        {format(notification.createdAt)}
+                                    </span>
+                                </div>
+                            </div>
+                        ))
+                    )}
+                </ScrollArea>
+            </PopoverContent>
+        </Popover>
     );
 };
 

@@ -5,7 +5,7 @@ import { Button } from "../ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select"
 import { Slider } from "../ui/slider"
 import { Card, CardContent } from "../ui/card"
-import { Search, SlidersHorizontal } from "lucide-react"
+import { ChevronLeft, ChevronRight, Search, SlidersHorizontal } from "lucide-react"
 import CourseCard from '../Layouts/CourseCard';
 import { Label } from '../ui/label';
 import Loader from '../Loader/Loader';
@@ -21,6 +21,8 @@ const AllCourses = () => {
   const [selectedLevel, setSelectedLevel] = useState('All');
   const [showFilters, setShowFilters] = useState(false);
   const [filteredCourses, setFilteredCourses] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const coursesPerPage = 12;
 
   useEffect(() => {
     if (data?.courses && categoriesData?.layout.categories) {
@@ -29,12 +31,12 @@ const AllCourses = () => {
       if (searchTerm) {
         filtered = filtered.filter((item) => {
           const matchTitle = item.name.toLowerCase().includes(searchTerm.toLowerCase());
-          const matchCategory = categoriesData.layout.categories.some(cat => 
-            cat.title.toLowerCase().includes(searchTerm.toLowerCase()) && 
+          const matchCategory = categoriesData.layout.categories.some(cat =>
+            cat.title.toLowerCase().includes(searchTerm.toLowerCase()) &&
             item.categories === cat.title
           );
-          const matchLevel = categoriesData.layout.categories.some(cat => 
-            cat.levels.some(level => 
+          const matchLevel = categoriesData.layout.categories.some(cat =>
+            cat.levels.some(level =>
               level.toLowerCase().includes(searchTerm.toLowerCase()) &&
               item.level === level
             )
@@ -66,11 +68,44 @@ const AllCourses = () => {
       }
 
       setFilteredCourses(filtered);
+      setCurrentPage(1);
     }
   }, [data, categoriesData, selectedCategory, selectedLevel, searchTerm, priceRange, sortBy]);
 
   const categories = categoriesData?.layout.categories || [];
   const levels = Array.from(new Set(categories.flatMap(cat => cat.levels)));
+
+  // Pagination logic
+  const indexOfLastCourse = currentPage * coursesPerPage;
+  const indexOfFirstCourse = indexOfLastCourse - coursesPerPage;
+  const currentCourses = filteredCourses.slice(indexOfFirstCourse, indexOfLastCourse);
+  const totalPages = Math.ceil(filteredCourses.length / coursesPerPage);
+
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+  // Function to generate page numbers
+  const getPageNumbers = () => {
+    const pageNumbers = [];
+    if (totalPages <= 3) {
+      for (let i = 1; i <= totalPages; i++) {
+        pageNumbers.push(i);
+      }
+    } else {
+      pageNumbers.push(1);
+      if (currentPage > 2) {
+        pageNumbers.push('...');
+      }
+      if (currentPage > 1 && currentPage < totalPages) {
+        pageNumbers.push(currentPage);
+      }
+      if (currentPage < totalPages - 1) {
+        pageNumbers.push('...');
+      }
+      pageNumbers.push(totalPages);
+    }
+    return pageNumbers;
+  };
+
 
   return (
     <div className="container mx-auto p-4 mb-8">
@@ -86,7 +121,7 @@ const AllCourses = () => {
             />
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
           </div>
-          <Button 
+          <Button
             onClick={() => setShowFilters(!showFilters)}
             variant="outline"
             className="flex-shrink-0 whitespace-nowrap"
@@ -177,11 +212,48 @@ const AllCourses = () => {
       {isLoading ? (
         <Loader />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredCourses.map((course) => (
-            <CourseCard key={course._id} course={course} />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {currentCourses.map((course) => (
+              <CourseCard key={course._id} course={course} />
+            ))}
+          </div>
+
+          {/* Updated Pagination UI */}
+          <div className="flex justify-center items-center mt-8">
+            <Button
+              onClick={() => paginate(currentPage - 1)}
+              disabled={currentPage === 1}
+              variant="outline"
+              className="mr-2"
+            >
+              <ChevronLeft size={20} />
+            </Button>
+            {getPageNumbers().map((number, index) => (
+              <div key={index}>
+                {number === '...' ? (
+                  <span className="mx-2">...</span>
+                ) : (
+                  <Button
+                    onClick={() => paginate(number)}
+                    variant={currentPage === number ? "default" : "outline"}
+                    className="mx-1"
+                  >
+                    {number}
+                  </Button>
+                )}
+              </div>
+            ))}
+            <Button
+              onClick={() => paginate(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              variant="outline"
+              className="ml-2"
+            >
+              <ChevronRight size={20} />
+            </Button>
+          </div>
+        </>
       )}
 
       {filteredCourses.length === 0 && (

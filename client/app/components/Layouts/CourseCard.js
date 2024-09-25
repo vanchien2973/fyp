@@ -11,7 +11,7 @@ const CourseCard = ({ course, isProfile }) => {
     <Link
       href={!isProfile ? `/courses/course/${course._id}` : `/courses/course-access/${course._id}`}
     >
-      <Card className="w-full max-w-[350px] overflow-hiddentransition-all duration-300 ease-in-out hover:shadow-lg hover:scale-102">
+      <Card className="w-full flex flex-col overflow-hidden transition-all duration-300 ease-in-out hover:shadow-lg hover:scale-102">
         <CardHeader className="relative h-48 p-0">
           <Image
             src={course.thumbnail?.url}

@@ -12,7 +12,7 @@ export default function Header() {
           <MobileSidebar />
         </div>
         <div className="flex items-center gap-2">
-          {/* <DropdownNotifications/> */}
+          <DropdownNotifications/>
           <UserNav />
           <ThemeToggle />
         </div>

@@ -40,30 +40,6 @@ export const reviews = [
         profession: "Architect | DesignHub",
         comment: "Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisquam, quidem.",
     },
-    // {
-    //     name: "Anna Thompson",
-    //     avatar: "https://randomuser.me/api/portraits/women/4.jpg",
-    //     profession: "Data Analyst | Market Insights",
-    //     comment: "Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisquam, quidem.",
-    // },
-    // {
-    //     name: "Michael Johnson",
-    //     avatar: "https://randomuser.me/api/portraits/men/4.jpg",
-    //     profession: "Freelancer | Software Developer",
-    //     comment: "Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisquam, quidem.",
-    // },
-    // {
-    //     name: "Sophia Lee",
-    //     avatar: "https://randomuser.me/api/portraits/women/5.jpg",
-    //     profession: "Graphic Designer | Creative Studio",
-    //     comment: "Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisquam, quidem.",
-    // },
-    // {
-    //     name: "John Davies",
-    //     avatar: "https://randomuser.me/api/portraits/men/5.jpg",
-    //     profession: "Marketing Manager | SalesCo",
-    //     comment: "Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisquam, quidem.",
-    // }
 ];
 
 
@@ -85,29 +61,6 @@ const Reviews = () => {
                                    )
                                 }
                             </div>
-                            {/* <div className="flex items-center justify-center">
-              <Pagination>
-                <PaginationContent>
-                  <PaginationItem>
-                    <PaginationPrevious href="#" />
-                  </PaginationItem>
-                  <PaginationItem>
-                    <PaginationLink href="#">1</PaginationLink>
-                  </PaginationItem>
-                  <PaginationItem>
-                    <PaginationLink href="#" isActive>
-                      2
-                    </PaginationLink>
-                  </PaginationItem>
-                  <PaginationItem>
-                    <PaginationLink href="#">3</PaginationLink>
-                  </PaginationItem>
-                  <PaginationItem>
-                    <PaginationNext href="#" />
-                  </PaginationItem>
-                </PaginationContent>
-              </Pagination>
-            </div> */}
                         </div>
                     </div>
                 </div>

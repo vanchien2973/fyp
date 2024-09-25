@@ -28,7 +28,7 @@ export const apiSlice = createApi({
                         user: result.data.user,
                     }));
                 } catch (error) {
-                    console.log('Json Web Token is invalid, try again');
+                   console.log(error)
                 }
             },
         }),

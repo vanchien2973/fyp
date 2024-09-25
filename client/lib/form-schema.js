@@ -39,7 +39,6 @@ export const courseContentSchema = z.object({
     z.object({
       videoSection: z
         .string()
-        .min(1, { message: 'Section name cannot be empty' })
         .default('Untitled Section'),
       content: z.array(
         z.object({

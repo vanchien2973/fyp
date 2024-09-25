@@ -1,4 +1,5 @@
 'use client'
+import { useEffect } from "react";
 import { Roboto } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "./utils/ThemeProvider";
@@ -8,6 +9,9 @@ import { Providers } from "./Provider";
 import { Toaster } from "react-hot-toast";
 import { SessionProvider } from "next-auth/react";
 import NextTopLoader from "nextjs-toploader";
+import socketIO from 'socket.io-client';
+const ENDPOINT = process.env.NEXT_PUBLIC_SOCKET_SERVER_URI || '';
+const socketId = socketIO(ENDPOINT, { transports: ['websocket'] });
 
 const roboto = Roboto({
   subsets: ['latin'],
@@ -21,7 +25,7 @@ export default function RootLayout({ children }) {
       <body className={roboto.variable} suppressHydrationWarning={true}>
         <NextTopLoader showSpinner={false} />
         <Providers>
-        {/* <ProtectedRoute> */}
+          {/* <ProtectedRoute> */}
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
             <SessionProvider>
               <Loading>
@@ -39,6 +43,11 @@ export default function RootLayout({ children }) {
 
 const Loading = ({ children }) => {
   const { isLoading } = useLoadUserQuery({});
+
+  useEffect(() => {
+    socketId.on('connection', () => {});
+  }, []);
+
   return (
     <>
       {

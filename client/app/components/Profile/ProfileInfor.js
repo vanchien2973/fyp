@@ -1,20 +1,16 @@
-import Image from "next/image";
 import React, { useEffect, useState } from "react";
 import avatarIcon from "@/public/assets/avatar.png";
-import { IoCameraReverse } from "react-icons/io5";
 import { useLoadUserQuery } from "@/app/redux/features/api/apiSlice";
-import {
-    Input,
-    Button,
-    Typography,
-} from "@material-tailwind/react";
-import { CameraIcon } from "@heroicons/react/24/outline";
-
 import { useEditProfileMutation, useUpdateAvatarMutation } from "@/app/redux/features/user/userApi";
 import toast from "react-hot-toast";
+import { Input } from "../ui/input";
+import { Button } from "../ui/button";
+import { Label } from "../ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { Avatar, AvatarImage, AvatarFallback } from "../ui/avatar";
+import { CameraIcon } from "lucide-react";
 
 const ProfileInfor = ({ avatar = null, user }) => {
-    console.log(user)
     const [name, setName] = useState(user && user.name);
     const [phoneNumber, setPhoneNumber] = useState(user && user.phoneNumber);
     const [updateAvatar, {isSuccess, error}] = useUpdateAvatarMutation();
@@ -27,9 +23,7 @@ const ProfileInfor = ({ avatar = null, user }) => {
         fileReader.onload = () => {
             if (fileReader.readyState === 2) {
                 const avatar = fileReader.result;
-                updateAvatar({
-                    avatar,
-                })
+                updateAvatar({ avatar });
             }
         };
         fileReader.readAsDataURL(e.target.files[0]);
@@ -51,92 +45,73 @@ const ProfileInfor = ({ avatar = null, user }) => {
              await editProfile({
                 name: name,
                 phoneNumber: phoneNumber
-            })
+            });
         }
     };
 
     return (
-        <div className="w-full px-4 sm:px-6 md:px-8 lg:px-10 py-8">
-            <div className="max-w-3xl mx-auto">
+        <div className="w-full max-w-3xl mx-auto">
+            <CardHeader>
+                <CardTitle>Profile Information</CardTitle>
+            </CardHeader>
+            <CardContent>
                 <div className="flex flex-col items-center">
                     <div className="relative mb-6">
-                        <Image
-                            src={user.avatar || avatar ? user.avatar.url || avatar : avatarIcon}
-                            alt=""
-                            width={90}
-                            height={90}
-                            className="w-[120px] h-[120px] cursor-pointer border-[2px] border-[#181e1d] rounded-full"
-                        />
+                        <Avatar className="w-[120px] h-[120px]">
+                            <AvatarImage src={user.avatar || avatar ? user.avatar.url || avatar : avatarIcon} alt="Profile" />
+                            <AvatarFallback>
+                                {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                            </AvatarFallback>
+                        </Avatar>
                         <input
                             type="file"
-                            name=""
                             id="avatar"
                             className="hidden"
                             onChange={imageHandler}
                             accept="image/png, image/jpg, image/jpeg, image/webp"
                         />
-                        <label htmlFor="avatar">
-                            <div className="w-[30px] h-[30px] bg-slate-400 rounded-full absolute bottom-1 right-1 flex items-center justify-center cursor-pointer">
-                                <CameraIcon className="h-8 w-8 text-black" />
+                        <label htmlFor="avatar" className="absolute bottom-1 right-1 cursor-pointer">
+                            <div className="w-[30px] h-[30px] bg-secondary rounded-full flex items-center justify-center">
+                                <CameraIcon className="h-5 w-5" />
                             </div>
                         </label>
                     </div>
-                    <form onSubmit={handleSubmit} className="w-full">
-                        <div className="flex flex-col gap-6">
-                            <div>
-                                <Typography variant="h6" color="blue-gray" className="mb-2">
-                                    Full Name
-                                </Typography>
-                                <Input
-                                    type="text"
-                                    size="lg"
-                                    value={name}
-                                    onChange={(e) => setName(e.target.value)}
-                                    className="!border-t-blue-gray-200 focus:!border-t-gray-900"
-                                    labelProps={{
-                                        className: "before:content-none after:content-none",
-                                    }}
-                                />
-                            </div>
-                            <div>
-                                <Typography variant="h6" color="blue-gray" className="mb-2">
-                                    Email
-                                </Typography>
-                                <Input
-                                    type="text"
-                                    size="lg"
-                                    readOnly
-                                    value={user?.email}
-                                    className="!border-t-blue-gray-200 focus:!border-t-gray-900"
-                                    labelProps={{
-                                        className: "before:content-none after:content-none",
-                                    }}
-                                />
-                            </div>
-                            <div>
-                                <Typography variant="h6" color="blue-gray" className="mb-2">
-                                    Phone Number
-                                </Typography>
-                                <Input
-                                    type="text"
-                                    value={phoneNumber}
-                                    onChange={(e) => setPhoneNumber(e.target.value)}
-                                    size="lg"
-                                    className="!border-t-blue-gray-200 focus:!border-t-gray-900"
-                                    labelProps={{
-                                        className: "before:content-none after:content-none",
-                                    }}
-                                />
-                            </div>
-                            <div className="flex justify-center mt-6">
-                                <Button className="w-full sm:w-[400px]" type="submit">
-                                    Update
-                                </Button>
-                            </div>
+                    <form onSubmit={handleSubmit} className="w-full space-y-6">
+                        <div className="space-y-2">
+                            <Label htmlFor="name">Full Name</Label>
+                            <Input
+                                id="name"
+                                type="text"
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="email">Email</Label>
+                            <Input
+                                id="email"
+                                type="text"
+                                readOnly
+                                value={user?.email}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="phoneNumber">Phone Number</Label>
+                            <Input
+                                id="phoneNumber"
+                                type="text"
+                                value={phoneNumber}
+                                onChange={(e) => setPhoneNumber(e.target.value)}
+                            />
+                        </div>
+                        <div className="flex justify-center mt-6">
+                            <Button className="w-full sm:w-[400px]" type="submit">
+                                Update
+                            </Button>
                         </div>
                     </form>
                 </div>
-            </div>
+            </CardContent>
         </div>
     );
 };

@@ -13,8 +13,11 @@ import {
 import { Alert, AlertCircle, AlertTitle, AlertDescription } from '../ui/alert';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
+import socketIO from 'socket.io-client';
+const ENDPOINT = process.env.NEXT_PUBLIC_SOCKET_SERVER_URI || '';
+const socketId = socketIO(ENDPOINT, { transports: ['websocket'] });
 
-const CheckoutForm = ({ isOpen, setOpen, data }) => {
+const CheckoutForm = ({ isOpen, setOpen, data, user }) => {
     const stripe = useStripe();
     const elements = useElements();
     const [message, setMessage] = useState('');
@@ -48,7 +51,9 @@ const CheckoutForm = ({ isOpen, setOpen, data }) => {
             setMessage(error.message || 'An unexpected error occurred.');
             setIsLoading(false);
         } else if (paymentIntent && paymentIntent.status === 'succeeded') {
+            setIsLoading(false);
             createOrder({ courseId: data._id, paymentInfo: paymentIntent });
+            
         } else {
             setMessage('Payment failed. Please try again.');
         }
@@ -59,6 +64,11 @@ const CheckoutForm = ({ isOpen, setOpen, data }) => {
     useEffect(() => {
         if (orderData) {
             setLoadUser(true);
+            socketId.emit('notification', {
+                title: 'New Order',
+                message: `You have a new order from ${data.course.name}`,
+                userId: user._id
+            });
             router.push(`/courses/course-access/${data._id}`);
         }
         if (orderError) {

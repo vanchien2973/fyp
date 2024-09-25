@@ -17,6 +17,7 @@ const CourseDetail = ({ id }) => {
     const [createPaymentIntent, { data: paymentIntentData }] = useCreatePaymentIntentMutation();
     const [stripePromise, setStripePromise] = useState(null);
     const [clientSecret, setClientSecret] = useState('');
+    
     useEffect(() => {
         if (config) {
             setStripePromise(loadStripe(config?.stripePublishableKey));

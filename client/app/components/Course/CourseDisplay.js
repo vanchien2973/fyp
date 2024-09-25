@@ -13,6 +13,7 @@ import CheckoutForm from '../Payment/CheckoutForm';
 import { UserAvatar } from '../ui/avatar';
 import { useLoadUserQuery } from '@/app/redux/features/api/apiSlice';
 import { useEffect } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 const CourseDisplay = ({ data, clientSecret, stripePromise, setRoute, setOpen: openAuthModal }) => {
     const { data: userData } = useLoadUserQuery(undefined, {});
@@ -21,16 +22,19 @@ const CourseDisplay = ({ data, clientSecret, stripePromise, setRoute, setOpen: o
     const discountPercentage = ((data?.estimatedPrice - data?.price) / data?.estimatedPrice) * 100;
     const discountPercentagePrice = discountPercentage.toFixed(0);
     const isPurchased = user && user?.courses?.find((item) => item._id === data?._id);
+    // Pagination state
+    const [currentPage, setCurrentPage] = useState(1);
+    const reviewsPerPage = 5;
 
-    useEffect(() =>{
+    useEffect(() => {
         setUser(userData?.user)
     }, [userData])
 
     const handleOrder = (e) => {
         if (user) {
-        setOpen(true);
+            setOpen(true);
         } else {
-            setRoute('Login')
+            setRoute('Login');
             openAuthModal(true);
         }
     }
@@ -42,6 +46,34 @@ const CourseDisplay = ({ data, clientSecret, stripePromise, setRoute, setOpen: o
         clientSecret,
         appearance,
     };
+
+    // Calculate pagination
+    const indexOfLastReview = currentPage * reviewsPerPage;
+    const indexOfFirstReview = indexOfLastReview - reviewsPerPage;
+    const currentReviews = data?.reviews?.slice(indexOfFirstReview, indexOfLastReview);
+    const totalPages = Math.ceil((data?.reviews?.length || 0) / reviewsPerPage);
+
+    // Generate page numbers
+    const pageNumbers = [];
+    if (totalPages <= 3) {
+        for (let i = 1; i <= totalPages; i++) {
+            pageNumbers.push(i);
+        }
+    } else {
+        pageNumbers.push(1);
+        if (currentPage > 2) pageNumbers.push('...');
+        if (currentPage > 1 && currentPage < totalPages) pageNumbers.push(currentPage);
+        if (currentPage < totalPages - 1) pageNumbers.push('...');
+        pageNumbers.push(totalPages);
+    }
+    const handlePrevPage = () => {
+        setCurrentPage((prev) => Math.max(prev - 1, 1));
+    };
+
+    const handleNextPage = () => {
+        setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+    };
+
 
     return (
         <>
@@ -83,7 +115,6 @@ const CourseDisplay = ({ data, clientSecret, stripePromise, setRoute, setOpen: o
                                     <CourseContentList data={data?.courseData} isDemo={true} />
                                 </CardContent>
                             </div>
-
                             <CardHeader>
                                 <CardTitle>Reviews</CardTitle>
                                 <CardDescription>
@@ -94,8 +125,8 @@ const CourseDisplay = ({ data, clientSecret, stripePromise, setRoute, setOpen: o
                                 </CardDescription>
                             </CardHeader>
                             <CardContent>
-                                {data?.reviews && data.reviews.length > 0 ? (
-                                    [...data.reviews].reverse().map((review, index) => (
+                                {currentReviews && currentReviews.length > 0 &&
+                                    currentReviews.map((review, index) => (
                                         <div key={review._id || index} className="flex items-center mb-4">
                                             <UserAvatar
                                                 user={review.user}
@@ -113,15 +144,41 @@ const CourseDisplay = ({ data, clientSecret, stripePromise, setRoute, setOpen: o
                                             </div>
                                         </div>
                                     ))
-                                ) : (
-                                    <p>No reviews available.</p>
-                                )}
+                                }
                             </CardContent>
-                            <CardFooter className="flex justify-center">
-                                <Button variant="outline" className="mx-1">1</Button>
-                                <Button variant="outline" className="mx-1">2</Button>
-                                <Button variant="outline" className="mx-1">3</Button>
-                            </CardFooter>
+                            <CardFooter className="flex justify-center items-center">
+                            <Button 
+                                variant="outline" 
+                                onClick={handlePrevPage} 
+                                disabled={currentPage === 1}
+                                className="mr-2"
+                            >
+                                <ChevronLeft className="h-4 w-4" />
+                            </Button>
+                            {pageNumbers.map((number, index) => (
+                                <div key={index}>
+                                    {number === '...' ? (
+                                        <span className="mx-1">...</span>
+                                    ) : (
+                                        <Button
+                                            variant={currentPage === number ? "default" : "outline"}
+                                            className="mx-1"
+                                            onClick={() => setCurrentPage(number)}
+                                        >
+                                            {number}
+                                        </Button>
+                                    )}
+                                </div>
+                            ))}
+                            <Button 
+                                variant="outline" 
+                                onClick={handleNextPage} 
+                                disabled={currentPage === totalPages}
+                                className="ml-2"
+                            >
+                                <ChevronRight className="h-4 w-4" />
+                            </Button>
+                        </CardFooter>
                         </div>
                     </div>
                     <div className='w-full 800px:w-[35%] relative'>
@@ -166,7 +223,7 @@ const CourseDisplay = ({ data, clientSecret, stripePromise, setRoute, setOpen: o
             </div>
             {open && stripePromise && clientSecret && (
                 <Elements stripe={stripePromise} options={options}>
-                    <CheckoutForm isOpen={open} setOpen={setOpen} data={data}/>
+                    <CheckoutForm isOpen={open} setOpen={setOpen} data={data} user={user}/>
                 </Elements>
             )}
         </>

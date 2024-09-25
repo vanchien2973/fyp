@@ -1,8 +1,11 @@
 'use client'
-import { useUpdatePasswordMutation } from '@/app/redux/features/user/userApi';
-import { Button, Typography, Input } from '@material-tailwind/react';
 import React, { useEffect, useState } from 'react'
+import { useUpdatePasswordMutation } from '@/app/redux/features/user/userApi';
 import toast from 'react-hot-toast';
+import { Input } from "../ui/input"
+import { Button } from "../ui/button"
+import { Label } from "../ui/label"
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card"
 
 const ChangePassword = () => {
     const [currentPassword, setCurrentPassword] = useState("");
@@ -39,55 +42,37 @@ const ChangePassword = () => {
     }, [isSuccess, error])
 
     return (
-        <div className="w-full px-4 sm:px-6 md:px-8 lg:px-10 py-8">
-            <div className="max-w-3xl mx-auto">
-                <Typography variant="h4" color="blue-gray" className="text-center mb-6">
-                    Change Password
-                </Typography>
-                <form onSubmit={passwordChangeHandler} className="flex flex-col gap-6">
-                    <div>
-                        <Typography variant="h6" color="blue-gray" className="mb-2">
-                            Current Password
-                        </Typography>
+        <div className="w-full max-w-3xl mx-auto">
+            <CardHeader>
+                <CardTitle className="text-center">Change Password</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <form onSubmit={passwordChangeHandler} className="space-y-6">
+                    <div className="space-y-2">
+                        <Label htmlFor="currentPassword">Current Password</Label>
                         <Input
+                            id="currentPassword"
                             type="password"
-                            size="lg"
                             value={currentPassword}
                             onChange={(e) => setCurrentPassword(e.target.value)}
-                            className="!border-t-blue-gray-200 focus:!border-t-gray-900"
-                            labelProps={{
-                                className: "before:content-none after:content-none",
-                            }}
                         />
                     </div>
-                    <div>
-                        <Typography variant="h6" color="blue-gray" className="mb-2">
-                            New Password
-                        </Typography>
+                    <div className="space-y-2">
+                        <Label htmlFor="newPassword">New Password</Label>
                         <Input
+                            id="newPassword"
                             type="password"
-                            size="lg"
                             value={newPassword}
                             onChange={(e) => setNewPassword(e.target.value)}
-                            className="!border-t-blue-gray-200 focus:!border-t-gray-900"
-                            labelProps={{
-                                className: "before:content-none after:content-none",
-                            }}
                         />
                     </div>
-                    <div>
-                        <Typography variant="h6" color="blue-gray" className="mb-2">
-                            Confirm Password
-                        </Typography>
+                    <div className="space-y-2">
+                        <Label htmlFor="confirmPassword">Confirm Password</Label>
                         <Input
+                            id="confirmPassword"
                             type="password"
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.target.value)}
-                            size="lg"
-                            className="!border-t-blue-gray-200 focus:!border-t-gray-900"
-                            labelProps={{
-                                className: "before:content-none after:content-none",
-                            }}
                         />
                     </div>
                     <div className="flex justify-center mt-6">
@@ -96,7 +81,7 @@ const ChangePassword = () => {
                         </Button>
                     </div>
                 </form>
-            </div>
+            </CardContent>
         </div>
     )
 }

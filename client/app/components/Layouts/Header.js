@@ -37,6 +37,7 @@ import {
 } from "@heroicons/react/24/solid";
 import { RiAccountCircleLine } from "react-icons/ri";
 import ThemeToggle from "../Admin/layouts/ThemeToggle";
+import { useLoadUserQuery } from "@/app/redux/features/api/apiSlice";
 
 const navItemsData = [
   { name: "Home", url: "/", icon: HomeIcon },
@@ -52,17 +53,26 @@ const Header = ({ open, setOpen, route, setRoute }) => {
   const { data } = useSession();
   const [socialAuth, { isSuccess }] = useSocialAuthMutation();
   const [logout, setLogout] = useState(false);
-  const { } = useLogoutQuery(undefined, {
-    skip: !logout
-  });
+  const { data: userData, isLoading, refetch } = useLoadUserQuery(undefined, { refetchOnMountOrArgChange: true });
+  const {} = useLogoutQuery(undefined, { skip: !logout ? true : false,});
   const pathname = usePathname();
 
   useEffect(() => {
-    if (!user && data) {
-      socialAuth({ email: data?.user?.email, name: data?.user?.name, avatar: data?.user?.image });
+    if (!isLoading) {
+      if (!userData) {
+        if (data) {
+          socialAuth({ email: data?.user?.email, name: data?.user?.name, avatar: data?.user?.image });
+          refetch();
+        }
+      }
     }
-    if (isSuccess) {
-      toast.success("Login Successfully!");
+    if (data === null) {
+      if (isSuccess) {
+        toast.success("Login Successfully!");
+      }
+    }
+    if (data === null && !isLoading && !userData) {
+      setLogout(true)
     }
   }, [data, user, socialAuth, isSuccess]);
 
@@ -98,18 +108,18 @@ const Header = ({ open, setOpen, route, setRoute }) => {
             </NavigationMenu>
 
             <div className="flex items-center space-x-2 sm:space-x-4">
-              {user ? (
+              {userData ? (
                 <>
                   <ThemeToggle />
                   <Link href="/profile" className="flex items-center">
                     <Image
-                      src={user.avatar ? user.avatar.url : defaultAvatar}
+                      src={userData.avatar ? userData.avatar.url : defaultAvatar}
                       width={32}
                       height={32}
                       alt="User Avatar"
                       className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-primary"
                     />
-                    <span className="hidden md:inline ml-2 text-sm">{user.name}</span>
+                    <span className="hidden md:inline ml-2 text-sm">{userData.name}</span>
                   </Link>
                 </>
               ) : (
@@ -150,6 +160,7 @@ const Header = ({ open, setOpen, route, setRoute }) => {
           setOpen={setOpen}
           setRoute={setRoute}
           component={Login}
+          refetch={refetch}
         />
       )}
       {route === "SignUp" && open && (

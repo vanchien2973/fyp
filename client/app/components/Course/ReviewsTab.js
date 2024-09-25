@@ -78,7 +78,7 @@ const ReviewsTab = ({
                         onClick={handleReviewSubmit}
                         disabled={reviewCreateLoading}
                     >
-                        {reviewCreateLoading ? "Submitting..." : "Submit Review"}
+                        {reviewCreateLoading ? "Submitting..." : "Submit"}
                     </Button>
                 </div>
             )}

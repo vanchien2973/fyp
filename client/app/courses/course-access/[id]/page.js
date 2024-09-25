@@ -29,7 +29,7 @@ const page = ({ params }) => {
         ) : (
           <>
             <CourseContent id={id} user={data.user} />
-            </>
+          </>
         )
       }
     </>

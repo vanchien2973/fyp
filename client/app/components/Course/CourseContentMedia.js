@@ -16,6 +16,10 @@ import {
 } from "@/app/redux/features/courses/coursesApi";
 import CommentReply from "./CommentReply";
 import ReviewsTab from "./ReviewsTab";
+import socketIO from 'socket.io-client';
+const ENDPOINT = process.env.NEXT_PUBLIC_SOCKET_SERVER_URI || '';
+const socketId = socketIO(ENDPOINT, { transports: ['websocket'] });
+
 
 const CourseContentMedia = ({
     id,
@@ -77,45 +81,64 @@ const CourseContentMedia = ({
         if (isSuccess) {
             setQuestion("");
             refetch();
+            socketId.emit('notification', {
+                title: 'New Question Received',
+                message: `You have a new question in ${data[activeVideo].title}`,
+                userId: user._id
+            });
             toast.success("Question added successfully");
         }
+        if (error && "data" in error) {
+            toast.error(error.data.message);
+        }
+    }, [isSuccess, error]);
+    
+    useEffect(() => {
         if (answerSuccess) {
             setAnswer("");
             refetch();
             toast.success("Answer added successfully");
-        }
-        if (error) {
-            if ("data" in error) {
-                toast.error(error.data.message);
+            if (user.role === 'admin') {
+                socketId.emit('notification', {
+                    title: 'New Question Reply Received',
+                    message: `You have a new question reply in ${data[activeVideo].title}`,
+                    userId: user._id
+                });
             }
         }
-        if (answerError) {
-            if ("data" in answerError) {
-                toast.error(answerError.data.message);
-            }
+        if (answerError && "data" in answerError) {
+            toast.error(answerError.data.message);
         }
+    }, [answerSuccess, answerError]);
+    
+    useEffect(() => {
         if (reviewSuccess) {
             setReview("");
             setRating(1);
             courseRefetch();
             toast.success("Review added successfully");
+            socketId.emit('notification', {
+                title: 'New Review Received in Course',
+                message: `${user.name} has given a review in ${data[activeVideo].title}`,
+                userId: user._id
+            });
         }
-        if (reviewError) {
-            if ("data" in reviewError) {
-                toast.error(reviewError.data.message);
-            }
+        if (reviewError && "data" in reviewError) {
+            toast.error(reviewError.data.message);
         }
+    }, [reviewSuccess, reviewError]);
+
+    useEffect(() => {
         if (replyReviewSuccess) {
             setReplyReview("");
             courseRefetch();
             toast.success("Reply in review added successfully");
         }
-        if (replyReviewError) {
-            if ("data" in replyReviewError) {
-                toast.error(replyReviewError.data.message);
-            }
+        if (replyReviewError && "data" in replyReviewError) {
+            toast.error(replyReviewError.data.message);
         }
-    }, [isSuccess, error, answerSuccess, answerError, reviewSuccess, reviewError, replyReviewSuccess, replyReviewError]);
+    }, [replyReviewSuccess, replyReviewError]);
+    
 
     const handleAnswerSubmit = () => {
         addAnswerQuestion({

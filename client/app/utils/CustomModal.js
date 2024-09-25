@@ -1,24 +1,13 @@
 import React from "react";
-import { Modal, Box } from "@mui/material";
+import { Dialog, DialogContent } from "../components/ui/dialog";
 
-const CustomModal = ({
-    open,
-    setOpen,
-    activeItem,
-    component: Component,
-    setRoute,
-}) => {
+const CustomModal = ({ open, setOpen, activeItem, component: Component, setRoute, refetch }) => {
     return (
-        <Modal
-            open={open}
-            onClose={() => setOpen(false)}
-            aria-labelledby="modal-modal-title"
-            aria-describedby="modal-modal-description"
-        >
-            <Box>
-                <Component setOpen={setOpen} setRoute={setRoute} />
-            </Box>
-        </Modal>
+        <Dialog open={open} onOpenChange={setOpen}>
+            <DialogContent className="max-w-[24rem] p-4 max-h-[90vh] overflow-y-auto">
+                <Component setOpen={setOpen} setRoute={setRoute} refetch={refetch}/>
+            </DialogContent>
+        </Dialog>
     );
 };
 
