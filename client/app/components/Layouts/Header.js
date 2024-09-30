@@ -48,7 +48,7 @@ const navItemsData = [
 ];
 
 const Header = ({ open, setOpen, route, setRoute }) => {
-  const [isFixed, setIsFixed] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const { user } = useSelector((state) => state.auth);
   const { data } = useSession();
   const [socialAuth, { isSuccess }] = useSocialAuthMutation();
@@ -56,6 +56,16 @@ const Header = ({ open, setOpen, route, setRoute }) => {
   const { data: userData, isLoading, refetch } = useLoadUserQuery(undefined, { refetchOnMountOrArgChange: true });
   const {} = useLogoutQuery(undefined, { skip: !logout ? true : false,});
   const pathname = usePathname();
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollPosition = window.scrollY;
+      setIsScrolled(scrollPosition > 0);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   useEffect(() => {
     if (!isLoading) {
@@ -76,18 +86,11 @@ const Header = ({ open, setOpen, route, setRoute }) => {
     }
   }, [data, user, socialAuth, isSuccess]);
 
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsFixed(window.scrollY > 50);
-    };
-
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
   return (
     <>
-      <header className={`${isFixed ? 'fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-sm' : ''} transition-all duration-300`}>
+      <header className={`sticky top-0 z-50 transition-all duration-300 ${
+        isScrolled ? 'bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-sm' : ''
+      }`}>
         <div className="container mx-auto px-4">
           <nav className="flex items-center justify-between h-14 sm:h-16 md:h-20">
             <Link href='/' className="text-lg sm:text-xl font-bold">ELP</Link>
@@ -113,7 +116,7 @@ const Header = ({ open, setOpen, route, setRoute }) => {
                   <ThemeToggle />
                   <Link href="/profile" className="flex items-center">
                     <Image
-                      src={userData.avatar ? userData.avatar.url : defaultAvatar}
+                      src={user.avatar ? user.avatar?.url : defaultAvatar}
                       width={32}
                       height={32}
                       alt="User Avatar"
@@ -153,7 +156,6 @@ const Header = ({ open, setOpen, route, setRoute }) => {
           </nav>
         </div>
       </header>
-
       {route === "Login" && open && (
         <CustomModal
           open={open}

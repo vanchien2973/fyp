@@ -57,7 +57,7 @@ const Footer = () => {
                         </p>
                     </div>
                     <div className="flex items-center gap-2">
-                        <MapPin className="h-8 w-8" />
+                        <MapPin className="h-5 w-5" />
                         <p className="text-sm">
                             <strong>Address:</strong> 123 Đường ABC, Quận XYZ, Thành phố HCM
                         </p>

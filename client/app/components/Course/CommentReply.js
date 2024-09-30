@@ -11,8 +11,6 @@ const CommentReply = ({
     answer,
     setAnswer,
     handleAnswerSubmit,
-    user,
-    questionId,
     setQuestionId,
     answerCreateLoading
 }) => {

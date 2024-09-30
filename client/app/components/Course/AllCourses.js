@@ -5,11 +5,20 @@ import { Button } from "../ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select"
 import { Slider } from "../ui/slider"
 import { Card, CardContent } from "../ui/card"
-import { ChevronLeft, ChevronRight, Search, SlidersHorizontal } from "lucide-react"
+import { Search, SlidersHorizontal } from "lucide-react"
 import CourseCard from '../Layouts/CourseCard';
 import { Label } from '../ui/label';
 import Loader from '../Loader/Loader';
 import { useGetHeroDataQuery } from '@/app/redux/features/layout/layoutApi';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "../ui/pagination"
 
 const AllCourses = () => {
   const { data, isLoading } = useGetAllUserCoursesQuery({});
@@ -220,39 +229,36 @@ const AllCourses = () => {
           </div>
 
           {/* Updated Pagination UI */}
-          <div className="flex justify-center items-center mt-8">
-            <Button
-              onClick={() => paginate(currentPage - 1)}
-              disabled={currentPage === 1}
-              variant="outline"
-              className="mr-2"
-            >
-              <ChevronLeft size={20} />
-            </Button>
-            {getPageNumbers().map((number, index) => (
-              <div key={index}>
-                {number === '...' ? (
-                  <span className="mx-2">...</span>
-                ) : (
-                  <Button
-                    onClick={() => paginate(number)}
-                    variant={currentPage === number ? "default" : "outline"}
-                    className="mx-1"
-                  >
-                    {number}
-                  </Button>
-                )}
-              </div>
-            ))}
-            <Button
-              onClick={() => paginate(currentPage + 1)}
-              disabled={currentPage === totalPages}
-              variant="outline"
-              className="ml-2"
-            >
-              <ChevronRight size={20} />
-            </Button>
-          </div>
+          <Pagination className="mt-8">
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  onClick={() => paginate(currentPage - 1)}
+                  disabled={currentPage === 1}
+                />
+              </PaginationItem>
+              {getPageNumbers().map((number, index) => (
+                <PaginationItem key={index}>
+                  {number === '...' ? (
+                    <PaginationEllipsis />
+                  ) : (
+                    <PaginationLink
+                      onClick={() => paginate(number)}
+                      isActive={currentPage === number}
+                    >
+                      {number}
+                    </PaginationLink>
+                  )}
+                </PaginationItem>
+              ))}
+              <PaginationItem>
+                <PaginationNext
+                  onClick={() => paginate(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
         </>
       )}
 

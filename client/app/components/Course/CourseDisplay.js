@@ -14,6 +14,15 @@ import { UserAvatar } from '../ui/avatar';
 import { useLoadUserQuery } from '@/app/redux/features/api/apiSlice';
 import { useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import {
+    Pagination,
+    PaginationContent,
+    PaginationEllipsis,
+    PaginationItem,
+    PaginationLink,
+    PaginationNext,
+    PaginationPrevious,
+} from "../ui/pagination"
 
 const CourseDisplay = ({ data, clientSecret, stripePromise, setRoute, setOpen: openAuthModal }) => {
     const { data: userData } = useLoadUserQuery(undefined, {});
@@ -146,39 +155,38 @@ const CourseDisplay = ({ data, clientSecret, stripePromise, setRoute, setOpen: o
                                     ))
                                 }
                             </CardContent>
-                            <CardFooter className="flex justify-center items-center">
-                            <Button 
-                                variant="outline" 
-                                onClick={handlePrevPage} 
-                                disabled={currentPage === 1}
-                                className="mr-2"
-                            >
-                                <ChevronLeft className="h-4 w-4" />
-                            </Button>
-                            {pageNumbers.map((number, index) => (
-                                <div key={index}>
-                                    {number === '...' ? (
-                                        <span className="mx-1">...</span>
-                                    ) : (
-                                        <Button
-                                            variant={currentPage === number ? "default" : "outline"}
-                                            className="mx-1"
-                                            onClick={() => setCurrentPage(number)}
-                                        >
-                                            {number}
-                                        </Button>
-                                    )}
-                                </div>
-                            ))}
-                            <Button 
-                                variant="outline" 
-                                onClick={handleNextPage} 
-                                disabled={currentPage === totalPages}
-                                className="ml-2"
-                            >
-                                <ChevronRight className="h-4 w-4" />
-                            </Button>
-                        </CardFooter>
+                            <CardFooter>
+                                <Pagination>
+                                    <PaginationContent>
+                                        <PaginationItem>
+                                            <PaginationPrevious
+                                                onClick={handlePrevPage}
+                                                disabled={currentPage === 1}
+                                            />
+                                        </PaginationItem>
+                                        {pageNumbers.map((number, index) => (
+                                            <PaginationItem key={index}>
+                                                {number === '...' ? (
+                                                    <PaginationEllipsis />
+                                                ) : (
+                                                    <PaginationLink
+                                                        onClick={() => setCurrentPage(number)}
+                                                        isActive={currentPage === number}
+                                                    >
+                                                        {number}
+                                                    </PaginationLink>
+                                                )}
+                                            </PaginationItem>
+                                        ))}
+                                        <PaginationItem>
+                                            <PaginationNext
+                                                onClick={handleNextPage}
+                                                disabled={currentPage === totalPages}
+                                            />
+                                        </PaginationItem>
+                                    </PaginationContent>
+                                </Pagination>
+                            </CardFooter>
                         </div>
                     </div>
                     <div className='w-full 800px:w-[35%] relative'>
@@ -223,7 +231,7 @@ const CourseDisplay = ({ data, clientSecret, stripePromise, setRoute, setOpen: o
             </div>
             {open && stripePromise && clientSecret && (
                 <Elements stripe={stripePromise} options={options}>
-                    <CheckoutForm isOpen={open} setOpen={setOpen} data={data} user={user}/>
+                    <CheckoutForm isOpen={open} setOpen={setOpen} data={data} user={user} />
                 </Elements>
             )}
         </>
