@@ -38,7 +38,9 @@ const Forum = ({ user }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalPosts, setTotalPosts] = useState(0)
-  const { data, isLoading, refetch } = useGetAllPostsQuery(currentPage);
+  const { data, isLoading, refetch } = useGetAllPostsQuery(currentPage, {
+    refetchOnMountOrArgChange: true
+  });
   const [createPost, { isLoading: createPostLoading, isSuccess, error }] = useCreatePostMutation();
   const [editPost, { isLoading: editPostLoading, isSuccess: editPostSuccess, editPostError }] = useEditPostMutation();
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -73,6 +75,16 @@ const Forum = ({ user }) => {
     }
   }, [data]);
 
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage);
+    }
+  };
+
+  useEffect(() => {
+    refetch();
+  }, [currentPage, refetch]);
+
   useEffect(() => {
     if (isSuccess) {
       setIsModalOpen(false);
@@ -102,10 +114,6 @@ const Forum = ({ user }) => {
       }
     }
   }, [editPostLoading, editPostSuccess, editPostError]);
-
-  const handlePageChange = (page) => {
-    setCurrentPage(page);
-  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -277,6 +285,7 @@ const Forum = ({ user }) => {
                             </CardContent>
                             <CommentSection
                               postId={post._id}
+                              likes={post.likes}
                               comments={post.comments}
                               currentUser={user}
                               refetch={refetch}

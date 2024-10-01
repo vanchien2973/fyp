@@ -12,7 +12,7 @@ export const courseSchema = z.object({
     level: z.string().min(1, { message: 'Level is required' })
   }).refine((category) => !!category.title && !!category.level, {
     message: 'Both category and level must be selected',
-    path: ['category'], // Points to the category object
+    path: ['category'],
   }),
   price: z.coerce
     .number({ invalid_type_error: 'Price is required' })

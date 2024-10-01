@@ -7,8 +7,8 @@ export const forumApi = apiSlice.injectEndpoints({
                 url: 'posts',
                 method: 'GET',
                 params,
-                credentials: 'include'
-            })
+                credentials: 'include',
+            }),
         }),
         createPost: builder.mutation({
             query: ({ title, content, tags }) => ({
@@ -37,7 +37,36 @@ export const forumApi = apiSlice.injectEndpoints({
             query: ({ postId, content }) => ({
                 url: 'add-comment-post',
                 method: 'PUT',
-                body: {  postId, content },
+                body: { postId, content },
+                credentials: 'include'
+            }),
+        }),
+        addReply: builder.mutation({
+            query: ({ postId, commentId, content }) => ({
+                url: 'add-reply-comment',
+                method: 'PUT',
+                body: { postId, commentId, content },
+                credentials: 'include'
+            }),
+        }),
+        likePost: builder.mutation({
+            query: ({ postId }) => ({
+                url: `like-post/${postId}`,
+                method: 'PUT',
+                credentials: 'include'
+            }),
+        }),
+        likeComment: builder.mutation({
+            query: ({ postId, commentId }) => ({
+               url: `posts/${postId}/comments/${commentId}`,
+                method: 'PUT',
+                credentials: 'include'
+            }),
+        }),
+        likeReply: builder.mutation({
+            query: ({ postId, commentId, replyId }) => ({
+               url: `posts/${postId}/comments/${commentId}/replies/${replyId}`,
+                method: 'PUT',
                 credentials: 'include'
             }),
         }),
@@ -49,5 +78,9 @@ export const {
     useCreatePostMutation,
     useEditPostMutation,
     useDeletePostMutation,
-    useAddCommentMutation
- } = forumApi;
+    useAddCommentMutation,
+    useAddReplyMutation,
+    useLikePostMutation,
+    useLikeCommentMutation,
+    useLikeReplyMutation
+} = forumApi;

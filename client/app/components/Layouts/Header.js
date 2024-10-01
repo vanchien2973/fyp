@@ -53,8 +53,8 @@ const Header = ({ open, setOpen, route, setRoute }) => {
   const { data } = useSession();
   const [socialAuth, { isSuccess }] = useSocialAuthMutation();
   const [logout, setLogout] = useState(false);
-  const { data: userData, isLoading, refetch } = useLoadUserQuery(undefined, { refetchOnMountOrArgChange: true });
-  const {} = useLogoutQuery(undefined, { skip: !logout ? true : false,});
+  const { data: userData, isLoading, refetch } = useLoadUserQuery(undefined, {});
+  const {} = useLogoutQuery(undefined, { skip: !logout ? true : false });
   const pathname = usePathname();
 
   useEffect(() => {
@@ -71,26 +71,30 @@ const Header = ({ open, setOpen, route, setRoute }) => {
     if (!isLoading) {
       if (!userData) {
         if (data) {
-          socialAuth({ email: data?.user?.email, name: data?.user?.name, avatar: data?.user?.image });
+          socialAuth({
+            email: data?.user?.email,
+            name: data?.user?.name,
+            avatar: data?.user?.image,
+          });
           refetch();
         }
       }
-    }
-    if (data === null) {
-      if (isSuccess) {
-        toast.success("Login Successfully!");
+      if (data === null) {
+        if (isSuccess) {
+          toast.success("Login Successfully");
+        }
+      }
+      if (data === null && !isLoading && !userData) {
+        setLogout(true);
       }
     }
-    if (data === null && !isLoading && !userData) {
-      setLogout(true)
-    }
-  }, [data, user, socialAuth, isSuccess]);
+  }, [data, userData, isLoading]);
+
 
   return (
     <>
-      <header className={`sticky top-0 z-50 transition-all duration-300 ${
-        isScrolled ? 'bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-sm' : ''
-      }`}>
+      <header className={`sticky top-0 z-50 transition-all duration-300 ${isScrolled ? 'bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-sm' : ''
+        }`}>
         <div className="container mx-auto px-4">
           <nav className="flex items-center justify-between h-14 sm:h-16 md:h-20">
             <Link href='/' className="text-lg sm:text-xl font-bold">ELP</Link>

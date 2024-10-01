@@ -13,7 +13,6 @@ import CheckoutForm from '../Payment/CheckoutForm';
 import { UserAvatar } from '../ui/avatar';
 import { useLoadUserQuery } from '@/app/redux/features/api/apiSlice';
 import { useEffect } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 import {
     Pagination,
     PaginationContent,

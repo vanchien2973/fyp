@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Button } from '../ui/button';
+import { useLoadUserQuery } from '@/app/redux/features/api/apiSlice';
 
 const schema = Yup.object().shape({
     email: Yup.string().email("Invalid email!").required("Please enter your email!"),
@@ -21,6 +22,7 @@ const schema = Yup.object().shape({
 const Login = ({ setRoute, setOpen, open }) => {
     const [show, setShow] = useState(false);
     const [login, { isSuccess, error }] = useLoginMutation();
+    const { refetch } = useLoadUserQuery(undefined, {});
 
     const formik = useFormik({
         initialValues: { email: "", password: "" },
@@ -32,6 +34,7 @@ const Login = ({ setRoute, setOpen, open }) => {
 
     useEffect(() => {
         if (isSuccess) {
+            refetch();
             toast.success("Login Sucessfully!");
             setOpen(false);
         }

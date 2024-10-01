@@ -64,20 +64,14 @@ export const addComment = CatchAsyncError(async (req, res, next) => {
 
         // Create the comment
         const newComment = {
-            user: userId,  // Store the user ID
+            user: userId,
             content: content,
-            likes: [],     // Initialize as an empty array
-            replies: []    // Initialize as an empty array
+            likes: [], 
+            replies: [] 
         };
 
         // Add the comment to the post
         post.comments.push(newComment);
-
-        // Ensure the post has a user field
-        if (!post.user) {
-            post.user = userId;
-        }
-
         await post.save();
 
         // Create a notification for the post owner
@@ -163,11 +157,11 @@ export const likePost = CatchAsyncError(async (req, res, next) => {
         }
 
         // Check if the user has already liked the post
-        const likedIndex = post.likes.findIndex(like => like.user.toString() === userId.toString());
+        const likedIndex = post.likes.findIndex(like => like.toString() === userId.toString());
         let message;
 
         if (likedIndex === -1) {
-            post.likes.push({ user: userId });
+            post.likes.push(userId);
             message = "Post liked successfully";
 
             // Create a notification for the post owner if it's not the same user
@@ -211,11 +205,11 @@ export const likeComment = CatchAsyncError(async (req, res, next) => {
         }
 
         // Check if the user has already liked the comment
-        const likedIndex = comment.likes.findIndex(like => like.user.toString() === userId.toString());
+        const likedIndex = comment.likes.findIndex(like => like.toString() === userId.toString());
 
         let message;
         if (likedIndex === -1) {
-            comment.likes.push({ user: userId });
+            comment.likes.push(userId);
             message = "Comment liked successfully";
 
             // Create a notification for the comment owner
@@ -255,26 +249,21 @@ export const likeReply = CatchAsyncError(async (req, res, next) => {
         if (!post) {
             return next(new ErrorHandler("Forum post not found", 404));
         }
-
-        // Find the comment
         const comment = post.comments.id(commentId);
         if (!comment) {
             return next(new ErrorHandler("Comment not found", 404));
         }
-
-        // Find the reply
         const reply = comment.replies.id(replyId);
         if (!reply) {
             return next(new ErrorHandler("Reply not found", 404));
         }
 
         // Check if the user has already liked the reply
-        const likedIndex = reply.likes.findIndex(like => like.user.toString() === userId.toString());
+        const likedIndex = reply.likes.findIndex(like => like.toString() === userId.toString());
 
         let message;
         if (likedIndex === -1) {
-            // User hasn't liked the reply, so add the like
-            reply.likes.push({ user: userId });
+            reply.likes.push(userId);
             message = "Reply liked successfully";
 
             // Create a notification for the reply owner
@@ -287,7 +276,6 @@ export const likeReply = CatchAsyncError(async (req, res, next) => {
                 });
             }
         } else {
-            // User has already liked the reply, so remove the like
             reply.likes.splice(likedIndex, 1);
             message = "Reply unliked successfully";
         }
@@ -303,6 +291,7 @@ export const likeReply = CatchAsyncError(async (req, res, next) => {
         return next(new ErrorHandler(error.message, 500));
     }
 });
+
 
 // Edit a post
 export const editPost = CatchAsyncError(async (req, res, next) => {
