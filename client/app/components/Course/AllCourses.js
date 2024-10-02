@@ -119,7 +119,7 @@ const AllCourses = () => {
   return (
     <div className="container mx-auto p-4 mb-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-4">All Courses</h1>
+        <h1 className="text-2xl font-bold mb-4">Courses</h1>
         <div className="flex flex-nowrap gap-2 items-center">
           <div className="relative flex-grow">
             <Input

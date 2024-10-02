@@ -31,6 +31,7 @@ import { Textarea } from "../../ui/textarea"
 import toast from 'react-hot-toast'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../../ui/alert-dialog'
 import CommentSection from './CommentSection'
+import EditPostModel from './EditPostModel'
 
 
 const Forum = ({ user }) => {
@@ -38,7 +39,7 @@ const Forum = ({ user }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalPosts, setTotalPosts] = useState(0)
-  const { data, isLoading, refetch } = useGetAllPostsQuery(currentPage, {
+  const { data, isLoading, refetch } = useGetAllPostsQuery({ page: currentPage }, {
     refetchOnMountOrArgChange: true
   });
   const [createPost, { isLoading: createPostLoading, isSuccess, error }] = useCreatePostMutation();
@@ -78,12 +79,9 @@ const Forum = ({ user }) => {
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= totalPages) {
       setCurrentPage(newPage);
+      refetch();
     }
   };
-
-  useEffect(() => {
-    refetch();
-  }, [currentPage, refetch]);
 
   useEffect(() => {
     if (isSuccess) {
@@ -327,10 +325,6 @@ const Forum = ({ user }) => {
                         <h4 className="text-gray-600 font-medium dark:text-gray-400">Total Topics</h4>
                         <p className="text-gray-900 font-bold dark:text-white">{totalPosts}</p>
                       </div>
-                      <div>
-                        <h4 className="text-gray-600 font-medium dark:text-gray-400">Total Comments</h4>
-                        <p className="text-gray-900 font-bold dark:text-white">5,678</p>
-                      </div>
                     </div>
                   </Card>
                 </div>
@@ -340,7 +334,15 @@ const Forum = ({ user }) => {
         )
       }
       {/* Edit Post Modal */}
-      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+      <EditPostModel
+        isEditModalOpen={isEditModalOpen}
+        setIsEditModalOpen={setIsEditModalOpen}
+        handleEditPost={handleEditPost}
+        editingPost={editingPost}
+        handleInputChange={handleInputChange}
+        editPostLoading={editPostLoading}
+      />
+      {/* <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Edit Post</DialogTitle>
@@ -395,7 +397,7 @@ const Forum = ({ user }) => {
             </DialogFooter>
           </form>
         </DialogContent>
-      </Dialog>
+      </Dialog> */}
       {/* Delete Post Confirmation Dialog */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>

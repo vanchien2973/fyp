@@ -3,10 +3,10 @@ import { apiSlice } from "../api/apiSlice";
 export const forumApi = apiSlice.injectEndpoints({
     endpoints: (builder) => ({
         getAllPosts: builder.query({
-            query: (params) => ({
+            query: ({ page = 1, limit = 10 }) => ({
                 url: 'posts',
                 method: 'GET',
-                params,
+                params: { page, limit },
                 credentials: 'include',
             }),
         }),
@@ -58,14 +58,14 @@ export const forumApi = apiSlice.injectEndpoints({
         }),
         likeComment: builder.mutation({
             query: ({ postId, commentId }) => ({
-               url: `posts/${postId}/comments/${commentId}`,
+                url: `posts/${postId}/comments/${commentId}`,
                 method: 'PUT',
                 credentials: 'include'
             }),
         }),
         likeReply: builder.mutation({
             query: ({ postId, commentId, replyId }) => ({
-               url: `posts/${postId}/comments/${commentId}/replies/${replyId}`,
+                url: `posts/${postId}/comments/${commentId}/replies/${replyId}`,
                 method: 'PUT',
                 credentials: 'include'
             }),

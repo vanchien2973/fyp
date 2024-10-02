@@ -66,7 +66,7 @@ const CheckoutForm = ({ isOpen, setOpen, data, user }) => {
             setLoadUser(true);
             socketId.emit('notification', {
                 title: 'New Order',
-                message: `You have a new order from ${data.course.name}`,
+                message: `You have a new order from `,
                 userId: user._id
             });
             router.push(`/courses/course-access/${data._id}`);
