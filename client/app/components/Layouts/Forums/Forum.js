@@ -32,6 +32,9 @@ import toast from 'react-hot-toast'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../../ui/alert-dialog'
 import CommentSection from './CommentSection'
 import EditPostModel from './EditPostModel'
+import socketIO from 'socket.io-client';
+const ENDPOINT = process.env.NEXT_PUBLIC_SOCKET_SERVER_URI || '';
+const socketId = socketIO(ENDPOINT, { transports: ['websocket'] });
 
 
 const Forum = ({ user }) => {
@@ -51,6 +54,12 @@ const Forum = ({ user }) => {
   const [deletePost, { isLoading: deletePostLoading, error: deletePostError, isSuccess: deletePostSuccess }] = useDeletePostMutation({});
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [postToDelete, setPostToDelete] = useState(null);
+  const [filteredPosts, setFilteredPosts] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState('date');
+  const [totalLikes, setTotalLikes] = useState(0)
+  const [totalComments, setTotalComments] = useState(0)
+
 
   useEffect(() => {
     if (deletePostSuccess) {
@@ -70,11 +79,55 @@ const Forum = ({ user }) => {
   useEffect(() => {
     if (data) {
       setPosts(data.posts);
+      setFilteredPosts(data.posts);
       setCurrentPage(data.currentPage);
       setTotalPages(data.totalPages);
-      setTotalPosts(data.totalPosts)
+      setTotalPosts(data.totalPosts);
+      // Calculate total likes and comments
+      let likes = 0;
+      let comments = 0;
+      data.posts.forEach(post => {
+        likes += post.likes.length;
+        comments += post.comments.length;
+      });
+      setTotalLikes(likes);
+      setTotalComments(comments);
     }
   }, [data]);
+
+  useEffect(() => {
+    filterAndSortPosts();
+  }, [posts, searchTerm, sortBy]);
+
+  const filterAndSortPosts = () => {
+    let filtered = posts.filter(post =>
+      post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      post.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
+
+    switch (sortBy) {
+      case 'likes':
+        filtered.sort((a, b) => b.likes.length - a.likes.length);
+        break;
+      case 'comments':
+        filtered.sort((a, b) => b.comments.length - a.comments.length);
+        break;
+      case 'date':
+      default:
+        filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        break;
+    }
+
+    setFilteredPosts(filtered);
+  };
+
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+  };
+
+  const handleSortChange = (newSortBy) => {
+    setSortBy(newSortBy);
+  };
 
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= totalPages) {
@@ -88,6 +141,11 @@ const Forum = ({ user }) => {
       setIsModalOpen(false);
       setNewPost({ title: '', content: '', tags: '' });
       refetch();
+      socketId.emit('notification', {
+        title: 'New Forum Post',
+        message: `${user.name} has created a new forum post: ${newPost.title}`,
+        type: 'system'
+      });
       toast.success("Your post has been successfully created.");
     }
     if (error) {
@@ -180,10 +238,22 @@ const Forum = ({ user }) => {
                       <SearchIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                       <Input
                         type="search"
-                        placeholder="Search forums..."
+                        placeholder="Search by title or tags..."
                         className="w-full sm:w-[200px] lg:w-[300px] pl-8 pr-4 py-2 rounded-lg bg-background"
+                        value={searchTerm}
+                        onChange={handleSearchChange}
                       />
                     </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline">Sort By</Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent>
+                        <DropdownMenuItem onClick={() => handleSortChange('date')}>Date</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleSortChange('likes')}>Likes</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleSortChange('comments')}>Comments</DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                     <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
                       <DialogTrigger asChild>
                         <Button size="sm">
@@ -253,7 +323,7 @@ const Forum = ({ user }) => {
                   <div className="flex-1">
                     <div className="grid gap-4">
                       {
-                        posts.map((post) => (
+                        filteredPosts.map((post) => (
                           <Card key={post._id} className='bg-white rounded-lg shadow-sm p-6 dark:bg-black dark:shadow-none'>
                             <CardHeader className="flex items-center justify-between">
                               <div className="flex items-center gap-2">
@@ -263,7 +333,7 @@ const Forum = ({ user }) => {
                                   <div className="text-xs text-muted-foreground">{format(post.createdAt)}</div>
                                 </div>
                               </div>
-                              {post.user._id === user._id && (
+                              {(post.user._id === user._id || user.role === 'admin') && (
                                 <DropdownMenu>
                                   <DropdownMenuTrigger asChild>
                                     <Button variant="ghost" size="icon" className="w-8 h-8 rounded-full">
@@ -271,17 +341,21 @@ const Forum = ({ user }) => {
                                     </Button>
                                   </DropdownMenuTrigger>
                                   <DropdownMenuContent align="end">
-                                    <DropdownMenuItem onClick={() => openEditModal(post)}>Edit</DropdownMenuItem>
+                                    {post.user._id === user._id && (
+                                      <DropdownMenuItem onClick={() => openEditModal(post)}>Edit</DropdownMenuItem>
+                                    )}
                                     <DropdownMenuItem onClick={() => openDeleteDialog(post)}>Delete</DropdownMenuItem>
                                   </DropdownMenuContent>
                                 </DropdownMenu>
                               )}
+
                             </CardHeader>
                             <CardContent>
                               <h3 className="text-lg font-semibold">{post.title}</h3>
                               <p className="mt-2 text-muted-foreground">{post.content}</p>
                             </CardContent>
                             <CommentSection
+                              postTitle={post.title}
                               postId={post._id}
                               likes={post.likes}
                               comments={post.comments}
@@ -325,6 +399,14 @@ const Forum = ({ user }) => {
                         <h4 className="text-gray-600 font-medium dark:text-gray-400">Total Topics</h4>
                         <p className="text-gray-900 font-bold dark:text-white">{totalPosts}</p>
                       </div>
+                      <div>
+                        <h4 className="text-gray-600 font-medium dark:text-gray-400">Total Likes</h4>
+                        <p className="text-gray-900 font-bold dark:text-white">{totalLikes}</p>
+                      </div>
+                      <div>
+                        <h4 className="text-gray-600 font-medium dark:text-gray-400">Total Comments</h4>
+                        <p className="text-gray-900 font-bold dark:text-white">{totalComments}</p>
+                      </div>
                     </div>
                   </Card>
                 </div>
@@ -342,62 +424,6 @@ const Forum = ({ user }) => {
         handleInputChange={handleInputChange}
         editPostLoading={editPostLoading}
       />
-      {/* <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Edit Post</DialogTitle>
-            <DialogDescription>
-              Make changes to your post here.
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleEditPost}>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="edit-title" className="text-right">
-                  Title
-                </Label>
-                <Input
-                  id="edit-title"
-                  name="title"
-                  value={editingPost?.title || ''}
-                  onChange={handleInputChange}
-                  className="col-span-3"
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="edit-content" className="text-right">
-                  Content
-                </Label>
-                <Textarea
-                  id="edit-content"
-                  name="content"
-                  value={editingPost?.content || ''}
-                  onChange={handleInputChange}
-                  className="col-span-3"
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="edit-tags" className="text-right">
-                  Tags
-                </Label>
-                <Input
-                  id="edit-tags"
-                  name="tags"
-                  value={editingPost?.tags || ''}
-                  onChange={handleInputChange}
-                  placeholder="Separate tags with commas"
-                  className="col-span-3"
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button type="submit" disabled={editPostLoading}>
-                {editPostLoading ? 'Updating...' : 'Update Post'}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog> */}
       {/* Delete Post Confirmation Dialog */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>

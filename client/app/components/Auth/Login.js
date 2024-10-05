@@ -111,7 +111,9 @@ const Login = ({ setRoute, setOpen, open }) => {
                         <Link href="#">Forgot password?</Link>
                     </div>
                     <Button type="submit" className="flex w-full justify-center gap-2 px-2 py-2 shadow-md" value="Login">
-                        Sign In
+                        <h5 className="text-sm font-semibold uppercase">
+                            Sign In
+                        </h5>
                     </Button>
 
                     <div className="mb-4">
@@ -125,9 +127,9 @@ const Login = ({ setRoute, setOpen, open }) => {
                                 onClick={() => signIn("facebook")}
                             >
                                 <FaFacebookF className="w-4 h-4" />
-                                <h6 className="text-sm font-semibold uppercase">
+                                <h5 className="text-sm font-semibold uppercase">
                                     Sign in with Facebook
-                                </h6>
+                                </h5>
                             </Button>
                             <Button
                                 variant="outline"
@@ -135,9 +137,9 @@ const Login = ({ setRoute, setOpen, open }) => {
                                 onClick={() => signIn("google")}
                             >
                                 <FaGoogle className="w-4 h-4" />
-                                <h6 className="text-sm font-semibold uppercase">
+                                <h5 className="text-sm font-semibold uppercase">
                                     Sign in with Google
-                                </h6>
+                                </h5>
                             </Button>
                         </ul>
                     </div>

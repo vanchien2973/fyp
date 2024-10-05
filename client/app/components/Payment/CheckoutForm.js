@@ -64,10 +64,18 @@ const CheckoutForm = ({ isOpen, setOpen, data, user }) => {
     useEffect(() => {
         if (orderData) {
             setLoadUser(true);
+            // Notification for user
             socketId.emit('notification', {
-                title: 'New Order',
-                message: `You have a new order from `,
-                userId: user._id
+                userId: user._id,
+                title: 'Course Purchase Successful',
+                message: `You have successfully purchased the course: ${data.name}`,
+                type: 'order'
+            });
+            // Notification for admin
+            socketId.emit('notification', {
+                title: 'New Order Received',
+                message: `A new order has been placed for the course: ${data.name} by ${user.name}.`,
+                type: 'system'
             });
             router.push(`/courses/course-access/${data._id}`);
         }

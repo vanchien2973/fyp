@@ -17,9 +17,9 @@ import {
 import CommentReply from "./CommentReply";
 import ReviewsTab from "./ReviewsTab";
 import socketIO from 'socket.io-client';
+import { UserAvatar } from "../ui/avatar";
 const ENDPOINT = process.env.NEXT_PUBLIC_SOCKET_SERVER_URI || '';
 const socketId = socketIO(ENDPOINT, { transports: ['websocket'] });
-
 
 const CourseContentMedia = ({
     id,
@@ -68,11 +68,15 @@ const CourseContentMedia = ({
     const handleQuestionSubmit = () => {
         if (question.length === 0) {
             toast.error("Please enter a question");
+        } else if (!user || !user._id) {
+            toast.error("User information is missing");
+        } else if (!data || !data[activeVideo] || !data[activeVideo]._id) {
+            toast.error("Course content information is missing");
         } else {
             createNewQuestion({
                 courseId: id,
                 question,
-                contentId: data[activeVideo]?._id,
+                contentId: data[activeVideo]._id,
             });
         }
     };
@@ -84,7 +88,7 @@ const CourseContentMedia = ({
             socketId.emit('notification', {
                 title: 'New Question Received',
                 message: `You have a new question in ${data[activeVideo].title}`,
-                userId: user._id
+                type: 'system'
             });
             toast.success("Question added successfully");
         }
@@ -92,25 +96,24 @@ const CourseContentMedia = ({
             toast.error(error.data.message);
         }
     }, [isSuccess, error]);
-    
+
     useEffect(() => {
         if (answerSuccess) {
             setAnswer("");
             refetch();
             toast.success("Answer added successfully");
-            if (user.role === 'admin') {
-                socketId.emit('notification', {
-                    title: 'New Question Reply Received',
-                    message: `You have a new question reply in ${data[activeVideo].title}`,
-                    userId: user._id
-                });
-            }
+            socketId.emit('notification', {
+                userId: user._id,
+                title: 'New Answer to Your Question"',
+                message: `Your question in ${data[activeVideo].title} has a new answer`,
+                type: 'course'
+            });
         }
         if (answerError && "data" in answerError) {
             toast.error(answerError.data.message);
         }
     }, [answerSuccess, answerError]);
-    
+
     useEffect(() => {
         if (reviewSuccess) {
             setReview("");
@@ -118,9 +121,9 @@ const CourseContentMedia = ({
             courseRefetch();
             toast.success("Review added successfully");
             socketId.emit('notification', {
-                title: 'New Review Received in Course',
-                message: `${user.name} has given a review in ${data[activeVideo].title}`,
-                userId: user._id
+                title: 'New Course Review',
+                message: `${user.name} has left a review for ${data[activeVideo].title}`,
+                type: 'system'
             });
         }
         if (reviewError && "data" in reviewError) {
@@ -132,13 +135,19 @@ const CourseContentMedia = ({
         if (replyReviewSuccess) {
             setReplyReview("");
             courseRefetch();
+            socketId.emit('notification', {
+                userId: user._id,
+                title: 'New Reply to Your Review',
+                message: `Admin has replied to your review on ${data[activeVideo].title} has a new answer`,
+                type: 'course'
+            });
             toast.success("Reply in review added successfully");
         }
         if (replyReviewError && "data" in replyReviewError) {
             toast.error(replyReviewError.data.message);
         }
     }, [replyReviewSuccess, replyReviewError]);
-    
+
 
     const handleAnswerSubmit = () => {
         addAnswerQuestion({
@@ -152,10 +161,15 @@ const CourseContentMedia = ({
     const handleReviewSubmit = () => {
         if (review.length === 0) {
             toast.error("Please enter a review");
+        } else if (!user || !user._id) {
+            toast.error("User information is missing");
+        } else if (!id) {
+            toast.error("Course ID is missing");
         } else {
             addReviewInCourse({ review, rating, courseId: id });
         }
     };
+
 
     const handleReviewReplySubmit = () => {
         if (replyReview.length === 0) {
@@ -247,17 +261,7 @@ const CourseContentMedia = ({
                     </TabsContent>
                     <TabsContent value="q&a">
                         <div className="flex items-center gap-4">
-                            <Image
-                                src={
-                                    user?.avatar
-                                        ? user.avatar.url
-                                        : "../../../public/assets/avatar.png"
-                                }
-                                alt=""
-                                width={40}
-                                height={40}
-                                className="w-[40px] h-[40px] rounded-full border-2 border-primary"
-                            />
+                            <UserAvatar user={user} />
                             <Textarea
                                 placeholder="Write your question..."
                                 rows={2}

@@ -8,6 +8,7 @@ import UserModel from "../models/user.model";
 import { createOrderService, getAllOrdersService } from "../services/order.service";
 import NotificationModel from "../models/notification.model";
 import { redis } from "../utils/redis";
+import { createNotification } from "./notification.controller";
 require('dotenv').config();
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
 
@@ -83,11 +84,24 @@ export const createOrder = CatchAsyncError(async (req, res, next) => {
         await redis.set(req.user?._id, JSON.stringify(user))
         await user?.save();
 
-        await NotificationModel.create({
-            user: user._id,
-            title: 'New Order',
-            message: `You have a new order from ${course.name}`,
-        });
+        // Notify user about successful purchase
+        await createNotification(
+            user._id,
+            "Course Purchase Successful",
+            `You have successfully purchased the course: ${course.name}`,
+            'order'
+        );
+
+        // Notify admin about new order
+        const adminUser = await UserModel.findOne({ role: 'admin' });
+        if (adminUser) {
+            await createNotification(
+                adminUser._id,
+                "New Order Received",
+                `A new order has been placed for the course: ${course.name} by ${user.name}`,
+                'system'
+            );
+        }
 
         // Update the purchased count
         course.purchased = (course.purchased || 0) + 1;

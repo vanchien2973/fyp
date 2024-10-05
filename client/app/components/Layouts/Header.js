@@ -38,6 +38,7 @@ import {
 import { RiAccountCircleLine } from "react-icons/ri";
 import ThemeToggle from "../Admin/layouts/ThemeToggle";
 import { useLoadUserQuery } from "@/app/redux/features/api/apiSlice";
+import DropdownNotifications from "../Admin/dashboard/DropdownNotification";
 
 const navItemsData = [
   { name: "Home", url: "/", icon: HomeIcon },
@@ -117,6 +118,7 @@ const Header = ({ open, setOpen, route, setRoute }) => {
             <div className="flex items-center space-x-2 sm:space-x-4">
               {userData ? (
                 <>
+                  <DropdownNotifications/>
                   <ThemeToggle />
                   <Link href="/profile" className="flex items-center">
                     <Image

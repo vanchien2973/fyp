@@ -78,15 +78,15 @@ const SignUp = ({ setRoute, setOpen }) => {
                     <div className="form-group mb-6">
                         <Label htmlFor="name">Your Name</Label>
                         <div className="mt-5 relative mb-1 h-11 w-full min-w-[200px]">
-                        <Input
-                            type="text"
-                            name="name"
-                            value={values.name}
-                            onChange={handleChange}
-                            id="name"
-                            className={errors.name && touched.name ? "border-red-500" : ""}
-                            placeholder="Enter your name"
-                        />
+                            <Input
+                                type="text"
+                                name="name"
+                                value={values.name}
+                                onChange={handleChange}
+                                id="name"
+                                className={errors.name && touched.name ? "border-red-500" : ""}
+                                placeholder="Enter your name"
+                            />
                         </div>
                         {errors.name && touched.name && (
                             <span className="text-red-500 text-sm">{errors.name}</span>
@@ -96,15 +96,15 @@ const SignUp = ({ setRoute, setOpen }) => {
                     <div className="form-group mb-6">
                         <Label htmlFor="email">Your Email</Label>
                         <div className="mt-5 relative mb-1 h-11 w-full min-w-[200px]">
-                        <Input
-                            type="email"
-                            name="email"
-                            value={values.email}
-                            onChange={handleChange}
-                            id="email"
-                            className={errors.email && touched.email ? "border-red-500" : ""}
-                            placeholder="Enter your email"
-                        />
+                            <Input
+                                type="email"
+                                name="email"
+                                value={values.email}
+                                onChange={handleChange}
+                                id="email"
+                                className={errors.email && touched.email ? "border-red-500" : ""}
+                                placeholder="Enter your email"
+                            />
                         </div>
                         {errors.email && touched.email && (
                             <span className="text-red-500 text-sm">{errors.email}</span>
@@ -114,61 +114,69 @@ const SignUp = ({ setRoute, setOpen }) => {
                     <div className="form-group mb-6">
                         <Label htmlFor="phoneNumber">Your Phone Number</Label>
                         <div className="mt-5 relative mb-1 h-11 w-full min-w-[200px]">
-                        <Input
-                            type="text"
-                            name="phoneNumber"
-                            value={values.phoneNumber}
-                            onChange={handleChange}
-                            id="phoneNumber"
-                            className={errors.phoneNumber && touched.phoneNumber ? "border-red-500" : ""}
-                            placeholder="Enter your phone number"
-                        />
-                        {errors.phoneNumber && touched.phoneNumber && (
-                            <span className="text-red-500 text-sm">{errors.phoneNumber}</span>
-                        )}
+                            <Input
+                                type="text"
+                                name="phoneNumber"
+                                value={values.phoneNumber}
+                                onChange={handleChange}
+                                id="phoneNumber"
+                                className={errors.phoneNumber && touched.phoneNumber ? "border-red-500" : ""}
+                                placeholder="Enter your phone number"
+                            />
+                            {errors.phoneNumber && touched.phoneNumber && (
+                                <span className="text-red-500 text-sm">{errors.phoneNumber}</span>
+                            )}
                         </div>
                     </div>
 
                     <div className="form-group mb-6">
                         <Label htmlFor="password">Your Password</Label>
                         <div className="mt-5 relative mb-1 h-11 w-full min-w-[200px]">
-                        <Input
-                            type={show ? "text" : "password"}
-                            name="password"
-                            value={values.password}
-                            onChange={handleChange}
-                            id="password"
-                            className={errors.password && touched.password ? "border-red-500" : ""}
-                            placeholder="Enter your password"
-                        />
-                        {show ? (
-                            <AiOutlineEye
-                                className="absolute right-2 top-[6px] h-5 w-5 cursor-pointer"
-                                onClick={() => setShow(false)}
+                            <Input
+                                type={show ? "text" : "password"}
+                                name="password"
+                                value={values.password}
+                                onChange={handleChange}
+                                id="password"
+                                className={errors.password && touched.password ? "border-red-500" : ""}
+                                placeholder="Enter your password"
                             />
-                        ) : (
-                            <AiOutlineEyeInvisible
-                                className="absolute right-2 top-[6px] h-5 w-5 cursor-pointer"
-                                onClick={() => setShow(true)}
-                            />
-                        )}
-                        {errors.password && touched.password && (
-                            <span className="text-red-500 text-sm">{errors.password}</span>
-                        )}
+                            {show ? (
+                                <AiOutlineEye
+                                    className="absolute right-2 top-[6px] h-5 w-5 cursor-pointer"
+                                    onClick={() => setShow(false)}
+                                />
+                            ) : (
+                                <AiOutlineEyeInvisible
+                                    className="absolute right-2 top-[6px] h-5 w-5 cursor-pointer"
+                                    onClick={() => setShow(true)}
+                                />
+                            )}
+                            {errors.password && touched.password && (
+                                <span className="text-red-500 text-sm">{errors.password}</span>
+                            )}
                         </div>
                     </div>
 
                     <Button type="submit" className="flex w-full justify-center gap-2 px-2 py-2 shadow-md" value="Sign Up">
-                        Sign Up
+                        <h5 className="text-sm font-semibold uppercase">
+                            Sign up
+                        </h5>
                     </Button>
 
                     <div className="mt-4 mb-4 text-center">
                         <p className="text-sm">OR</p>
                         <Button variant="outline" className="w-full flex justify-center gap-2 mt-2" onClick={() => signIn("facebook")}>
-                            <FaFacebookF className="w-5 h-5" /> Sign in with Facebook
+                            <FaFacebookF className="w-5 h-5" />
+                            <h5 className="text-sm font-semibold uppercase">
+                                Sign in with Facebook
+                            </h5>
                         </Button>
                         <Button variant="outline" className="w-full flex justify-center gap-2 mt-2" onClick={() => signIn("google")}>
-                            <FaGoogle className="w-5 h-5" /> Sign in with Google
+                            <FaGoogle className="w-5 h-5" />
+                            <h5 className="text-sm font-semibold uppercase">
+                                Sign in with Google
+                            </h5>
                         </Button>
                     </div>
 

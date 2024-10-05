@@ -10,6 +10,8 @@ import path from "path";
 import CourseModel from "../models/course.model";
 import { createCourse, getAllCoursService } from "../services/course.service";
 import NotificationModel from "../models/notification.model";
+import { createNotification } from "./notification.controller";
+import UserModel from "../models/user.model";
 require('dotenv').config();
 
 // Create Course
@@ -118,12 +120,12 @@ export const getSingleCourse = CatchAsyncError(async (req, res, next) => {
 // Get All Courses (without purchase)
 export const getAllCourses = CatchAsyncError(async (req, res, next) => {
     try {
-            const courses = await CourseModel.find().select("-courseData.videlUrl -courseData.suggestion -courseData.questions -courseData.links");
-            // await redis.set("allCourses", JSON.stringify(courses));
-            res.status(200).json({
-                success: true,
-                courses
-            });
+        const courses = await CourseModel.find().select("-courseData.videlUrl -courseData.suggestion -courseData.questions -courseData.links");
+        // await redis.set("allCourses", JSON.stringify(courses));
+        res.status(200).json({
+            success: true,
+            courses
+        });
     } catch (error) {
         return next(new ErrorHandler(error.message, 500));
     }
@@ -157,43 +159,35 @@ export const getCourseByUser = CatchAsyncError(async (req, res, next) => {
 export const addQuestion = CatchAsyncError(async (req, res, next) => {
     try {
         const { question, courseId, contentId } = req.body;
-
         if (!mongoose.Types.ObjectId.isValid(contentId)) {
             return next(new ErrorHandler("Invalid Content Id", 400));
         }
-
         const course = await CourseModel.findById(courseId);
-
         if (!course) {
             return next(new ErrorHandler("Course not found", 404));
         }
-
         const courseContent = course.courseData[0].content.find(
             (item) => item._id.toString() === contentId
         );
-
         if (!courseContent) {
             return next(new ErrorHandler("Invalid Content Id", 400));
         }
-
         const newQuestion = {
             user: req.user,
             question,
             questionReplies: [],
         };
-        // Initialize questions array if it doesn't exist
-         if (!courseContent.questions) {
-            courseContent.questions = [];
-        }
         courseContent.questions.push(newQuestion);
-
-        // Add notification
-        await NotificationModel.create({
-            user: req.user?._id,
-            title: "New Question Received",
-            message: `You have a new question in ${courseContent.title}`
-        });
-
+        // Add notification for course creator
+        const adminUser = await UserModel.findOne({ role: 'admin' });
+        if (adminUser) {
+            await createNotification(
+                adminUser._id,
+                "New Question Received",
+                `You have a new question in ${courseContent.title}`,
+                'system'
+            );
+        }
         await course.save();
         res.status(200).json({
             success: true,
@@ -203,6 +197,7 @@ export const addQuestion = CatchAsyncError(async (req, res, next) => {
         return next(new ErrorHandler(error.message, 500));
     }
 });
+
 
 // Add Answer in Course Question
 export const addAnswer = CatchAsyncError(async (req, res, next) => {
@@ -242,29 +237,13 @@ export const addAnswer = CatchAsyncError(async (req, res, next) => {
         question.questionReplies.push(newAnswer);
         await course?.save();
 
-        if (req.user._id === question.user._id) {
-            await NotificationModel.create({
-                user: req.user?._id,
-                title: "New Question Reply Received",
-                message: `You have a new question reply in ${courseContent.title}`
-            });
-        } else {
-            const data = {
-                name: question.user.name,
-                title: courseContent.title,
-            };
-            // const html = await ejs.renderFile(path.join(__dirname, "../mails/QuestionReply.ejs"), data);
-            try {
-                await SendMail({
-                    email: question.user.email,
-                    subject: "Question Reply",
-                    template: "QuestionReply.ejs",
-                    data
-                });
-            } catch (error) {
-                return next(new ErrorHandler(error.message, 500));
-            }
-        }
+        // Add notification for question asker
+        await createNotification(
+            question.user._id,
+            "New Answer to Your Question",
+            `Your question in ${courseContent.title} has a new answer`,
+            'course'
+        );
 
         res.status(200).json({
             success: true,
@@ -278,46 +257,64 @@ export const addAnswer = CatchAsyncError(async (req, res, next) => {
 // Add Review in Course
 export const addReview = CatchAsyncError(async (req, res, next) => {
     try {
-        const userCourseList = req.user?.courses;
+        const userCourseList = req.user?.courses || [];
         const courseId = req.params.id;
-        const courseExists = userCourseList.some((course) => course._id.toString() === courseId.toString());
+
+        // Check if courseId is valid
+        if (!mongoose.Types.ObjectId.isValid(courseId)) {
+            return next(new ErrorHandler("Invalid Course Id", 400));
+        }
+
+        const courseExists = userCourseList.some((course) => {
+            return course && course._id && course._id.toString() === courseId.toString();
+        });
 
         if (!courseExists) {
             return next(new ErrorHandler("You are not authorized to access this course", 404));
         }
 
         const course = await CourseModel.findById(courseId);
+
+        if (!course) {
+            return next(new ErrorHandler("Course not found", 404));
+        }
+
         const { review, rating } = req.body;
+
+        if (!review || !rating) {
+            return next(new ErrorHandler("Please provide both review and rating", 400));
+        }
+
         const reviewData = {
             user: req.user,
             comment: review,
-            rating
+            rating: Number(rating)
         }
-        course.reviews.push(reviewData);
-        await course.save();
 
-        let average = 0;
-        course?.reviews.forEach((review) => {
-            average += review.rating;
-        });
-        if (course) {
-            average = average / course.reviews.length;
-            course.ratings = average;
-        }
+        course.reviews.push(reviewData);
+
+        // Recalculate average rating
+        const totalRating = course.reviews.reduce((sum, review) => sum + review.rating, 0);
+        course.ratings = totalRating / course.reviews.length;
+
         await course.save();
         await redis.set(courseId, JSON.stringify(course), 'EX', 604800); // 7 days
 
-        // Add notification
-        await NotificationModel.create({
-            user: req.user?._id,
-            title: 'New Review Received in Course',
-            message: `${req.user?.name} has given a review in ${course?.name}!`
-        });
+        // Add notification for course creator
+        const adminUser = await UserModel.findOne({ role: 'admin' });
+        if (adminUser) {
+            await createNotification(
+                adminUser._id,
+                "New Course Review",
+                `${req.user.name} has left a review for ${course.name}`,
+                'system'
+            );
+        }
 
         res.status(200).json({
             success: true,
             course
-        })
+        });
     } catch (error) {
         return next(new ErrorHandler(error.message, 500));
     }
@@ -345,6 +342,15 @@ export const addReplyForReview = CatchAsyncError(async (req, res, next) => {
             review.commentReplies = [];
         }
         review.commentReplies?.push(replyData);
+
+        // Add notification for review author
+        await createNotification(
+            review.user._id,
+            "New Reply to Your Review",
+            `Admin has replied to your review on ${course.name}`,
+            'course'
+        );
+
         await course?.save();
         await redis.set(courseId, JSON.stringify(course), 'EX', 604800); // 7 days
         res.status(200).json({

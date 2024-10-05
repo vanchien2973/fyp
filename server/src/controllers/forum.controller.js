@@ -3,6 +3,7 @@ import ErrorHandler from "../utils/ErrorHandler";
 import UserModel from "../models/user.model";
 import NotificationModel from "../models/notification.model";
 import ForumModel from "../models/forum.model";
+import { createNotification } from "./notification.controller";
 
 // Create post in Forum
 export const createPost = CatchAsyncError(async (req, res, next) => {
@@ -27,13 +28,16 @@ export const createPost = CatchAsyncError(async (req, res, next) => {
         });
         await newPost.save();
 
-        // Create a notification for followers (assuming you have a follower system)
-        const notification = {
-            user: userId,
-            title: "New Forum Post",
-            message: `${user.name} has created a new forum post: ${title}`
-        };
-        await NotificationModel.create(notification);
+        // Notify admin
+        const adminUser = await UserModel.findOne({ role: 'admin' });
+        if (adminUser) {
+            await createNotification(
+                adminUser._id,
+                "New Forum Post",
+                `${user.name} has created a new forum post: ${title}`,
+                'system'
+            );
+        }
 
         res.status(201).json({
             success: true,
@@ -66,21 +70,22 @@ export const addComment = CatchAsyncError(async (req, res, next) => {
         const newComment = {
             user: userId,
             content: content,
-            likes: [], 
-            replies: [] 
+            likes: [],
+            replies: []
         };
 
         // Add the comment to the post
         post.comments.push(newComment);
         await post.save();
 
-        // Create a notification for the post owner
+        // Notify post owner
         if (post.user.toString() !== userId.toString()) {
-            await NotificationModel.create({
-                user: post.user,
-                title: "New Comment",
-                message: `${user.name} commented on your post: "${post.title}"`
-            });
+            await createNotification(
+                post.user,
+                "New Comment on Your Post",
+                `${user.name} commented on your post: "${post.title}"`,
+                'forum'
+            );
         }
 
         res.status(201).json({
@@ -122,13 +127,14 @@ export const addReply = CatchAsyncError(async (req, res, next) => {
         comment.replies.push(newReply);
         await post.save();
 
-        // Create a notification for the comment owner
+        // Notify comment owner
         if (comment.user.toString() !== userId.toString()) {
-            await NotificationModel.create({
-                user: comment.user,
-                title: "New Reply",
-                message: `${user.name} replied to your comment on the post: "${post.title}"`
-            });
+            await createNotification(
+                comment.user,
+                "New Reply to Your Comment",
+                `${user.name} replied to your comment on the post: "${post.title}"`,
+                'forum'
+            );
         }
 
         res.status(201).json({
@@ -164,13 +170,14 @@ export const likePost = CatchAsyncError(async (req, res, next) => {
             post.likes.push(userId);
             message = "Post liked successfully";
 
-            // Create a notification for the post owner if it's not the same user
+            // Notify post owner
             if (post.user.toString() !== userId.toString()) {
-                await NotificationModel.create({
-                    user: post.user,
-                    title: "New Like",
-                    message: `${user.name} liked your post: "${post.title}"`
-                });
+                await createNotification(
+                    post.user,
+                    "New Like on Your Post",
+                    `${user.name} liked your post: "${post.title}"`,
+                    'forum'
+                );
             }
         } else {
             post.likes.splice(likedIndex, 1);
@@ -212,14 +219,14 @@ export const likeComment = CatchAsyncError(async (req, res, next) => {
             comment.likes.push(userId);
             message = "Comment liked successfully";
 
-            // Create a notification for the comment owner
+            // Notify post owner
             if (comment.user.toString() !== userId.toString()) {
-                const user = await UserModel.findById(userId);
-                await NotificationModel.create({
-                    user: comment.user,
-                    title: "New Like on Comment",
-                    message: `${user.name} liked your comment on the post: "${post.title}"`
-                });
+                await createNotification(
+                    comment.user,
+                    "New Like on Your Comment",
+                    `${user.name} liked your comment: "${post.title}"`,
+                    'forum'
+                );
             }
         } else {
             comment.likes.splice(likedIndex, 1);
@@ -266,14 +273,14 @@ export const likeReply = CatchAsyncError(async (req, res, next) => {
             reply.likes.push(userId);
             message = "Reply liked successfully";
 
-            // Create a notification for the reply owner
+            // Notify post owner
             if (reply.user.toString() !== userId.toString()) {
-                const user = await UserModel.findById(userId);
-                await NotificationModel.create({
-                    user: reply.user,
-                    title: "New Like on Reply",
-                    message: `${user.name} liked your reply on a comment in the post: "${post.title}"`
-                });
+                await createNotification(
+                    reply.user,
+                    "New Like on Your Reply",
+                    `${user.name} liked your reply: "${post.title}"`,
+                    'forum'
+                );
             }
         } else {
             reply.likes.splice(likedIndex, 1);

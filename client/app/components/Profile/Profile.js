@@ -1,18 +1,18 @@
-import React, { useEffect, useState } from 'react'
-import SidebarProfile from './SidebarProfile';
+import React, { useState } from 'react'
 import { signOut } from 'next-auth/react';
 import { useLogoutQuery } from '@/app/redux/features/auth/authApi';
+import { Card } from "../ui/card"
+import SidebarProfile from './SidebarProfile';
 import ProfileInfor from './ProfileInfor';
 import ChangePassword from './ChangePassword';
-import { Card } from "../ui/card"
+import EnrolledCourse from './EnrolledCourse';
 
 const Profile = ({ user }) => {
-    const [scroll, setScroll] = useState(false);
     const [avatar, setAvatar] = useState(null)
     const [active, setActive] = useState(1);
     const [logout, setLogout] = useState(false);
     const {} = useLogoutQuery(undefined, {
-        skip: !logout ? true : false
+        skip: !logout
     });
 
     const logoutHandler = async () => {
@@ -20,47 +20,35 @@ const Profile = ({ user }) => {
         await signOut();
     };
 
-    useEffect(() => {
-        const handleScroll = () => {
-            if (window.scrollY > 85) {
-                setScroll(true);
-            } else {
-                setScroll(false);
-            }
-        };
+    const renderContent = () => {
+        switch(active) {
+            case 1:
+                return <ProfileInfor avatar={avatar} user={user} />;
+            case 2:
+                return <ChangePassword />;
+            case 3:
+                return <EnrolledCourse user={user}/>;
+            default:
+                return null;
+        }
+    };
 
-        window.addEventListener("scroll", handleScroll);
-
-        return () => {
-            window.removeEventListener("scroll", handleScroll);
-        };
-    }, []);
-    
     return (
-        <div className="pt-[80px] pb-[80px] w-[85%] flex mx-auto">
-            <Card
-                className={`w-[60px] 800px:w-[310px] h-[450px] mt-[6px] sticky ${
-                    scroll ? "top-[180px]" : "top-[30px]"
-                } left-[30px]`}
-            >
-                <SidebarProfile
-                    user={user}
-                    active={active}
-                    avatar={avatar}
-                    setActive={setActive}
-                    logoutHandler={logoutHandler}
-                />
-            </Card>
-            {active === 1 && (
-                <div className="w-full h-[80%] bg-transparent">
-                    <ProfileInfor avatar={avatar} user={user} />
+        <div className="container mx-auto py-6 px-4 md:py-10 md:px-0">
+            <div className="flex flex-col md:flex-row gap-6">
+                <Card className="w-full md:w-64 shrink-0">
+                    <SidebarProfile
+                        user={user}
+                        active={active}
+                        avatar={avatar}
+                        setActive={setActive}
+                        logoutHandler={logoutHandler}
+                    />
+                </Card>
+                <div className="flex-1 p-4 md:p-6">
+                    {renderContent()}
                 </div>
-            )}
-            {active === 2 && (
-                <div className="w-full h-[80%] bg-transparent">
-                    <ChangePassword />
-                </div>
-            )}
+            </div>
         </div>
     )
 }

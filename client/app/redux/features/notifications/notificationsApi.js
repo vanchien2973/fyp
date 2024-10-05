@@ -2,17 +2,24 @@ import { apiSlice } from "../api/apiSlice";
 
 export const notificationsApi = apiSlice.injectEndpoints({
     endpoints: (builder) => ({
-        getAllNotifications: builder.query({
+        getUserNotifications: builder.query({
             query: () => ({
                 method: 'GET',
-                url: 'get-all-notifications',
+                url: 'user-notifications',
+                credentials: 'include'
+            })
+        }),
+        getSystemNotifications: builder.query({
+            query: () => ({
+                method: 'GET',
+                url: 'system-notifications',
                 credentials: 'include'
             })
         }),
         updateNotificationStatus: builder.mutation({
             query: (id) => ({
                 method: 'PUT',
-                url: `update-notification-status/${id}`,
+                url: `update-notification/${id}`,
                 credentials: 'include'
             })
         }),
@@ -23,8 +30,12 @@ export const notificationsApi = apiSlice.injectEndpoints({
                 credentials: 'include'
             })
         })
-        
     })
 });
 
-export const { useGetAllNotificationsQuery, useUpdateNotificationStatusMutation, useDeleteNotificationMutation } = notificationsApi; 
+export const { 
+    useGetUserNotificationsQuery, 
+    useGetSystemNotificationsQuery, 
+    useUpdateNotificationStatusMutation, 
+    useDeleteNotificationMutation 
+} = notificationsApi;

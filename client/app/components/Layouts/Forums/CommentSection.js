@@ -7,8 +7,11 @@ import { CardFooter } from '../../ui/card';
 import { Input } from '../../ui/input';
 import { useAddCommentMutation, useAddReplyMutation, useLikeCommentMutation, useLikePostMutation, useLikeReplyMutation } from '@/app/redux/features/forum/forumApi';
 import toast from 'react-hot-toast';
+import socketIO from 'socket.io-client';
+const ENDPOINT = process.env.NEXT_PUBLIC_SOCKET_SERVER_URI || '';
+const socketId = socketIO(ENDPOINT, { transports: ['websocket'] });
 
-const CommentSection = ({ postId, comments, currentUser, refetch, likes }) => {
+const CommentSection = ({ postTitle, postId, comments, currentUser, refetch, likes }) => {
     const [visibleComments, setVisibleComments] = useState(3);
     const [showComments, setShowComments] = useState(false);
     const [newComment, setNewComment] = useState('');
@@ -51,6 +54,12 @@ const CommentSection = ({ postId, comments, currentUser, refetch, likes }) => {
         if (addCommentSuccess) {
             refetch();
             setNewComment('');
+            socketId.emit('notification', {
+                userId: currentUser._id,
+                title: 'New Comment on Your Post',
+                message: `${currentUser.name} commented on your post: ${postTitle}`,
+                type: 'forum'
+            });
             toast.success('Comment added successfully');
         }
         if (addCommentError && "data" in addCommentError) {
@@ -63,6 +72,12 @@ const CommentSection = ({ postId, comments, currentUser, refetch, likes }) => {
             refetch();
             setReplyContents({});
             setReplyingTo({});
+            socketId.emit('notification', {
+                userId: currentUser._id,
+                title: 'New Reply to Your Comment',
+                message: `${currentUser.name} replied to your comment on the post: ${postTitle}`,
+                type: 'forum'
+            });
             toast.success('Reply added successfully');
         }
         if (addReplyError && "data" in addReplyError) {
@@ -106,16 +121,34 @@ const CommentSection = ({ postId, comments, currentUser, refetch, likes }) => {
     const handleLikePost = async () => {
         await likePost({ postId }).unwrap();
         refetch();
+        socketId.emit('notification', {
+            userId: currentUser._id,
+            title: 'New Like on Your Post',
+            message: `${currentUser.name} liked your post: ${postTitle}`,
+            type: 'forum'
+        });
     };
 
     const handleLikeComment = async (commentId) => {
         await likeComment({ postId, commentId }).unwrap();
         refetch();
+        socketId.emit('notification', {
+            userId: currentUser._id,
+            title: 'New Like on Your Comment',
+            message: `${currentUser.name} liked your comment: ${postTitle}`,
+            type: 'forum'
+        });
     };
 
     const handleLikeReply = async (commentId, replyId) => {
         await likeReply({ postId, commentId, replyId }).unwrap();
         refetch();
+        socketId.emit('notification', {
+            userId: currentUser._id,
+            title: 'New Like on Your Reply',
+            message: `${currentUser.name} liked your reply: ${postTitle}`,
+            type: 'forum'
+        });
     };
 
     return (

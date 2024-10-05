@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Bell, Check, Trash2 } from 'lucide-react';
-import { useGetAllNotificationsQuery, useUpdateNotificationStatusMutation, useDeleteNotificationMutation } from '@/app/redux/features/notifications/notificationsApi';
+import { useGetUserNotificationsQuery, useGetSystemNotificationsQuery, useUpdateNotificationStatusMutation, useDeleteNotificationMutation } from '@/app/redux/features/notifications/notificationsApi';
+import { useSelector } from 'react-redux';
 import socketIO from 'socket.io-client';
 import {
     Popover,
@@ -17,7 +18,18 @@ const ENDPOINT = process.env.NEXT_PUBLIC_SOCKET_SERVER_URI || '';
 const socketId = socketIO(ENDPOINT, { transports: ['websocket'] });
 
 const DropdownNotifications = () => {
-    const { data, refetch } = useGetAllNotificationsQuery(undefined, { refetchOnMountOrArgChange: true });
+    const { user } = useSelector((state) => state.auth);
+    const isAdmin = user && user.role === 'admin';
+    
+    const { data: userData, refetch: refetchUserData } = useGetUserNotificationsQuery(undefined, { 
+        skip: isAdmin,
+        refetchOnMountOrArgChange: true 
+    });
+    const { data: adminData, refetch: refetchAdminData } = useGetSystemNotificationsQuery(undefined, { 
+        skip: !isAdmin,
+        refetchOnMountOrArgChange: true 
+    });
+    
     const [updateNotificationStatus] = useUpdateNotificationStatusMutation();
     const [deleteNotification] = useDeleteNotificationMutation();
     const [notifications, setNotifications] = useState([]);
@@ -28,31 +40,45 @@ const DropdownNotifications = () => {
     };
 
     useEffect(() => {
-        if (data) {
-            const sortedNotifications = [...data.notifications].sort((a, b) =>
+        const notificationData = isAdmin ? adminData : userData;
+        if (notificationData) {
+            const sortedNotifications = [...notificationData.notifications].sort((a, b) =>
                 new Date(b.createdAt) - new Date(a.createdAt)
             );
             setNotifications(sortedNotifications);
         }
         audio.load();
-    }, [data]);
+    }, [isAdmin, adminData, userData]);
 
     useEffect(() => {
         socketId.on('newNotification', (data) => {
-            refetch();
+            if (isAdmin) {
+                refetchAdminData();
+            } else {
+                refetchUserData();
+            }
             playNotificationSound();
         });
-    }, [refetch]);
+    }, [refetchAdminData, refetchUserData, isAdmin]);
 
     const handleNotificationStatusChange = async (id) => {
         await updateNotificationStatus(id).unwrap();
-        refetch();
+        if (isAdmin) {
+            refetchAdminData();
+        } else {
+            refetchUserData();
+        }
     };
 
     const handleDeleteNotification = async (id) => {
         await deleteNotification(id).unwrap();
-        refetch();
+        if (isAdmin) {
+            refetchAdminData();
+        } else {
+            refetchUserData();
+        }
     };
+
 
     return (
         <Popover>

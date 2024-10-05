@@ -1,11 +1,12 @@
 import React from 'react';
 import Link from 'next/link';
 import { Button } from "../ui/button";
-import { Avatar, AvatarImage, AvatarFallback } from "../ui/avatar";
+import { Avatar, AvatarImage, AvatarFallback, UserAvatar } from "../ui/avatar";
 import { IoLogOutOutline } from "react-icons/io5";
 import { BookOpenIcon, ArrowPathIcon } from "@heroicons/react/24/outline";
 import { MdOutlineAdminPanelSettings } from "react-icons/md";
 import { Separator } from '../ui/separator';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
 
 const SidebarProfile = ({ user, active, avatar, setActive, logoutHandler }) => {
   const menuItems = [
@@ -22,41 +23,40 @@ const SidebarProfile = ({ user, active, avatar, setActive, logoutHandler }) => {
     { id: 5, label: 'Logout', icon: IoLogOutOutline, action: logoutHandler },
   ];
 
+  const renderButton = (item) => (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant={active === item.id ? "secondary" : "ghost"}
+            className="w-full justify-start hover:bg-gray-100 py-4 md:py-6 text-base mt-2"
+            onClick={item.action}
+          >
+            {item.id === 1 ? (
+              <UserAvatar user={user}/>
+            ) : item.icon && <item.icon className="h-5 w-5 md:h-7 md:w-7" />}
+            <span className="hidden md:inline ml-3">{item.label}</span>
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="right">
+          <p>{item.label}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+
   return (
-    <div className="w-full space-y-2">
+    <div className="w-full space-y-1 md:space-y-2">
       {menuItems.map((item) => (
         <React.Fragment key={item.id}>
           {item.href ? (
             <Link href={item.href} passHref className="w-full block">
-              <Button
-                variant="ghost"
-                className="w-full justify-start hover:bg-gray-100 py-6 text-lg"
-              >
-                {item.id === 1 ? (
-                  <Avatar className="h-8 w-8 mr-4">
-                    <AvatarImage src={user.avatar || avatar ? user.avatar.url || avatar : '/assets/avatar.png'} alt="Avatar" />
-                    <AvatarFallback>Avatar</AvatarFallback>
-                  </Avatar>
-                ) : item.icon && <item.icon className="mr-4 h-7 w-7" />}
-                <span className="hidden md:inline">{item.label}</span>
-              </Button>
+              {renderButton(item)}
             </Link>
           ) : (
-            <Button
-              variant="ghost"
-              className="w-full justify-start hover:bg-gray-100 py-6 text-lg"
-              onClick={item.action}
-            >
-              {item.id === 1 ? (
-                <Avatar className="h-8 w-8 mr-4">
-                  <AvatarImage src={user.avatar || avatar ? user.avatar.url || avatar : '/assets/avatar.png'} alt="Avatar" />
-                  <AvatarFallback>Avatar</AvatarFallback>
-                </Avatar>
-              ) : item.icon && <item.icon className="mr-4 h-7 w-7" />}
-              <span className="hidden md:inline">{item.label}</span>
-            </Button>
+            renderButton(item)
           )}
-          {item.id === 1 && <Separator/>}
+          {item.id === 1 && <Separator className="my-2" />}
         </React.Fragment>
       ))}
     </div>

@@ -1,14 +1,24 @@
 import express from 'express';
 import { authorizeRoles, isAuthenticated } from '../middlewares/AuthMiddleware';
 import { updateToken } from '../controllers/user.controller';
-import { getNotifications, updateNotificationStatus, deleteNotification } from '../controllers/notification.controller';
+import { 
+    getUserNotifications, 
+    getSystemNotifications, 
+    updateNotificationStatus, 
+    deleteNotification 
+} from '../controllers/notification.controller';
 
 const notificationRouter = express.Router();
 
-notificationRouter.get('/get-all-notifications', updateToken, isAuthenticated, authorizeRoles('admin'), getNotifications);
+// Route for regular users
+notificationRouter.get('/user-notifications', updateToken, isAuthenticated, getUserNotifications);
 
-notificationRouter.put('/update-notification-status/:id', updateToken, isAuthenticated, authorizeRoles('admin'), updateNotificationStatus);
+// Routes for admin
+notificationRouter.get('/system-notifications', updateToken, isAuthenticated, authorizeRoles('admin'), getSystemNotifications);
 
-notificationRouter.delete('/delete-notification/:id', updateToken, isAuthenticated, authorizeRoles('admin'), deleteNotification);
+// Routes for both users and admin
+notificationRouter.put('/update-notification/:id', updateToken, isAuthenticated, updateNotificationStatus);
+
+notificationRouter.delete('/delete-notification/:id', updateToken, isAuthenticated, deleteNotification);
 
 export default notificationRouter;
