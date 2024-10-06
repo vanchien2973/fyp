@@ -1,4 +1,4 @@
-import { HeartIcon, MessageCircleIcon, MoveHorizontalIcon, Plus, SearchIcon } from 'lucide-react'
+import { Filter, HeartIcon, MessageCircleIcon, MoveHorizontalIcon, Plus, SearchIcon } from 'lucide-react'
 import React, { useEffect, useState } from 'react'
 import { UserAvatar } from '../../ui/avatar'
 import { Card, CardContent, CardFooter, CardHeader } from '../../ui/card'
@@ -246,7 +246,7 @@ const Forum = ({ user }) => {
                     </div>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="outline">Sort By</Button>
+                        <Button variant="outline"><Filter className='h-4 w-4 mr-2'/>Filter</Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent>
                         <DropdownMenuItem onClick={() => handleSortChange('date')}>Date</DropdownMenuItem>

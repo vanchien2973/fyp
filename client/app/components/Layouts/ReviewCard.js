@@ -1,8 +1,8 @@
 import Rating from '@/app/utils/Rating'
-import { avatar } from '@material-tailwind/react'
-import { Card } from '@mui/material'
+
 import Image from 'next/image'
 import React from 'react'
+import { Card } from '../ui/card'
 
 const ReviewCard = (props) => {
     return (
