@@ -37,6 +37,7 @@ const CourseInformation = ({ courseInfor, setCourseInfor, setCurrentStep, curren
     defaultValues: courseInfor,
     mode: 'onChange'
   });
+  console.log(courseInfor.rank)
 
   useEffect(() => {
     form.reset(courseInfor);
@@ -216,6 +217,39 @@ const CourseInformation = ({ courseInfor, setCourseInfor, setCurrentStep, curren
                         setCourseInfor({ ...courseInfor, demoUrl: e.target.value });
                       }}
                     />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          <div className="relative mb-4 gap-8 rounded-md border p-4 md:grid md:grid-cols-1">
+            <FormField
+              control={form.control}
+              name="rank"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Course Rank</FormLabel>
+                  <FormControl>
+                    <Select
+                      disabled={isEdit}
+                      value={field.value}
+                      onValueChange={(value) => {
+                        if (!isEdit) {
+                          field.onChange(value);
+                          setCourseInfor((prev) => ({ ...prev, rank: value }));
+                        }
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select course rank" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Beginner">Beginner</SelectItem>
+                        <SelectItem value="Intermediate Level">Intermediate Level</SelectItem>
+                        <SelectItem value="Advanced Level">Advanced Level</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </FormControl>
                   <FormMessage />
                 </FormItem>

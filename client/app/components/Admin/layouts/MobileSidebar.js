@@ -5,8 +5,6 @@ import { useState } from 'react';
 import { DashboardNav } from '../../ui/dashboard-nav';
 import { navItems } from '@/app/utils/NavItems';
 
-// import { Playlist } from "../data/playlists";
-
 export function MobileSidebar({ className }) {
   const [open, setOpen] = useState(false);
 

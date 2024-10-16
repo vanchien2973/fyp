@@ -30,6 +30,18 @@ export const navItems = [
         label: 'list_course'
     },
     {
+        title: 'Entry Test',
+        href: '/admin/entry-test',
+        icon: 'entry_test',
+        label: 'entry_test'
+    },
+    {
+        title: 'Create Entry Test',
+        href: '/admin/create-entry-test',
+        icon: 'create_entry_test',
+        label: 'create_entry_test'
+    },
+    {
         title: 'Hero',
         href: '/admin/hero',
         icon: 'hero',

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Bell, Check, Trash2 } from 'lucide-react';
 import { useGetUserNotificationsQuery, useGetSystemNotificationsQuery, useUpdateNotificationStatusMutation, useDeleteNotificationMutation } from '@/app/redux/features/notifications/notificationsApi';
 import { useSelector } from 'react-redux';
@@ -21,64 +21,68 @@ const DropdownNotifications = () => {
     const { user } = useSelector((state) => state.auth);
     const isAdmin = user && user.role === 'admin';
     
-    const { data: userData, refetch: refetchUserData } = useGetUserNotificationsQuery(undefined, { 
-        skip: isAdmin,
-        refetchOnMountOrArgChange: true 
-    });
-    const { data: adminData, refetch: refetchAdminData } = useGetSystemNotificationsQuery(undefined, { 
-        skip: !isAdmin,
-        refetchOnMountOrArgChange: true 
-    });
+    const { data: userData, refetch: refetchUserData } = useGetUserNotificationsQuery();
+    const { data: adminData, refetch: refetchAdminData } = useGetSystemNotificationsQuery();
     
     const [updateNotificationStatus] = useUpdateNotificationStatusMutation();
     const [deleteNotification] = useDeleteNotificationMutation();
     const [notifications, setNotifications] = useState([]);
     const [audio] = useState(new Audio('https://res.cloudinary.com/du3a3d1dh/video/upload/v1727277580/qscarlijg0ukeqk0bqwf.mp3'));
 
-    const playNotificationSound = () => {
+    const playNotificationSound = useCallback(() => {
         audio.play();
-    };
+    }, [audio]);
 
     useEffect(() => {
-        const notificationData = isAdmin ? adminData : userData;
-        if (notificationData) {
-            const sortedNotifications = [...notificationData.notifications].sort((a, b) =>
-                new Date(b.createdAt) - new Date(a.createdAt)
-            );
-            setNotifications(sortedNotifications);
+        let combinedNotifications = [];
+        if (userData) {
+            combinedNotifications = [...combinedNotifications, ...userData.notifications];
         }
+        if (isAdmin && adminData) {
+            combinedNotifications = [...combinedNotifications, ...adminData.notifications];
+        }
+        const sortedNotifications = combinedNotifications.sort((a, b) =>
+            new Date(b.createdAt) - new Date(a.createdAt)
+        );
+        setNotifications(sortedNotifications);
         audio.load();
-    }, [isAdmin, adminData, userData]);
+    }, [isAdmin, adminData, userData, audio]);
 
     useEffect(() => {
-        socketId.on('newNotification', (data) => {
-            if (isAdmin) {
-                refetchAdminData();
-            } else {
-                refetchUserData();
+        const handleNewNotification = (data) => {
+            if (data.type === 'user' || (isAdmin && data.type === 'system')) {
+                if (data.type === 'user') {
+                    refetchUserData();
+                }
+                if (isAdmin) {
+                    refetchAdminData();
+                }
+                playNotificationSound();
             }
-            playNotificationSound();
-        });
-    }, [refetchAdminData, refetchUserData, isAdmin]);
+        };
+    
+        socketId.on('newNotification', handleNewNotification);
+    
+        return () => {
+            socketId.off('newNotification', handleNewNotification);
+        };
+    }, [refetchAdminData, refetchUserData, isAdmin, playNotificationSound]);
 
     const handleNotificationStatusChange = async (id) => {
         await updateNotificationStatus(id).unwrap();
+        refetchUserData();
         if (isAdmin) {
             refetchAdminData();
-        } else {
-            refetchUserData();
         }
     };
 
     const handleDeleteNotification = async (id) => {
         await deleteNotification(id).unwrap();
+        refetchUserData();
         if (isAdmin) {
             refetchAdminData();
-        } else {
-            refetchUserData();
         }
     };
-
 
     return (
         <Popover>

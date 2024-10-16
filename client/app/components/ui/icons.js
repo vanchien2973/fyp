@@ -33,7 +33,9 @@ import {
     User2Icon,
     Users,
     UserX2Icon,
-    X
+    X,
+    BookCheck,
+    FilePlus
   } from 'lucide-react';
   
   export const Icons = {
@@ -41,6 +43,8 @@ import {
     logo: Command,
     create_course: CircleFadingPlus,
     login: LogIn,
+    entry_test: BookCheck,
+    create_entry_test: FilePlus,
     close: X,
     list_course: ListVideo,
     profile: User2Icon,

@@ -1,7 +1,6 @@
 import CatchAsyncError from "../middlewares/CatchAsyncError";
 import ErrorHandler from "../utils/ErrorHandler";
 import UserModel from "../models/user.model";
-import NotificationModel from "../models/notification.model";
 import ForumModel from "../models/forum.model";
 import { createNotification } from "./notification.controller";
 

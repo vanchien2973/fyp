@@ -357,6 +357,7 @@ const Forum = ({ user }) => {
                             <CommentSection
                               postTitle={post.title}
                               postId={post._id}
+                              postAuthorId={post.user._id} 
                               likes={post.likes}
                               comments={post.comments}
                               currentUser={user}

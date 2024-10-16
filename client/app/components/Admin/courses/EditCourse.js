@@ -33,12 +33,12 @@ const EditCourse = ({ id }) => {
 
     useEffect(() => {
         if (editCourseData) {
-            console.log('editCourseData.category:', editCourseData.category);
             setCourseInfor((prev) => ({
                 ...prev,
                 name: editCourseData.name,
                 description: editCourseData.description,
                 category: editCourseData.category,
+                rank: editCourseData.rank,
                 price: editCourseData.price,
                 estimatedPrice: editCourseData?.estimatedPrice,
                 thumbnail: editCourseData?.thumbnail?.url,
@@ -55,6 +55,7 @@ const EditCourse = ({ id }) => {
         name: "",
         description: "",
         category: { title: "", level: "" },
+        rank: "",
         price: "",
         estimatedPrice: "",
         thumbnail: "",
@@ -115,6 +116,7 @@ const EditCourse = ({ id }) => {
             description: courseInfor.description,
             category: courseInfor.category,
             price: courseInfor.price,
+            rank: courseInfor.rank,
             estimatedPrice: courseInfor.estimatedPrice,
             thumbnail: courseInfor.thumbnail,
             tags: courseInfor.tags,

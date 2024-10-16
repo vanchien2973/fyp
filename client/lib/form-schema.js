@@ -7,6 +7,9 @@ export const courseSchema = z.object({
   description: z
     .string()
     .min(10, { message: 'Description is required' }),
+  rank: z.enum(['Beginner', 'Intermediate Level', 'Advanced Level'], {
+    required_error: 'Rank is required',
+  }),
   category: z.object({
     title: z.string().min(1, { message: 'Category is required' }),
     level: z.string().min(1, { message: 'Level is required' })

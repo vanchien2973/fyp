@@ -75,7 +75,35 @@ const userSchema = new mongoose.Schema({
                 default: Date.now
             }
         }
-    ]
+    ],
+    entranceTestResults: [{
+        test: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'EntranceTest'
+        },
+        score: Number,
+        sectionScores: {
+            type: Map,
+            of: Number
+        },
+        detailedResults: [{
+            section: String,
+            questionId: mongoose.Schema.Types.ObjectId,
+            userAnswer: mongoose.Schema.Types.Mixed,
+            isCorrect: Boolean,
+            score: Number,
+            maxScore: Number
+        }],
+        takenAt: {
+            type: Date,
+            default: Date.now
+        }
+    }],
+    proficiencyLevel: {
+        type: String,
+        enum: ['Beginner', 'Intermediate', 'Advanced'],
+        default: 'Beginner'
+    }
 }, { timestamps: true });
 
 // Hash Password
@@ -93,12 +121,12 @@ userSchema.methods.comparePassword = async function (enteredPassword) {
 };
 
 // Generate Access Token
-userSchema.methods.generateAccessToken = function() {
+userSchema.methods.generateAccessToken = function () {
     return jwt.sign({ id: this._id }, process.env.ACCESS_TOKEN_SECRET || '', { expiresIn: '5m' });
 };
 
 // Generate Refresh Token
-userSchema.methods.generateRefreshToken = function() {
+userSchema.methods.generateRefreshToken = function () {
     return jwt.sign({ id: this._id }, process.env.REFRESH_TOKEN_SECRET || '', { expiresIn: '3d' });
 };
 

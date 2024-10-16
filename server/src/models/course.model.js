@@ -58,6 +58,11 @@ const courseSchema = new mongoose.Schema({
             required: true,
         }, 
     },
+    rank: {
+        type: String,
+        enum: ['Beginner', 'Intermediate', 'Advanced'],
+        required: true
+    },
     price: {
         type: Number,
         required: true,

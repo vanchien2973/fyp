@@ -11,7 +11,7 @@ import socketIO from 'socket.io-client';
 const ENDPOINT = process.env.NEXT_PUBLIC_SOCKET_SERVER_URI || '';
 const socketId = socketIO(ENDPOINT, { transports: ['websocket'] });
 
-const CommentSection = ({ postTitle, postId, comments, currentUser, refetch, likes }) => {
+const CommentSection = ({ postTitle, postId, comments, currentUser, postAuthorId, refetch, likes }) => {
     const [visibleComments, setVisibleComments] = useState(3);
     const [showComments, setShowComments] = useState(false);
     const [newComment, setNewComment] = useState('');
@@ -89,28 +89,6 @@ const CommentSection = ({ postTitle, postId, comments, currentUser, refetch, lik
         setVisibleComments(prev => prev === 3 ? comments.length : 3);
     };
 
-    const handleAddComment = async () => {
-        if (newComment.trim() === '') return;
-        const comment = {
-            postId,
-            content: newComment,
-            user: currentUser,
-        };
-        await addComment(comment).unwrap();
-    };
-
-    const handleReply = async (commentId) => {
-        const replyContent = replyContents[commentId];
-        if (!replyContent || replyContent.trim() === '') return;
-        const reply = {
-            postId,
-            commentId,
-            content: replyContent,
-            user: currentUser,
-        };
-        await addReply(reply).unwrap();
-    };
-
     const handleReplyContentChange = (commentId, content) => {
         setReplyContents(prev => ({
             ...prev,
@@ -121,34 +99,78 @@ const CommentSection = ({ postTitle, postId, comments, currentUser, refetch, lik
     const handleLikePost = async () => {
         await likePost({ postId }).unwrap();
         refetch();
-        socketId.emit('notification', {
-            userId: currentUser._id,
-            title: 'New Like on Your Post',
-            message: `${currentUser.name} liked your post: ${postTitle}`,
-            type: 'forum'
-        });
+        if (currentUser._id !== postAuthorId) {
+            socketId.emit('notification', {
+                userId: postAuthorId,
+                title: 'New Like on Your Post',
+                message: `${currentUser.name} liked your post: ${postTitle}`,
+                type: 'forum'
+            });
+        }
     };
 
-    const handleLikeComment = async (commentId) => {
+    const handleLikeComment = async (commentId, commentAuthorId) => {
         await likeComment({ postId, commentId }).unwrap();
         refetch();
-        socketId.emit('notification', {
-            userId: currentUser._id,
-            title: 'New Like on Your Comment',
-            message: `${currentUser.name} liked your comment: ${postTitle}`,
-            type: 'forum'
-        });
+        if (currentUser._id !== commentAuthorId) {
+            socketId.emit('notification', {
+                userId: commentAuthorId,
+                title: 'New Like on Your Comment',
+                message: `${currentUser.name} liked your comment on: ${postTitle}`,
+                type: 'forum'
+            });
+        }
     };
 
-    const handleLikeReply = async (commentId, replyId) => {
+    const handleLikeReply = async (commentId, replyId, replyAuthorId) => {
         await likeReply({ postId, commentId, replyId }).unwrap();
         refetch();
-        socketId.emit('notification', {
-            userId: currentUser._id,
-            title: 'New Like on Your Reply',
-            message: `${currentUser.name} liked your reply: ${postTitle}`,
-            type: 'forum'
-        });
+        if (currentUser._id !== replyAuthorId) {
+            socketId.emit('notification', {
+                userId: replyAuthorId,
+                title: 'New Like on Your Reply',
+                message: `${currentUser.name} liked your reply on: ${postTitle}`,
+                type: 'forum'
+            });
+        }
+    };
+
+    const handleAddComment = async () => {
+        if (newComment.trim() === '') return;
+        const comment = {
+            postId,
+            content: newComment,
+            user: currentUser,
+        };
+        await addComment(comment).unwrap();
+        if (currentUser._id !== postAuthorId) {
+            socketId.emit('notification', {
+                userId: postAuthorId,
+                title: 'New Comment on Your Post',
+                message: `${currentUser.name} commented on your post: ${postTitle}`,
+                type: 'forum'
+            });
+        }
+    };
+
+    const handleReply = async (commentId, commentAuthorId) => {
+        const replyContent = replyContents[commentId];
+        if (!replyContent || replyContent.trim() === '') return;
+        const reply = {
+            postId,
+            commentId,
+            content: replyContent,
+            user: currentUser,
+        };
+        await addReply(reply).unwrap();
+        if (currentUser._id !== commentAuthorId) {
+            socketId.emit('notification', {
+                userId: commentAuthorId,
+                title: 'New Reply to Your Comment',
+                message: `${currentUser.name} replied to your comment on: ${postTitle}`,
+                type: 'forum'
+            });
+        }
     };
 
     return (
@@ -194,8 +216,12 @@ const CommentSection = ({ postTitle, postId, comments, currentUser, refetch, lik
                                 </div>
                                 <div>{comment.content}</div>
                                 <div className="flex items-center gap-2">
-                                    <Button variant="ghost" size="sm" onClick={() => handleLikeComment(comment._id)}>
-                                        <ThumbsUpIcon className="w-4 h-4 mr-1" />
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => handleLikeComment(comment._id, comment.user._id)}
+                                    >
+                                        <ThumbsUpIcon className={`w-4 h-4 mr-1 ${comment.likes.includes(currentUser._id) ? 'text-blue-500' : ''}`} />
                                         Like ({comment.likes.length})
                                     </Button>
                                     <Button variant="ghost" size="sm" onClick={() => toggleReplyTo(comment._id)}>
@@ -243,8 +269,12 @@ const CommentSection = ({ postTitle, postId, comments, currentUser, refetch, lik
                                                             <div className="text-gray-500 text-xs dark:text-gray-400">{format(reply.createdAt)}</div>
                                                         </div>
                                                         <div>{reply.content}</div>
-                                                        <Button variant="ghost" size="sm" onClick={() => handleLikeReply(comment._id, reply._id)}>
-                                                            <ThumbsUpIcon className="w-4 h-4 mr-1" />
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={() => handleLikeReply(comment._id, reply._id, reply.user._id)}
+                                                        >
+                                                            <ThumbsUpIcon className={`w-4 h-4 mr-1 ${reply.likes.includes(currentUser._id) ? 'text-blue-500' : ''}`} />
                                                             Like ({reply.likes.length})
                                                         </Button>
                                                     </div>
