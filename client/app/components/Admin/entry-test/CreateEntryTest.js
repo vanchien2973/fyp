@@ -16,9 +16,8 @@ const CreateEntryTest = () => {
   const [description, setDescription] = useState('');
   const [testType, setTestType] = useState('IELTS');
   const [totalTime, setTotalTime] = useState(180);
-  const [passingScore, setPassingScore] = useState(65);
   const [sections, setSections] = useState([
-    { name: 'Listening', description: '', timeLimit: 40, questions: [] },
+    { name: 'Listening', description: '', timeLimit: 40, passages: [], questions: [] },
     { name: 'Reading', description: '', timeLimit: 60, passages: [], questions: [] },
     { name: 'Writing', description: '', timeLimit: 60, questions: [] },
     { name: 'Speaking', description: '', timeLimit: 20, questions: [] }
@@ -32,13 +31,18 @@ const CreateEntryTest = () => {
 
   const handleAddPassage = (sectionIndex) => {
     const updatedSections = [...sections];
-    updatedSections[sectionIndex].passages.push({ text: '', questions: [] });
+    updatedSections[sectionIndex].passages.push({
+      text: '',
+      questions: [],
+      audioFile: null,
+      imageFile: null
+    });
     setSections(updatedSections);
   };
 
-  const handlePassageChange = (sectionIndex, passageIndex, value) => {
+  const handlePassageChange = (sectionIndex, passageIndex, field, value) => {
     const updatedSections = [...sections];
-    updatedSections[sectionIndex].passages[passageIndex].text = value;
+    updatedSections[sectionIndex].passages[passageIndex][field] = value;
     setSections(updatedSections);
   };
 
@@ -50,7 +54,8 @@ const CreateEntryTest = () => {
       correctAnswer: '',
       points: 1,
       audioFile: null,
-      imageFile: null
+      imageFile: null,
+      timeLimit: 0
     };
 
     const updatedSections = [...sections];
@@ -68,10 +73,20 @@ const CreateEntryTest = () => {
       ? updatedSections[sectionIndex].passages[passageIndex].questions
       : updatedSections[sectionIndex].questions;
 
-    targetQuestions[questionIndex] = {
-      ...targetQuestions[questionIndex],
-      [field]: value
-    };
+    // Special handling for file inputs to ensure we store the actual File object
+    if (field === 'audioFile' || field === 'imageFile') {
+      if (value instanceof File || value === null) {
+        targetQuestions[questionIndex] = {
+          ...targetQuestions[questionIndex],
+          [field]: value
+        };
+      }
+    } else {
+      targetQuestions[questionIndex] = {
+        ...targetQuestions[questionIndex],
+        [field]: value
+      };
+    }
 
     setSections(updatedSections);
   };
@@ -79,47 +94,84 @@ const CreateEntryTest = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const formData = new FormData();
+    
+    // Append basic test information
     formData.append('title', title);
     formData.append('description', description);
     formData.append('testType', testType);
     formData.append('totalTime', totalTime.toString());
-    formData.append('passingScore', passingScore.toString());
-
-    const sectionsWithFileHandling = sections.map(section => ({
-        ...section,
-        questions: section.questions.map(question => ({
-            ...question,
-            audioFile: question.audioFile instanceof File ? question.audioFile : null,
-            imageFile: question.imageFile instanceof File ? question.imageFile : null,
+  
+    // Create a copy of sections for JSON with file references
+    const sectionsForJson = sections.map((section, sectionIndex) => ({
+      ...section,
+      passages: section.passages?.map((passage, passageIndex) => ({
+        ...passage,
+        audioFile: passage.audioFile ? `sections[${sectionIndex}].passages[${passageIndex}].audioFile` : null,
+        imageFile: passage.imageFile ? `sections[${sectionIndex}].passages[${passageIndex}].imageFile` : null,
+        questions: passage.questions.map((question, questionIndex) => ({
+          ...question,
+          audioFile: question.audioFile ? `sections[${sectionIndex}].passages[${passageIndex}].questions[${questionIndex}].audioFile` : null,
+          imageFile: question.imageFile ? `sections[${sectionIndex}].passages[${passageIndex}].questions[${questionIndex}].imageFile` : null,
         }))
+      })),
+      questions: section.questions.map((question, questionIndex) => ({
+        ...question,
+        audioFile: question.audioFile ? `sections[${sectionIndex}].questions[${questionIndex}].audioFile` : null,
+        imageFile: question.imageFile ? `sections[${sectionIndex}].questions[${questionIndex}].imageFile` : null,
+      }))
     }));
-
-    formData.append('sections', JSON.stringify(sectionsWithFileHandling));
-
+  
+    // Append sections JSON with file references
+    formData.append('sections', JSON.stringify(sectionsForJson));
+  
+    // Append actual files with matching keys
     sections.forEach((section, sectionIndex) => {
-        section.questions.forEach((question, questionIndex) => {
-            if (question.audioFile instanceof File) {
-                formData.append(`sections[${sectionIndex}].questions[${questionIndex}].audioFile`, question.audioFile);
-            }
-            if (question.imageFile instanceof File) {
-                formData.append(`sections[${sectionIndex}].questions[${questionIndex}].imageFile`, question.imageFile);
-            }
-        });
-    });
-
-    try {
-        const response = await createEntranceTest(formData);
-        if (response.data?.success) {
-            toast.success('Entrance test created successfully!');
-            // Reset form or redirect
-        } else {
-            toast.error('Failed to create entrance test');
+      section.passages?.forEach((passage, passageIndex) => {
+        if (passage.audioFile instanceof File) {
+          const key = `sections[${sectionIndex}].passages[${passageIndex}].audioFile`;
+          formData.append(key, passage.audioFile);
         }
+        if (passage.imageFile instanceof File) {
+          const key = `sections[${sectionIndex}].passages[${passageIndex}].imageFile`;
+          formData.append(key, passage.imageFile);
+        }
+  
+        passage.questions.forEach((question, questionIndex) => {
+          if (question.audioFile instanceof File) {
+            const key = `sections[${sectionIndex}].passages[${passageIndex}].questions[${questionIndex}].audioFile`;
+            formData.append(key, question.audioFile);
+          }
+          if (question.imageFile instanceof File) {
+            const key = `sections[${sectionIndex}].passages[${passageIndex}].questions[${questionIndex}].imageFile`;
+            formData.append(key, question.imageFile);
+          }
+        });
+      });
+  
+      section.questions.forEach((question, questionIndex) => {
+        if (question.audioFile instanceof File) {
+          const key = `sections[${sectionIndex}].questions[${questionIndex}].audioFile`;
+          formData.append(key, question.audioFile);
+        }
+        if (question.imageFile instanceof File) {
+          const key = `sections[${sectionIndex}].questions[${questionIndex}].imageFile`;
+          formData.append(key, question.imageFile);
+        }
+      });
+    });
+  
+    try {
+      const response = await createEntranceTest(formData);
+      if (response.data?.success) {
+        toast.success('Entrance test created successfully!');
+      } else {
+        toast.error(`Failed to create entrance test: ${response.error?.data?.message || 'Unknown error'}`);
+      }
     } catch (error) {
-        console.error('Error in handleSubmit:', error);
-        toast.error('An error occurred while creating the entrance test');
+      console.error('Error in handleSubmit:', error);
+      toast.error(`An error occurred: ${error.message || 'Unknown error'}`);
     }
-};
+  };
 
   const renderQuestionFields = (question, sectionIndex, questionIndex, passageIndex = null) => (
     <div className="space-y-4">
@@ -199,6 +251,86 @@ const CreateEntryTest = () => {
     </div>
   );
 
+  const renderSectionContent = (section, sectionIndex) => {
+    if (section.name === 'Listening' || section.name === 'Reading') {
+      return (
+        <div className="space-y-4">
+          {section.passages.map((passage, passageIndex) => (
+            <Card key={passageIndex} className="mt-4">
+              <CardHeader>
+                <CardTitle>Passage {passageIndex + 1}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Textarea
+                  placeholder="Passage text"
+                  value={passage.text}
+                  onChange={(e) => handlePassageChange(sectionIndex, passageIndex, 'text', e.target.value)}
+                  className="mb-4"
+                />
+                <div className="flex space-x-4 mb-4">
+                  <div className="flex-1">
+                    <Label htmlFor={`passage-audio-${sectionIndex}-${passageIndex}`} className="text-sm font-medium">Passage Audio</Label>
+                    <Input
+                      id={`passage-audio-${sectionIndex}-${passageIndex}`}
+                      type="file"
+                      accept="audio/*"
+                      onChange={(e) => handlePassageChange(sectionIndex, passageIndex, 'audioFile', e.target.files[0])}
+                      className="mt-1"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <Label htmlFor={`passage-image-${sectionIndex}-${passageIndex}`} className="text-sm font-medium">Passage Image</Label>
+                    <Input
+                      id={`passage-image-${sectionIndex}-${passageIndex}`}
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handlePassageChange(sectionIndex, passageIndex, 'imageFile', e.target.files[0])}
+                      className="mt-1"
+                    />
+                  </div>
+                </div>
+                {passage.questions.map((question, questionIndex) => (
+                  <Card key={questionIndex} className="mb-4">
+                    <CardHeader>
+                      <CardTitle className="text-lg">Question {questionIndex + 1}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {renderQuestionFields(question, sectionIndex, questionIndex, passageIndex)}
+                    </CardContent>
+                  </Card>
+                ))}
+                <Button type="button" onClick={() => handleAddQuestion(sectionIndex, passageIndex)} className="mt-2">
+                  <PlusCircle className="mr-2 h-4 w-4" /> Add Question to Passage
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
+          <Button type="button" onClick={() => handleAddPassage(sectionIndex)} className="mt-2">
+            <PlusCircle className="mr-2 h-4 w-4" /> Add Passage
+          </Button>
+        </div>
+      );
+    } else {
+      return (
+        <div className="space-y-4">
+          {section.questions.map((question, questionIndex) => (
+            <Card key={questionIndex} className="mb-4">
+              <CardHeader>
+                <CardTitle className="text-lg">Question {questionIndex + 1}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {renderQuestionFields(question, sectionIndex, questionIndex)}
+              </CardContent>
+            </Card>
+          ))}
+          <Button type="button" onClick={() => handleAddQuestion(sectionIndex)} className="mt-2">
+            <PlusCircle className="mr-2 h-4 w-4" /> Add Question
+          </Button>
+        </div>
+      );
+    }
+  };
+
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-3xl font-bold mb-6 flex items-center">
@@ -252,17 +384,6 @@ const CreateEntryTest = () => {
               className="mt-1"
             />
           </div>
-          <div>
-            <Label htmlFor="passingScore" className="text-lg font-semibold">Passing Score</Label>
-            <Input
-              id="passingScore"
-              type="number"
-              value={passingScore}
-              onChange={(e) => setPassingScore(parseInt(e.target.value))}
-              required
-              className="mt-1"
-            />
-          </div>
 
           {sections.map((section, sectionIndex) => (
             <Card key={sectionIndex} className="mt-6">
@@ -294,59 +415,7 @@ const CreateEntryTest = () => {
                     />
                   </div>
 
-                  {section.name === 'Reading' && (
-                    <div className="space-y-4">
-                      {section.passages.map((passage, passageIndex) => (
-                        <Card key={passageIndex} className="mt-4">
-                          <CardHeader>
-                            <CardTitle>Passage {passageIndex + 1}</CardTitle>
-                          </CardHeader>
-                          <CardContent>
-                            <Textarea
-                              placeholder="Passage text"
-                              value={passage.text}
-                              onChange={(e) => handlePassageChange(sectionIndex, passageIndex, e.target.value)}
-                              className="mb-4"
-                            />
-                            {passage.questions.map((question, questionIndex) => (
-                              <Card key={questionIndex} className="mb-4">
-                                <CardHeader>
-                                  <CardTitle className="text-lg">Question {questionIndex + 1}</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                  {renderQuestionFields(question, sectionIndex, questionIndex, passageIndex)}
-                                </CardContent>
-                              </Card>
-                            ))}
-                            <Button type="button" onClick={() => handleAddQuestion(sectionIndex, passageIndex)} className="mt-2">
-                              <PlusCircle className="mr-2 h-4 w-4" /> Add Question to Passage
-                            </Button>
-                          </CardContent>
-                        </Card>
-                      ))}
-                      <Button type="button" onClick={() => handleAddPassage(sectionIndex)} className="mt-2">
-                        <PlusCircle className="mr-2 h-4 w-4" /> Add Passage
-                      </Button>
-                    </div>
-                  )}
-
-                  {section.name !== 'Reading' && (
-                    <div className="space-y-4">
-                      {section.questions.map((question, questionIndex) => (
-                        <Card key={questionIndex} className="mb-4">
-                          <CardHeader>
-                            <CardTitle className="text-lg">Question {questionIndex + 1}</CardTitle>
-                          </CardHeader>
-                          <CardContent>
-                            {renderQuestionFields(question, sectionIndex, questionIndex)}
-                          </CardContent>
-                        </Card>
-                      ))}
-                      <Button type="button" onClick={() => handleAddQuestion(sectionIndex)} className="mt-2">
-                        <PlusCircle className="mr-2 h-4 w-4" /> Add Question
-                      </Button>
-                    </div>  
-                  )}
+                  {renderSectionContent(section, sectionIndex)}
                 </div>
               </CardContent>
             </Card>

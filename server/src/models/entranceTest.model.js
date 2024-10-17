@@ -30,7 +30,6 @@ const questionSchema = new mongoose.Schema({
     },
     audioFile: { type: String, default: null },
     imageFile: { type: String, default: null },
-    timeLimit: Number
 });
 
 const passageSchema = new mongoose.Schema({
@@ -38,18 +37,17 @@ const passageSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    questions: [questionSchema]
+    audioFile: { type: String, default: null },
+    imageFile: { type: String, default: null },
+    questions: [questionSchema],
 });
 
 const sectionSchema = new mongoose.Schema({
     name: String,
     description: String,
     timeLimit: Number,
-    passages: [{
-        text: String,
-        questions: [questionSchema]
-    }],
-    questions: [questionSchema]
+    passages: [passageSchema],
+    questions: [questionSchema],
 });
 
 const entranceTestSchema = new mongoose.Schema({
@@ -68,7 +66,6 @@ const entranceTestSchema = new mongoose.Schema({
     },
     sections: [sectionSchema],
     totalTime: Number,
-    passingScore: Number,
     createdAt: {
         type: Date,
         default: Date.now

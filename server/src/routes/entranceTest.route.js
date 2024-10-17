@@ -7,9 +7,9 @@ const upload = multer({ dest: 'uploads/' });
 
 const entranceTest = express.Router();
 
-entranceTest.post('/create-test',upload.any(), updateToken, isAuthenticated, authorizeRoles('admin'), createEntranceTest);
+entranceTest.post('/create-test', upload.any(), updateToken, isAuthenticated, authorizeRoles('admin'), createEntranceTest);
 
-entranceTest.post('/:testId/take', updateToken, isAuthenticated, takeEntranceTest);
+entranceTest.post('/:testId/take', upload.any(), updateToken, isAuthenticated, takeEntranceTest);
 
 entranceTest.get('/all-test', isAuthenticated, updateToken, authorizeRoles('admin'), getAllEntranceTests);
 

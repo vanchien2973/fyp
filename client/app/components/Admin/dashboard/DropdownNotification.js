@@ -27,7 +27,7 @@ const DropdownNotifications = () => {
     const [updateNotificationStatus] = useUpdateNotificationStatusMutation();
     const [deleteNotification] = useDeleteNotificationMutation();
     const [notifications, setNotifications] = useState([]);
-    const [audio] = useState(new Audio('https://res.cloudinary.com/du3a3d1dh/video/upload/v1727277580/qscarlijg0ukeqk0bqwf.mp3'));
+    const [audio] = useState(new Audio('https://res.cloudinary.com/du3a3d1dh/video/upload/v1729144964/djfftb2qb0tbvikx5une.mp3'));
 
     const playNotificationSound = useCallback(() => {
         audio.play();
