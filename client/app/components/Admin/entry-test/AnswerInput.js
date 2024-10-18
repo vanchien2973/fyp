@@ -175,7 +175,7 @@ const AnswerInput = ({ question, sectionIndex, questionIndex, handleQuestionChan
     case 'ordering':
       return renderOrderItems();
     case 'selectFromDropdown':
-      return renderMultipleChoiceOptions(); // Similar to multiple choice, but will be rendered differently in the test
+      return renderMultipleChoiceOptions();
     default:
       return null;
   }
