@@ -37,7 +37,6 @@ const CourseInformation = ({ courseInfor, setCourseInfor, setCurrentStep, curren
     defaultValues: courseInfor,
     mode: 'onChange'
   });
-  console.log(courseInfor.rank)
 
   useEffect(() => {
     form.reset(courseInfor);

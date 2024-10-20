@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '../../../ui/dropdown-menu';
-import { Edit, MoreHorizontal, Trash } from 'lucide-react';
+import { Edit, FileSearch, MoreHorizontal, Trash } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { AlertModal } from '../../modal/alert-modal';
 import { Button } from '../../../ui/button';
@@ -58,7 +58,12 @@ export const CellAction = ({ data }) => {
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>Actions</DropdownMenuLabel>
           <DropdownMenuItem
-            onClick={() => router.push(`/admin/edit-entrance-test/${data._id}`)}
+            onClick={() => router.push(`/admin/entry-test/${data._id}`)}
+          >
+            <FileSearch className="mr-2 h-4 w-4" /> View Details
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => router.push(`/admin/edit-entry-test/${data._id}`)}
           >
             <Edit className="mr-2 h-4 w-4" /> Update
           </DropdownMenuItem>

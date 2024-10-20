@@ -70,24 +70,25 @@ export const courseContentSchema = z.object({
 });
 
 
-// Option Schema
+const fileSchema = z.any()
+  .refine((file) => !file || file instanceof File, "Must be a File object or null")
+  .nullable()
+  .optional();
+
 const optionSchema = z.object({
-  text: z.string(),
+  text: z.string().min(1, "Option text is required"),
   isCorrect: z.boolean()
 });
 
-// Matching Pair Schema
 const matchingPairSchema = z.object({
-  left: z.string(),
-  right: z.string()
+  left: z.string().min(1, "Left item is required"),
+  right: z.string().min(1, "Right item is required")
 });
 
-// Question Schema
 const questionSchema = z.object({
-  text: z.string().min(1, "Question text is required"),
   type: z.enum([
     'multipleChoice',
-    'trueFalse', 
+    'trueFalse',
     'shortAnswer',
     'essay',
     'fillInTheBlank',
@@ -95,57 +96,39 @@ const questionSchema = z.object({
     'ordering',
     'selectFromDropdown'
   ]),
+  text: z.string().min(1, "Question text is required"),
   options: z.array(optionSchema).optional(),
   matchingPairs: z.array(matchingPairSchema).optional(),
   orderItems: z.array(z.string()).optional(),
-  correctAnswer: z.any().optional(),
-  points: z.number().default(1),
-  audioFile: z.string().nullable().default(null),
-  imageFile: z.string().nullable().default(null)
-}).refine(data => {
-  switch (data.type) {
-    case 'multipleChoice':
-      return data.options && data.options.length > 0;
-    case 'matching':
-      return data.matchingPairs && data.matchingPairs.length > 0;
-    case 'ordering':
-      return data.orderItems && data.orderItems.length > 0;
-    default:
-      return true;
-  }
-}, {
-  message: "Question must have appropriate data based on its type"
+  correctAnswer: z.string().optional(),
+  points: z.number().min(1, "Points must be greater than 0"),
+  timeLimit: z.number().min(0).optional(),
+  audioFile: fileSchema,
+  imageFile: fileSchema
 });
 
-// Passage Schema
 const passageSchema = z.object({
   text: z.string().min(1, "Passage text is required"),
-  audioFile: z.string().nullable().default(null),
-  imageFile: z.string().nullable().default(null),
-  questions: z.array(questionSchema)
+  audioFile: fileSchema,
+  imageFile: fileSchema,
+  questions: z.array(questionSchema).default([])
 });
 
-// Section Schema
 const sectionSchema = z.object({
-  name: z.string(),
-  description: z.string(),
-  timeLimit: z.number().int().positive(),
-  passages: z.array(passageSchema),
-  questions: z.array(questionSchema)
-}).refine(data => {
-  return data.passages.length > 0 || data.questions.length > 0;
-}, {
-  message: "Section must have at least one passage or question"
+  name: z.string().min(1, "Section name is required"),
+  description: z.string().min(1, "Section description is required"),
+  timeLimit: z.number().min(1, "Time limit must be greater than 0"),
+  passages: z.array(passageSchema).default([]),
+  questions: z.array(questionSchema).default([])
 });
 
-// Main Entrance Test Schema
-const entranceTestSchema = z.object({
+export const formSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().min(1, "Description is required"),
   testType: z.enum(['IELTS', 'TOEIC', 'Custom']),
-  sections: z.array(sectionSchema).min(1, "Test must have at least one section"),
-  totalTime: z.number().int().positive(),
-  createdAt: z.date().default(() => new Date())
+  totalTime: z.number().min(1, "Total time must be greater than 0"),
+  sections: z.array(sectionSchema)
 });
+
 
 
