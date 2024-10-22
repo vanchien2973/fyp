@@ -12,6 +12,7 @@ import { Input } from "../../ui/input";
 import { Textarea } from "../../ui/textarea";
 import { Progress } from "../../ui/progress";
 import { Separator } from "../../ui/separator";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
 
 const ViewEntryTest = ({ id }) => {
   const { data, isLoading, isError } = useGetEntranceTestByIdQuery(id);
@@ -106,6 +107,40 @@ const ViewEntryTest = ({ id }) => {
         return <Textarea placeholder="Write your essay here" className="mt-2 h-32" />;
       case 'fillInTheBlank':
         return <Input placeholder="Fill in the blank" className="mt-2" />;
+      case 'ordering':
+        return (
+          <div className="space-y-2">
+            {question.orderItems?.map((item, idx) => (
+              <Card key={idx} className="p-2">
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    min="1"
+                    max={question.orderItems.length}
+                    className="w-16"
+                    placeholder="#"
+                  />
+                  <span>{item}</span>
+                </div>
+              </Card>
+            ))}
+          </div>
+        );
+      case 'selectFromDropdown':
+        return (
+          <Select>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select an option" />
+            </SelectTrigger>
+            <SelectContent>
+              {question.options?.map((option, idx) => (
+                <SelectItem key={idx} value={option.text}>
+                  {option.text}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        );
       case 'matching':
         return (
           <div className="grid grid-cols-2 gap-4 mt-2">
@@ -139,6 +174,21 @@ const ViewEntryTest = ({ id }) => {
         answerContent = correctOption ? correctOption.text : 'No correct answer provided';
         break;
       case 'trueFalse':
+        answerContent = question.correctAnswer ? 'True' : 'False';
+        break;
+      case 'ordering':
+        if (question.orderItems && question.correctAnswer) {
+          const orderedItems = question.orderItems.map((item, index) => ({
+            item,
+            correctPosition: question.correctAnswer[index]
+          }));
+          orderedItems.sort((a, b) => a.correctPosition - b.correctPosition);
+          answerContent = orderedItems.map(obj => obj.item).join(' → ');
+        } else {
+          answerContent = 'No correct answer provided';
+        }
+        break;
+      case 'selectFromDropdown':
         answerContent = question.correctAnswer;
         break;
       case 'shortAnswer':

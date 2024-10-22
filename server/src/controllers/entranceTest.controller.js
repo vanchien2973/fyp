@@ -1,59 +1,96 @@
 import CatchAsyncError from "../middlewares/CatchAsyncError";
 import ErrorHandler from "../utils/ErrorHandler";
 import EntranceTestModel from "../models/entranceTest.model";
-import cloudinary from "cloudinary";
 import UserModel from "../models/user.model";
 import LayoutModel from "../models/layout.model";
 import CourseModel from "../models/course.model";
 import mongoose from "mongoose";
 import { promisify } from 'util';
 import fs from 'fs';
+import { deleteAllSectionFiles, handleFileUploads } from "../services/entranceTest.service";
 
 const unlinkAsync = promisify(fs.unlink);
 
-// Handle file upload to Cloudinary
-const uploadFile = async (file, folder) => {
-    if (!file) {
-        return null;
-    }
-
+// Create Entry Test
+export const createEntranceTest = CatchAsyncError(async (req, res, next) => {
     try {
-        const result = await cloudinary.v2.uploader.upload(file.path, {
-            folder: `entrance_tests/${folder}`,
-            resource_type: "auto"
+        const { title, description, testType, totalTime, sections } = req.body;
+
+        if (!title || !description || !testType || !totalTime || !sections) {
+            return next(new ErrorHandler('Missing required fields', 400));
+        }
+
+        let parsedSections;
+        try {
+            parsedSections = typeof sections === 'string' ? JSON.parse(sections) : sections;
+            
+            if (!Array.isArray(parsedSections)) {
+                return next(new ErrorHandler('Sections must be an array', 400));
+            }
+
+            for (const section of parsedSections) {
+                if (!section.name || !section.description || !section.timeLimit) {
+                    return next(new ErrorHandler('Each section must have name, description, and timeLimit', 400));
+                }
+            }
+        } catch (parseError) {
+            return next(new ErrorHandler(`Invalid JSON in sections: ${parseError.message}`, 400));
+        }
+
+        // Process sections and upload files
+        const processedSections = await handleFileUploads(parsedSections, req.files);
+
+        const newTest = await EntranceTestModel.create({
+            title,
+            description,
+            testType,
+            sections: processedSections,
+            totalTime: Number(totalTime),
         });
 
-        // Delete the temporary file
-        await unlinkAsync(file.path);
-        return result.secure_url;
+        res.status(201).json({
+            success: true,
+            message: "Entrance test created successfully",
+            test: newTest
+        });
     } catch (error) {
-        if (file.path) {
-            try {
-                await unlinkAsync(file.path);
-            } catch (unlinkError) {
-                console.error('Error deleting temporary file:', unlinkError);
-            }
-        }
-        throw new Error(`File upload failed: ${error.message}`);
+        return next(new ErrorHandler(`Error creating entrance test: ${error.message}`, 500));
     }
-};
+});
 
-// Delete file from Cloudinary
-const deleteCloudinaryFile = async (fileUrl) => {
-    if (!fileUrl) return;
-    
+// Delete Entrance Test
+export const deleteEntranceTest = CatchAsyncError(async (req, res, next) => {
     try {
-        // Extract public_id from the URL
-        const publicId = fileUrl.split('/').slice(-1)[0].split('.')[0];
-        const folderPath = fileUrl.split('/').slice(-3, -1).join('/');
-        const fullPublicId = `${folderPath}/${publicId}`;
+        const { id } = req.params;
         
-        // Delete the file from Cloudinary
-        await cloudinary.v2.uploader.destroy(fullPublicId);
+        const test = await EntranceTestModel.findById(id);
+        if (!test) {
+            return next(new ErrorHandler('Entrance test not found', 404));
+        }
+
+        // Delete all associated files
+        const deletionResult = await deleteAllSectionFiles(test.sections);
+        if (!deletionResult) {
+            return next(new ErrorHandler('Error deleting associated files', 500));
+        }
+
+        const { failedDeletions, successfulDeletions } = deletionResult;
+
+        // Delete the test document
+        await EntranceTestModel.findByIdAndDelete(id);
+
+        res.status(200).json({
+            success: true,
+            message: "Entrance test deleted successfully",
+            deletionSummary: {
+                successfulDeletions: successfulDeletions.length,
+                failedDeletions: failedDeletions.length > 0 ? failedDeletions : undefined
+            }
+        });
     } catch (error) {
-        console.error('Error deleting file from Cloudinary:', error);
+        return next(new ErrorHandler(`Error deleting entrance test: ${error.message}`, 500));
     }
-};
+});
 
 // Compare and handle file updates
 const handleFileUpdate = async (oldFile, newFile, folder) => {
@@ -64,74 +101,6 @@ const handleFileUpdate = async (oldFile, newFile, folder) => {
         return await uploadFile(newFile, folder);
     }
     return oldFile;
-};
-
-// Helper function to handle file uploads for sections
-const handleFileUploads = async (sections, files) => {
-    try {
-        const parsedSections = typeof sections === 'string' ? JSON.parse(sections) : sections;
-        
-        return await Promise.all(parsedSections.map(async (section, sectionIndex) => {
-            // Handle passages
-            if (Array.isArray(section.passages)) {
-                section.passages = await Promise.all(section.passages.map(async (passage, passageIndex) => {
-                    const passageAudioKey = `sections[${sectionIndex}].passages[${passageIndex}].audioFile`;
-                    const passageImageKey = `sections[${sectionIndex}].passages[${passageIndex}].imageFile`;
-
-                    // Find the corresponding files in the uploaded files
-                    const audioFile = files?.find(f => f.fieldname === passageAudioKey);
-                    const imageFile = files?.find(f => f.fieldname === passageImageKey);
-
-                    // Upload passage files
-                    const audioUrl = audioFile ? await uploadFile(audioFile, 'audio') : null;
-                    const imageUrl = imageFile ? await uploadFile(imageFile, 'images') : null;
-
-                    // Handle questions within passages
-                    const questions = await Promise.all((passage.questions || []).map(async (question, questionIndex) => {
-                        const questionAudioKey = `sections[${sectionIndex}].passages[${passageIndex}].questions[${questionIndex}].audioFile`;
-                        const questionImageKey = `sections[${sectionIndex}].passages[${passageIndex}].questions[${questionIndex}].imageFile`;
-
-                        const qAudioFile = files?.find(f => f.fieldname === questionAudioKey);
-                        const qImageFile = files?.find(f => f.fieldname === questionImageKey);
-
-                        return {
-                            ...question,
-                            audioFile: qAudioFile ? await uploadFile(qAudioFile, 'audio') : null,
-                            imageFile: qImageFile ? await uploadFile(qImageFile, 'images') : null
-                        };
-                    }));
-
-                    return {
-                        ...passage,
-                        audioFile: audioUrl,
-                        imageFile: imageUrl,
-                        questions
-                    };
-                }));
-            }
-
-            // Handle standalone questions
-            if (Array.isArray(section.questions)) {
-                section.questions = await Promise.all(section.questions.map(async (question, questionIndex) => {
-                    const audioKey = `sections[${sectionIndex}].questions[${questionIndex}].audioFile`;
-                    const imageKey = `sections[${sectionIndex}].questions[${questionIndex}].imageFile`;
-
-                    const audioFile = files?.find(f => f.fieldname === audioKey);
-                    const imageFile = files?.find(f => f.fieldname === imageKey);
-
-                    return {
-                        ...question,
-                        audioFile: audioFile ? await uploadFile(audioFile, 'audio') : null,
-                        imageFile: imageFile ? await uploadFile(imageFile, 'images') : null
-                    };
-                }));
-            }
-
-            return section;
-        }));
-    } catch (error) {
-        throw new Error(`Error processing sections: ${error.message}`);
-    }
 };
 
 // Helper function to process section updates
@@ -238,47 +207,6 @@ const processUpdateSections = async (oldSections, newSections, files) => {
     }));
 };
 
-// Create Entry Test
-export const createEntranceTest = CatchAsyncError(async (req, res, next) => {
-    try {
-        const { title, description, testType, totalTime, sections } = req.body;
-
-        if (!req.files || !Array.isArray(req.files)) {
-            return next(new ErrorHandler('No files were uploaded', 400));
-        }
-
-        // Process sections and upload files
-        const processedSections = await handleFileUploads(sections, req.files);
-
-        const newTest = await EntranceTestModel.create({
-            title,
-            description,
-            testType,
-            sections: processedSections,
-            totalTime: Number(totalTime),
-        });
-
-        res.status(201).json({
-            success: true,
-            message: "Entrance test created successfully",
-            test: newTest
-        });
-    } catch (error) {
-        if (req.files) {
-            for (const file of req.files) {
-                if (file.path) {
-                    try {
-                        await unlinkAsync(file.path);
-                    } catch (unlinkError) {
-                        console.error('Error deleting temporary file:', unlinkError);
-                    }
-                }
-            }
-        }
-        return next(new ErrorHandler(`Error creating entrance test: ${error.message}`, 500));
-    }
-});
-
 // Update Entrance Test
 export const updateEntranceTest = CatchAsyncError(async (req, res, next) => {
     try {
@@ -348,57 +276,6 @@ export const updateEntranceTest = CatchAsyncError(async (req, res, next) => {
             }
         }
         return next(new ErrorHandler(`Error updating entrance test: ${error.message}`, 500));
-    }
-});
-
-// Delete all files in a section
-const deleteAllSectionFiles = async (sections) => {
-    for (const section of sections) {
-        // Handle passages
-        if (Array.isArray(section.passages)) {
-            for (const passage of section.passages) {
-                // Delete passage files
-                if (passage.audioFile) await deleteCloudinaryFile(passage.audioFile);
-                if (passage.imageFile) await deleteCloudinaryFile(passage.imageFile);
-
-                // Delete files from questions within passages
-                if (Array.isArray(passage.questions)) {
-                    for (const question of passage.questions) {
-                        if (question.audioFile) await deleteCloudinaryFile(question.audioFile);
-                        if (question.imageFile) await deleteCloudinaryFile(question.imageFile);
-                    }
-                }
-            }
-        }
-
-        // Handle standalone questions
-        if (Array.isArray(section.questions)) {
-            for (const question of section.questions) {
-                if (question.audioFile) await deleteCloudinaryFile(question.audioFile);
-                if (question.imageFile) await deleteCloudinaryFile(question.imageFile);
-            }
-        }
-    }
-};
-
-// Delete Entrance Test
-export const deleteEntranceTest = CatchAsyncError(async (req, res, next) => {
-    try {
-        const { id } = req.params;
-        const test = await EntranceTestModel.findById(id);
-        if (!test) {
-            return next(new ErrorHandler('Entrance test not found', 404));
-        }
-
-        await deleteAllSectionFiles(test.sections);
-        await EntranceTestModel.findByIdAndDelete(id);
-
-        res.status(200).json({
-            success: true,
-            message: "Entrance test deleted successfully"
-        });
-    } catch (error) {
-        return next(new ErrorHandler(`Error deleting entrance test: ${error.message}`, 500));
     }
 });
 

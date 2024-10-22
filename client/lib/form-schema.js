@@ -69,66 +69,44 @@ export const courseContentSchema = z.object({
   )
 });
 
-
-const fileSchema = z.any()
-  .refine((file) => !file || file instanceof File, "Must be a File object or null")
-  .nullable()
-  .optional();
-
-const optionSchema = z.object({
-  text: z.string().min(1, "Option text is required"),
-  isCorrect: z.boolean()
-});
-
-const matchingPairSchema = z.object({
-  left: z.string().min(1, "Left item is required"),
-  right: z.string().min(1, "Right item is required")
-});
-
 const questionSchema = z.object({
-  type: z.enum([
-    'multipleChoice',
-    'trueFalse',
-    'shortAnswer',
-    'essay',
-    'fillInTheBlank',
-    'matching',
-    'ordering',
-    'selectFromDropdown'
-  ]),
-  text: z.string().min(1, "Question text is required"),
-  options: z.array(optionSchema).optional(),
-  matchingPairs: z.array(matchingPairSchema).optional(),
+  type: z.enum(['multipleChoice', 'trueFalse', 'shortAnswer', 'essay', 'fillInTheBlank', 'matching', 'ordering', 'selectFromDropdown']),
+  text: z.string().min(1, "Question content is required"),
+  points: z.number().min(0),
+  audioFile: z.any().optional().nullable(),
+  imageFile: z.any().optional().nullable(),
+  options: z.array(z.object({
+    text: z.string(),
+    isCorrect: z.boolean()
+  })).optional(),
+  correctAnswer: z.union([z.string(), z.boolean()]).optional(),
   orderItems: z.array(z.string()).optional(),
-  correctAnswer: z.string().optional(),
-  points: z.number().min(1, "Points must be greater than 0"),
-  timeLimit: z.number().min(0).optional(),
-  audioFile: fileSchema,
-  imageFile: fileSchema
-});
-
-const passageSchema = z.object({
-  text: z.string().min(1, "Passage text is required"),
-  audioFile: fileSchema,
-  imageFile: fileSchema,
-  questions: z.array(questionSchema).default([])
-});
-
-const sectionSchema = z.object({
-  name: z.string().min(1, "Section name is required"),
-  description: z.string().min(1, "Section description is required"),
-  timeLimit: z.number().min(1, "Time limit must be greater than 0"),
-  passages: z.array(passageSchema).default([]),
-  questions: z.array(questionSchema).default([])
+  matchingPairs: z.array(z.object({
+    left: z.string(),
+    right: z.string()
+  })).optional()
 });
 
 export const formSchema = z.object({
-  title: z.string().min(1, "Title is required"),
-  description: z.string().min(1, "Description is required"),
-  testType: z.enum(['IELTS', 'TOEIC', 'Custom']),
-  totalTime: z.number().min(1, "Total time must be greater than 0"),
-  sections: z.array(sectionSchema)
-});
-
-
-
+  title: z.string().min(1, "Title is required").max(100, "Title cannot exceed 100 characters"),
+  description: z.string().max(500, "Description cannot exceed 500 characters"),
+  testType: z.enum(['IELTS', 'TOEIC', 'Custom'], {
+    errorMap: () => ({ message: "Invalid test type" }),
+  }),
+  totalTime: z.number().min(1, "Total time must be greater than 0").max(480, "Total time cannot exceed 8 hours"),
+  sections: z.array(z.object({
+    name: z.string().min(1, "Section name is required").max(50, "Section name cannot exceed 50 characters"),
+    description: z.string().max(200, "Section description cannot exceed 200 characters"),
+    timeLimit: z.number().min(1, "Time limit must be greater than 0").max(240, "Time limit cannot exceed 4 hours"),
+    passages: z.array(z.object({
+      text: z.string().min(1, "Passage content is required").max(5000, "Passage content cannot exceed 5000 characters"),
+      audioFile: z.any().optional().nullable().refine(val => !val || val instanceof File, "Invalid audio file"),
+      imageFile: z.any().optional().nullable().refine(val => !val || val instanceof File, "Invalid image file"),
+      questions: z.array(questionSchema).optional().default([]),
+    })).optional().default([]),
+    questions: z.array(questionSchema).optional().default([]),
+  })).min(1, "At least one section is required in the test"),
+}).refine(
+  data => data.sections.reduce((sum, section) => sum + section.timeLimit, 0) <= data.totalTime,
+  "The total time of sections cannot exceed the test's total time"
+);

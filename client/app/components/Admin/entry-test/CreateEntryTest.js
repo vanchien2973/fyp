@@ -13,9 +13,11 @@ import { useCreateEntranceTestMutation } from '@/app/redux/features/entry-test/e
 import toast from 'react-hot-toast';
 import AnswerInput from './AnswerInput';
 import { formSchema } from '@/lib/form-schema';
+import sampleEntryTestData from './SampleEntryTest';
+import { redirect } from 'next/navigation';
 
 const CreateEntryTest = () => {
-  const [createEntranceTest, { isLoading }] = useCreateEntranceTestMutation();
+  const [createEntranceTest, { isLoading, isSuccess, error }] = useCreateEntranceTestMutation();
   const [files, setFiles] = useState({});
 
   const createFilePath = (sectionIndex, questionIndex, fieldName, passageIndex = null) => {
@@ -29,13 +31,17 @@ const CreateEntryTest = () => {
     const newFiles = Array.from(event.target.files);
     if (!newFiles.length) return;
 
+    // Update files state
     setFiles(prevFiles => ({
       ...prevFiles,
-      [path]: newFiles
+      [path]: newFiles[0]
     }));
 
-    // Update the form state
-    form.setValue(path, newFiles[0]);
+    // Update form value with the File object directly
+    form.setValue(path, newFiles[0], {
+      shouldValidate: true,
+      shouldDirty: true
+    });
   };
 
   const [entryTestData, setEntryTestData] = useState({
@@ -72,6 +78,7 @@ const CreateEntryTest = () => {
       }
     ]
   });
+  // const [entryTestData, setEntryTestData] = useState(sampleEntryTestData);
 
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -86,6 +93,21 @@ const CreateEntryTest = () => {
     control: form.control,
     name: "sections"
   });
+
+  useEffect(() => {
+    if (isSuccess) {
+      toast.success("Entrance test created successfully!");
+      form.reset();
+      setFiles({});
+      redirect("/admin/entry-test");
+    }
+    if (error) {
+      if ("data" in error) {
+        const errMessage = error;
+        toast.error(errMessage?.data.message);
+      }
+    }
+  }, [isLoading, isSuccess, error]);
 
   const handleAddPassage = (sectionIndex) => {
     const newPassage = {
@@ -119,7 +141,6 @@ const CreateEntryTest = () => {
       points: 1,
       audioFile: null,
       imageFile: null,
-      timeLimit: 0,
       orderItems: [],
       matchingPairs: [],
     };
@@ -145,37 +166,35 @@ const CreateEntryTest = () => {
     if (passageIndex !== null) {
       const currentQuestions = form.getValues(`sections.${sectionIndex}.passages.${passageIndex}.questions`) || [];
       form.setValue(
-        `sections.${sectionIndex}.passages.${passageIndex}.questions`, 
+        `sections.${sectionIndex}.passages.${passageIndex}.questions`,
         [...currentQuestions, newQuestion]
       );
     } else {
       const currentQuestions = form.getValues(`sections.${sectionIndex}.questions`) || [];
       form.setValue(
-        `sections.${sectionIndex}.questions`, 
+        `sections.${sectionIndex}.questions`,
         [...currentQuestions, newQuestion]
       );
     }
   };
 
   const handleQuestionChange = useCallback((sectionIndex, questionIndex, field, value, passageIndex = null) => {
-    console.log('handleQuestionChange called:', { sectionIndex, questionIndex, field, value, passageIndex });
     setEntryTestData(prevData => {
       const updatedSections = [...prevData.sections];
       const targetQuestions = passageIndex !== null
         ? updatedSections[sectionIndex].passages[passageIndex].questions
         : updatedSections[sectionIndex].questions;
-  
+
       if (field === 'type') {
         // Initialize default values based on question type
         const baseQuestion = {
           type: value,
           text: targetQuestions[questionIndex].text || '',
           points: targetQuestions[questionIndex].points || 1,
-          timeLimit: targetQuestions[questionIndex].timeLimit || 0,
           audioFile: targetQuestions[questionIndex].audioFile || null,
           imageFile: targetQuestions[questionIndex].imageFile || null,
         };
-  
+
         // Add specific fields based on question type
         switch (value) {
           case 'multipleChoice':
@@ -238,7 +257,7 @@ const CreateEntryTest = () => {
               matchingPairs: []
             };
         }
-  
+
         // Update the form values
         const questionPath = passageIndex !== null
           ? `sections.${sectionIndex}.passages.${passageIndex}.questions.${questionIndex}`
@@ -248,7 +267,7 @@ const CreateEntryTest = () => {
         // Handle other field changes
         targetQuestions[questionIndex][field] = value;
       }
-  
+
       console.log('Updated entryTestData:', updatedSections);
       return { ...prevData, sections: updatedSections };
     });
@@ -545,44 +564,139 @@ const CreateEntryTest = () => {
   };
 
   const onSubmit = async (data) => {
-    console.log('Form submitted with data:', data);
-    try {
       const formData = new FormData();
 
-      // Append basic test information
+      // Append basic info
       formData.append('title', data.title);
       formData.append('description', data.description);
       formData.append('testType', data.testType);
       formData.append('totalTime', data.totalTime.toString());
 
-      // Append sections data
-      formData.append('sections', JSON.stringify(data.sections));
+      // Helper function to process question data based on type
+      const processQuestionData = (question) => {
+        const baseQuestion = {
+          type: question.type,
+          text: question.text,
+          points: question.points
+        };
 
-      // Append files
-      Object.entries(files).forEach(([path, fileList]) => {
-        fileList.forEach((file, index) => {
-          formData.append(`${path}`, file);
+        switch (question.type) {
+          case 'multipleChoice':
+          case 'selectFromDropdown':
+            return {
+              ...baseQuestion,
+              options: question.options,
+              correctAnswer: question.options
+                ?.map((opt, index) => opt.isCorrect ? index : -1)
+                .filter(index => index !== -1)
+            };
+
+          case 'trueFalse':
+            return {
+              ...baseQuestion,
+              correctAnswer: Boolean(question.correctAnswer)
+            };
+
+          case 'ordering':
+            return {
+              ...baseQuestion,
+              orderItems: question.orderItems,
+              correctAnswer: question.orderItems?.map((_, index) => index)
+            };
+
+          case 'matching':
+            return {
+              ...baseQuestion,
+              matchingPairs: question.matchingPairs
+            };
+
+          case 'shortAnswer':
+          case 'essay':
+          case 'fillInTheBlank':
+            return {
+              ...baseQuestion,
+              correctAnswer: question.correctAnswer || ''
+            };
+
+          default:
+            return baseQuestion;
+        }
+      };
+
+      // Helper function to clean and validate section data
+      const prepareSectionData = (section) => {
+        const processPassages = section.passages?.map(passage => ({
+          text: passage.text,
+          questions: passage.questions?.map(processQuestionData)
+        }));
+
+        const processQuestions = section.questions?.map(processQuestionData);
+
+        const cleanedSection = {
+          name: section.name,
+          description: section.description,
+          timeLimit: section.timeLimit,
+          ...(processPassages?.length && { passages: processPassages }),
+          ...(processQuestions?.length && { questions: processQuestions })
+        };
+
+        // Remove undefined/null properties
+        Object.keys(cleanedSection).forEach(key =>
+          (cleanedSection[key] === undefined || cleanedSection[key] === null) && delete cleanedSection[key]
+        );
+
+        return cleanedSection;
+      };
+
+      // Process sections data
+      const processedSections = data.sections.map(prepareSectionData);
+      formData.append('sections', JSON.stringify(processedSections));
+
+      // Process files
+      const addFileToFormData = (file, path) => {
+        if (file instanceof File) {
+          formData.append(path, file);
+        }
+      };
+
+      // Add files from sections
+      data.sections.forEach((section, sectionIndex) => {
+        section.passages?.forEach((passage, passageIndex) => {
+          // Handle passage files
+          addFileToFormData(
+            passage.audioFile,
+            `sections[${sectionIndex}].passages[${passageIndex}].audioFile`
+          );
+          addFileToFormData(
+            passage.imageFile,
+            `sections[${sectionIndex}].passages[${passageIndex}].imageFile`
+          );
+
+          // Handle passage question files
+          passage.questions?.forEach((question, questionIndex) => {
+            addFileToFormData(
+              question.audioFile,
+              `sections[${sectionIndex}].passages[${passageIndex}].questions[${questionIndex}].audioFile`
+            );
+            addFileToFormData(
+              question.imageFile,
+              `sections[${sectionIndex}].passages[${passageIndex}].questions[${questionIndex}].imageFile`
+            );
+          });
+        });
+        section.questions?.forEach((question, questionIndex) => {
+          addFileToFormData(
+            question.audioFile,
+            `sections[${sectionIndex}].questions[${questionIndex}].audioFile`
+          );
+          addFileToFormData(
+            question.imageFile,
+            `sections[${sectionIndex}].questions[${questionIndex}].imageFile`
+          );
         });
       });
 
-      console.log('FormData created:', formData);
-
-      // Send the formData to the server
-      const response = await createEntranceTest(formData);
-
-      console.log('Server response:', response);
-
-      if (response.data?.success) {
-        toast.success('Entrance test created successfully!');
-        form.reset();
-        setFiles({});
-      } else {
-        toast.error(`Failed to create entrance test: ${response.error?.data?.message || 'Unknown error'}`);
-      }
-    } catch (error) {
-      console.error('Error in onSubmit:', error);
-      toast.error(`An error occurred: ${error.message || 'Unknown error'}`);
-    }
+      await createEntranceTest(formData);
   };
 
   return (

@@ -3,7 +3,13 @@ import { updateToken } from "../controllers/user.controller";
 import { authorizeRoles, isAuthenticated } from "../middlewares/AuthMiddleware";
 import { createEntranceTest, deleteEntranceTest, getAllEntranceTests, getEntranceTestById, takeEntranceTest, updateEntranceTest } from "../controllers/entranceTest.controller";
 const multer = require('multer');
-const upload = multer({ dest: 'uploads/' });
+const storage = multer.memoryStorage();
+const upload = multer({ 
+    storage: storage,
+    limits: {
+        fileSize: 10 * 1024 * 1024,
+    }
+});
 
 const entranceTest = express.Router();
 
