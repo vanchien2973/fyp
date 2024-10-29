@@ -21,7 +21,7 @@ entranceTest.get('/all-test', isAuthenticated, updateToken, authorizeRoles('admi
 
 entranceTest.delete('/entrance-test/:id', updateToken, isAuthenticated, authorizeRoles('admin'), deleteEntranceTest);
 
-entranceTest.put('/entrance-test/:id', updateToken, isAuthenticated, authorizeRoles('admin'), updateEntranceTest);
+entranceTest.put('/entrance-test/:id', upload.any(), updateToken, isAuthenticated, authorizeRoles('admin'), updateEntranceTest);
 
 entranceTest.get('/entrance-test/:id', updateToken, isAuthenticated, authorizeRoles('admin'), getEntranceTestById);
 

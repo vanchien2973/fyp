@@ -4,12 +4,7 @@ import EntranceTestModel from "../models/entranceTest.model";
 import UserModel from "../models/user.model";
 import LayoutModel from "../models/layout.model";
 import CourseModel from "../models/course.model";
-import mongoose from "mongoose";
-import { promisify } from 'util';
-import fs from 'fs';
 import { deleteAllSectionFiles, handleFileUploads } from "../services/entranceTest.service";
-
-const unlinkAsync = promisify(fs.unlink);
 
 // Create Entry Test
 export const createEntranceTest = CatchAsyncError(async (req, res, next) => {
@@ -23,7 +18,7 @@ export const createEntranceTest = CatchAsyncError(async (req, res, next) => {
         let parsedSections;
         try {
             parsedSections = typeof sections === 'string' ? JSON.parse(sections) : sections;
-            
+
             if (!Array.isArray(parsedSections)) {
                 return next(new ErrorHandler('Sections must be an array', 400));
             }
@@ -58,11 +53,83 @@ export const createEntranceTest = CatchAsyncError(async (req, res, next) => {
     }
 });
 
+// Update Entrance Test 
+export const updateEntranceTest = CatchAsyncError(async (req, res, next) => {
+    try {
+        console.log('req.params:', req.params);
+        console.log('req.body:', req.body);
+        console.log('req.files:', req.files);
+        const { id } = req.params;
+        const { title, description, testType, totalTime, sections } = req.body;
+
+        // Input validation
+        if (!id || !title || !description || !testType || !totalTime || !sections) {
+            return next(new ErrorHandler('Missing required fields', 400));
+        }
+
+        let parsedSections;
+        try {
+            parsedSections = typeof sections === 'string' ? JSON.parse(sections) : sections;
+        } catch (error) {
+            return next(new ErrorHandler('Invalid sections data format: ' + error.message, 400));
+        }
+
+        const existingTest = await EntranceTestModel.findById(id);
+        console.log('existingTest:', existingTest);
+        if (!existingTest) {
+            return next(new ErrorHandler(`Entrance test with ID ${id} not found`, 404));
+        }
+
+        const oldSections = JSON.parse(JSON.stringify(existingTest.sections));
+
+        let newSections;
+        try {
+            newSections = await handleFileUploads(parsedSections, req.files || []);
+            console.log('newSections:', newSections);
+        } catch (uploadError) {
+            await deleteAllSectionFiles(oldSections);
+            return next(new ErrorHandler(`File upload failed: ${uploadError.message}`, 500));
+        }
+
+        const updateData = {
+            title,
+            description,
+            testType,
+            sections: newSections,
+            totalTime: Number(totalTime),
+            updatedAt: new Date()
+        };
+
+        const updatedTest = await EntranceTestModel.findByIdAndUpdate(
+            id,
+            updateData,
+            { new: true, runValidators: true }
+        );
+        console.log('updatedTest:', updatedTest);
+        
+        if (!updatedTest) {
+            await deleteAllSectionFiles(newSections);
+            return next(new ErrorHandler('Database update failed', 500));
+        }
+
+        await deleteAllSectionFiles(oldSections);
+
+        return res.status(200).json({
+            success: true,
+            message: "Entrance test updated successfully",
+            test: updatedTest
+        });
+    } catch (error) {
+        console.error('Unexpected error during test update:', error);
+        return next(new ErrorHandler(`Failed to update entrance test: ${error.message}`, 500));
+    }
+});
+
 // Delete Entrance Test
 export const deleteEntranceTest = CatchAsyncError(async (req, res, next) => {
     try {
         const { id } = req.params;
-        
+
         const test = await EntranceTestModel.findById(id);
         if (!test) {
             return next(new ErrorHandler('Entrance test not found', 404));
@@ -89,193 +156,6 @@ export const deleteEntranceTest = CatchAsyncError(async (req, res, next) => {
         });
     } catch (error) {
         return next(new ErrorHandler(`Error deleting entrance test: ${error.message}`, 500));
-    }
-});
-
-// Compare and handle file updates
-const handleFileUpdate = async (oldFile, newFile, folder) => {
-    if (newFile) {
-        if (oldFile) {
-            await deleteCloudinaryFile(oldFile);
-        }
-        return await uploadFile(newFile, folder);
-    }
-    return oldFile;
-};
-
-// Helper function to process section updates
-const processUpdateSections = async (oldSections, newSections, files) => {
-    const parsedNewSections = typeof newSections === 'string' ? JSON.parse(newSections) : newSections;
-    
-    return await Promise.all(parsedNewSections.map(async (newSection, sectionIndex) => {
-        const oldSection = oldSections[sectionIndex];
-
-        // Process passages
-        if (Array.isArray(newSection.passages)) {
-            newSection.passages = await Promise.all(newSection.passages.map(async (newPassage, passageIndex) => {
-                const oldPassage = oldSection?.passages?.[passageIndex];
-
-                // Handle passage files
-                const passageAudioKey = `sections[${sectionIndex}].passages[${passageIndex}].audioFile`;
-                const passageImageKey = `sections[${sectionIndex}].passages[${passageIndex}].imageFile`;
-
-                const audioFile = files?.find(f => f.fieldname === passageAudioKey);
-                const imageFile = files?.find(f => f.fieldname === passageImageKey);
-
-                const audioUrl = await handleFileUpdate(
-                    oldPassage?.audioFile,
-                    audioFile,
-                    'audio'
-                );
-
-                const imageUrl = await handleFileUpdate(
-                    oldPassage?.imageFile,
-                    imageFile,
-                    'images'
-                );
-
-                // Process questions within passages
-                const questions = await Promise.all((newPassage.questions || []).map(async (newQuestion, questionIndex) => {
-                    const oldQuestion = oldPassage?.questions?.[questionIndex];
-
-                    const questionAudioKey = `sections[${sectionIndex}].passages[${passageIndex}].questions[${questionIndex}].audioFile`;
-                    const questionImageKey = `sections[${sectionIndex}].passages[${passageIndex}].questions[${questionIndex}].imageFile`;
-
-                    const qAudioFile = files?.find(f => f.fieldname === questionAudioKey);
-                    const qImageFile = files?.find(f => f.fieldname === questionImageKey);
-
-                    const questionAudioUrl = await handleFileUpdate(
-                        oldQuestion?.audioFile,
-                        qAudioFile,
-                        'audio'
-                    );
-
-                    const questionImageUrl = await handleFileUpdate(
-                        oldQuestion?.imageFile,
-                        qImageFile,
-                        'images'
-                    );
-
-                    return {
-                        ...newQuestion,
-                        audioFile: questionAudioUrl,
-                        imageFile: questionImageUrl
-                    };
-                }));
-
-                return {
-                    ...newPassage,
-                    audioFile: audioUrl,
-                    imageFile: imageUrl,
-                    questions
-                };
-            }));
-        }
-
-        // Process standalone questions
-        if (Array.isArray(newSection.questions)) {
-            newSection.questions = await Promise.all(newSection.questions.map(async (newQuestion, questionIndex) => {
-                const oldQuestion = oldSection?.questions?.[questionIndex];
-
-                const audioKey = `sections[${sectionIndex}].questions[${questionIndex}].audioFile`;
-                const imageKey = `sections[${sectionIndex}].questions[${questionIndex}].imageFile`;
-
-                const audioFile = files?.find(f => f.fieldname === audioKey);
-                const imageFile = files?.find(f => f.fieldname === imageKey);
-
-                const audioUrl = await handleFileUpdate(
-                    oldQuestion?.audioFile,
-                    audioFile,
-                    'audio'
-                );
-
-                const imageUrl = await handleFileUpdate(
-                    oldQuestion?.imageFile,
-                    imageFile,
-                    'images'
-                );
-
-                return {
-                    ...newQuestion,
-                    audioFile: audioUrl,
-                    imageFile: imageUrl
-                };
-            }));
-        }
-
-        return newSection;
-    }));
-};
-
-// Update Entrance Test
-export const updateEntranceTest = CatchAsyncError(async (req, res, next) => {
-    try {
-        const { id } = req.params;
-        const { title, description, testType, totalTime, sections } = req.body;
-
-        // Find the existing test
-        const existingTest = await EntranceTestModel.findById(id);
-        if (!existingTest) {
-            return next(new ErrorHandler('Entrance test not found', 404));
-        }
-
-        let processedSections;
-        if (req.files && Array.isArray(req.files)) {
-            // Process sections with file updates
-            processedSections = await processUpdateSections(
-                existingTest.sections,
-                sections,
-                req.files
-            );
-        } else {
-            // If no files to update, parse sections as is
-            processedSections = JSON.parse(sections);
-        }
-
-        // Update the test
-        const updatedTest = await EntranceTestModel.findByIdAndUpdate(
-            id,
-            {
-                title,
-                description,
-                testType,
-                sections: processedSections,
-                totalTime: Number(totalTime),
-            },
-            { new: true, runValidators: true }
-        );
-
-        // Clean up any temporary files
-        if (req.files) {
-            for (const file of req.files) {
-                if (file.path) {
-                    try {
-                        await unlinkAsync(file.path);
-                    } catch (unlinkError) {
-                        console.error('Error deleting temporary file:', unlinkError);
-                    }
-                }
-            }
-        }
-
-        res.status(200).json({
-            success: true,
-            message: "Entrance test updated successfully",
-            test: updatedTest
-        });
-    } catch (error) {
-        if (req.files) {
-            for (const file of req.files) {
-                if (file.path) {
-                    try {
-                        await unlinkAsync(file.path);
-                    } catch (unlinkError) {
-                        console.error('Error deleting temporary file:', unlinkError);
-                    }
-                }
-            }
-        }
-        return next(new ErrorHandler(`Error updating entrance test: ${error.message}`, 500));
     }
 });
 

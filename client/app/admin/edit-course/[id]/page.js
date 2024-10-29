@@ -6,7 +6,7 @@ import React from 'react';
 
 const breadcrumbItems = [
     { title: 'Dashboard', link: '/admin' },
-    { title: 'Create Course', link: 'admin/create-courses' }
+    { title: 'Edit Course', link: 'admin/create-courses' }
 ];
 
 const page = ({ params }) => {

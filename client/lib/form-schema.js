@@ -70,21 +70,34 @@ export const courseContentSchema = z.object({
 });
 
 const questionSchema = z.object({
-  type: z.enum(['multipleChoice', 'trueFalse', 'shortAnswer', 'essay', 'fillInTheBlank', 'matching', 'ordering', 'selectFromDropdown']),
-  text: z.string().min(1, "Question content is required"),
-  points: z.number().min(0),
+  type: z.enum([
+    'multipleChoice',
+    'trueFalse',
+    'shortAnswer', 
+    'essay',
+    'fillInTheBlank',
+    'matching',
+    'ordering',
+    'selectFromDropdown'
+  ], "Invalid question type"),
+  text: z.string().min(1, "Question content is required").max(1000, "Question content cannot exceed 1000 characters"),
+  points: z.number().min(0, "Points must be non-negative").max(100, "Points cannot exceed 100"),
   audioFile: z.any().optional().nullable(),
   imageFile: z.any().optional().nullable(),
   options: z.array(z.object({
-    text: z.string(),
+    text: z.string().min(1, "Option text is required"),
     isCorrect: z.boolean()
-  })).optional(),
-  correctAnswer: z.union([z.string(), z.boolean()]).optional(),
-  orderItems: z.array(z.string()).optional(),
+  })).optional().default([]),
+  correctAnswer: z.union([
+    z.string(),
+    z.boolean(),
+    z.array(z.string())
+  ]).optional(),
+  orderItems: z.array(z.string()).optional().default([]),
   matchingPairs: z.array(z.object({
-    left: z.string(),
-    right: z.string()
-  })).optional()
+    left: z.string().min(1, "Left pair text is required"),
+    right: z.string().min(1, "Right pair text is required")
+  })).optional().default([])
 });
 
 export const formSchema = z.object({

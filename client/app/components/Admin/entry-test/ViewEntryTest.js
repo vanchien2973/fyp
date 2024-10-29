@@ -15,12 +15,9 @@ import { Separator } from "../../ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
 
 const ViewEntryTest = ({ id }) => {
-  const { data, isLoading, isError } = useGetEntranceTestByIdQuery(id);
+  const { data, isLoading } = useGetEntranceTestByIdQuery(id);
 
   const test = data?.test;
-
-  if (isLoading) return <Loader />;
-  if (isError) return <div>Error loading test</div>;
 
   const getSectionIcon = (name) => {
     switch (name) {
@@ -250,74 +247,84 @@ const ViewEntryTest = ({ id }) => {
   );
 
   return (
-    <div className="container mx-auto p-4 space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">{test.title}</h1>
-          <p className="text-muted-foreground mt-2">{test.description}</p>
-        </div>
-        <Badge variant="outline" className="text-lg">
-          <Clock className="mr-2 h-4 w-4" />
-          {test.totalTime} minutes
-        </Badge>
-      </div>
-
-      <Alert>
-        <Info className="h-4 w-4" />
-        <AlertTitle>Test Information</AlertTitle>
-        <AlertDescription>
-          This is a {test.testType} format test. Please make sure you have {test.totalTime} minutes available before starting.
-        </AlertDescription>
-      </Alert>
-
-      <Accordion type="single" collapsible className="w-full">
-        {test.sections?.map((section, idx) => (
-          <AccordionItem key={idx} value={`section-${idx}`}>
-            <AccordionTrigger>
-              <div className="flex items-center space-x-2">
-                {getSectionIcon(section.name)}
-                <span>{section.name}</span>
-                <Badge variant="secondary" className="ml-2">
-                  {section.timeLimit} min
+    <>
+      {
+        isLoading ? (
+          <Loader />
+        ) : (
+          <>
+            <div className="container mx-auto p-4 space-y-6">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h1 className="text-3xl font-bold">{test.title}</h1>
+                  <p className="text-muted-foreground mt-2">{test.description}</p>
+                </div>
+                <Badge variant="outline" className="text-lg">
+                  <Clock className="mr-2 h-4 w-4" />
+                  {test.totalTime} minutes
                 </Badge>
               </div>
-            </AccordionTrigger>
-            <AccordionContent>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">{section.description}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {section.passages?.length > 0 ? (
-                    section.passages.map((passage, pIdx) => (
-                      <div key={pIdx} className="mt-4">
-                        <h3 className="text-lg font-medium mb-4">Passage {pIdx + 1}</h3>
-                        {renderPassageContent(passage, passage.questions)}
+
+              <Alert>
+                <Info className="h-4 w-4" />
+                <AlertTitle>Test Information</AlertTitle>
+                <AlertDescription>
+                  This is a {test.testType} format test. Please make sure you have {test.totalTime} minutes available before starting.
+                </AlertDescription>
+              </Alert>
+
+              <Accordion type="single" collapsible className="w-full">
+                {test.sections?.map((section, idx) => (
+                  <AccordionItem key={idx} value={`section-${idx}`}>
+                    <AccordionTrigger>
+                      <div className="flex items-center space-x-2">
+                        {getSectionIcon(section.name)}
+                        <span>{section.name}</span>
+                        <Badge variant="secondary" className="ml-2">
+                          {section.timeLimit} min
+                        </Badge>
                       </div>
-                    ))
-                  ) : (
-                    <div className="space-y-4">
-                      {section.questions?.map((question, qIdx) => (
-                        <Card key={qIdx} className="p-4">
-                          <div className="space-y-4">
-                            <div className="flex justify-between items-center">
-                              <h4 className="font-medium">Question {qIdx + 1}</h4>
-                              <Badge>{question.points} points</Badge>
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <Card>
+                        <CardHeader>
+                          <CardTitle className="text-lg">{section.description}</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          {section.passages?.length > 0 ? (
+                            section.passages.map((passage, pIdx) => (
+                              <div key={pIdx} className="mt-4">
+                                <h3 className="text-lg font-medium mb-4">Part {pIdx + 1}</h3>
+                                {renderPassageContent(passage, passage.questions)}
+                              </div>
+                            ))
+                          ) : (
+                            <div className="space-y-4">
+                              {section.questions?.map((question, qIdx) => (
+                                <Card key={qIdx} className="p-4">
+                                  <div className="space-y-4">
+                                    <div className="flex justify-between items-center">
+                                      <h4 className="font-medium">Question {qIdx + 1}</h4>
+                                      <Badge>{question.points} points</Badge>
+                                    </div>
+                                    <p>{question.text}</p>
+                                    {renderQuestionContent(question)}
+                                  </div>
+                                </Card>
+                              ))}
                             </div>
-                            <p>{question.text}</p>
-                            {renderQuestionContent(question)}
-                          </div>
-                        </Card>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </AccordionContent>
-          </AccordionItem>
-        ))}
-      </Accordion>
-    </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+            </div>
+          </>
+        )
+      }
+    </>
   );
 };
 

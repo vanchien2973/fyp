@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Input } from "../../ui/input";
 import { Button } from "../../ui/button";
 import { Checkbox } from "../../ui/checkbox";
@@ -13,7 +13,8 @@ const AnswerInput = ({
   questionIndex, 
   handleQuestionChange, 
   passageIndex = null,
-  form
+  form,
+  isEditing = false
 }) => {
   const getFieldName = (field) => {
     return passageIndex !== null
@@ -21,13 +22,25 @@ const AnswerInput = ({
       : `sections.${sectionIndex}.questions.${questionIndex}.${field}`;
   };
 
+  // Initialize question data when editing
+  useEffect(() => {
+    if (isEditing && question) {
+      // Set form values for the question
+      const fieldNames = ['options', 'correctAnswer', 'matchingPairs', 'orderItems'];
+      fieldNames.forEach(fieldName => {
+        if (question[fieldName]) {
+          form.setValue(getFieldName(fieldName), question[fieldName]);
+        }
+      });
+    }
+  }, [isEditing, question, form]);
+
   const updateOptions = (updatedOptions) => {
     const fieldName = getFieldName('options');
     form.setValue(fieldName, updatedOptions);
     handleQuestionChange(sectionIndex, questionIndex, 'options', updatedOptions, passageIndex);
   };
 
-  // Helper function to update correctAnswer
   const updateCorrectAnswer = (value) => {
     const fieldName = getFieldName('correctAnswer');
     form.setValue(fieldName, value);
@@ -51,14 +64,13 @@ const AnswerInput = ({
               <FormItem>
                 <FormControl>
                   <Checkbox
-                    checked={field.value}
+                    checked={isEditing ? option.isCorrect : field.value}
                     onCheckedChange={(checked) => {
                       field.onChange(checked);
                       const updatedOptions = [...question.options];
                       updatedOptions[optionIndex].isCorrect = checked;
                       updateOptions(updatedOptions);
                       
-                      // Update correctAnswer for selectFromDropdown
                       if (question.type === 'selectFromDropdown' && checked) {
                         updateCorrectAnswer(option.text);
                       }
@@ -76,6 +88,7 @@ const AnswerInput = ({
                 <FormControl>
                   <Input
                     {...field}
+                    value={isEditing ? option.text : field.value}
                     placeholder={`Option ${optionIndex + 1}`}
                     onChange={(e) => {
                       field.onChange(e);
@@ -83,7 +96,6 @@ const AnswerInput = ({
                       updatedOptions[optionIndex].text = e.target.value;
                       updateOptions(updatedOptions);
                       
-                      // Update correctAnswer for selectFromDropdown if this is the correct option
                       if (question.type === 'selectFromDropdown' && option.isCorrect) {
                         updateCorrectAnswer(e.target.value);
                       }
@@ -120,7 +132,7 @@ const AnswerInput = ({
           <FormLabel>Correct Answer</FormLabel>
           <FormControl>
             <RadioGroup
-              value={field.value?.toString()}
+              value={(isEditing ? question.correctAnswer : field.value)?.toString()}
               onValueChange={(value) => {
                 const boolValue = value === 'true';
                 field.onChange(boolValue);
@@ -142,7 +154,6 @@ const AnswerInput = ({
     />
   );
 
-
   const renderMatchingPairs = () => (
     <div className="space-y-2">
       {(question.matchingPairs || []).map((pair, pairIndex) => (
@@ -162,7 +173,6 @@ const AnswerInput = ({
                       updatedPairs[pairIndex].left = e.target.value;
                       form.setValue(getFieldName('matchingPairs'), updatedPairs);
                       handleQuestionChange(sectionIndex, questionIndex, 'matchingPairs', updatedPairs, passageIndex);
-                      // Update correctAnswer to include all pairs
                       updateCorrectAnswer(JSON.stringify(updatedPairs));
                     }}
                   />
@@ -281,37 +291,39 @@ const AnswerInput = ({
     </div>
   );
 
+ const renderTextAnswer = () => (
+    <FormField
+      control={form.control}
+      name={getFieldName('correctAnswer')}
+      render={({ field }) => (
+        <FormItem>
+          <FormLabel>Correct Answer</FormLabel>
+          <FormControl>
+            <Input
+              {...field}
+              value={isEditing ? question.correctAnswer : field.value}
+              placeholder="Enter correct answer"
+              onChange={(e) => {
+                field.onChange(e);
+                updateCorrectAnswer(e.target.value);
+              }}
+            />
+          </FormControl>
+        </FormItem>
+      )}
+    />
+  );
+
   switch (question.type) {
     case 'multipleChoice':
-      return renderMultipleChoiceOptions();
     case 'selectFromDropdown':
-      return renderMultipleChoiceOptions(); // Same UI but different handling of correctAnswer
+      return renderMultipleChoiceOptions();
     case 'trueFalse':
       return renderTrueFalseOptions();
     case 'shortAnswer':
     case 'essay':
     case 'fillInTheBlank':
-      return (
-        <FormField
-          control={form.control}
-          name={getFieldName('correctAnswer')}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Correct Answer</FormLabel>
-              <FormControl>
-                <Input
-                  {...field}
-                  placeholder="Enter correct answer"
-                  onChange={(e) => {
-                    field.onChange(e);
-                    updateCorrectAnswer(e.target.value);
-                  }}
-                />
-              </FormControl>
-            </FormItem>
-          )}
-        />
-      );
+      return renderTextAnswer();
     case 'matching':
       return renderMatchingPairs();
     case 'ordering':

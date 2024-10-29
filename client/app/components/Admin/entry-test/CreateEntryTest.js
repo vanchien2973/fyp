@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
 import { Button } from "../../ui/button";
 import { Input } from "../../ui/input";
 import { Textarea } from "../../ui/textarea";
@@ -15,6 +14,7 @@ import AnswerInput from './AnswerInput';
 import { formSchema } from '@/lib/form-schema';
 import sampleEntryTestData from './SampleEntryTest';
 import { redirect } from 'next/navigation';
+import FilePreview from './FilePreview';
 
 const CreateEntryTest = () => {
   const [createEntranceTest, { isLoading, isSuccess, error }] = useCreateEntranceTestMutation();
@@ -31,13 +31,11 @@ const CreateEntryTest = () => {
     const newFiles = Array.from(event.target.files);
     if (!newFiles.length) return;
 
-    // Update files state
     setFiles(prevFiles => ({
       ...prevFiles,
       [path]: newFiles[0]
     }));
 
-    // Update form value with the File object directly
     form.setValue(path, newFiles[0], {
       shouldValidate: true,
       shouldDirty: true
@@ -78,6 +76,7 @@ const CreateEntryTest = () => {
       }
     ]
   });
+
   // const [entryTestData, setEntryTestData] = useState(sampleEntryTestData);
 
   const form = useForm({
@@ -117,7 +116,6 @@ const CreateEntryTest = () => {
       imageFile: null
     };
 
-    // Update local state
     setEntryTestData(prevData => {
       const updatedSections = [...prevData.sections];
       if (!updatedSections[sectionIndex].passages) {
@@ -127,7 +125,6 @@ const CreateEntryTest = () => {
       return { ...prevData, sections: updatedSections };
     });
 
-    // Update form state
     const currentPassages = form.getValues(`sections.${sectionIndex}.passages`) || [];
     form.setValue(`sections.${sectionIndex}.passages`, [...currentPassages, newPassage]);
   };
@@ -145,7 +142,6 @@ const CreateEntryTest = () => {
       matchingPairs: [],
     };
 
-    // Update local state
     setEntryTestData(prevData => {
       const updatedSections = [...prevData.sections];
       if (passageIndex !== null) {
@@ -162,7 +158,6 @@ const CreateEntryTest = () => {
       return { ...prevData, sections: updatedSections };
     });
 
-    // Update form state
     if (passageIndex !== null) {
       const currentQuestions = form.getValues(`sections.${sectionIndex}.passages.${passageIndex}.questions`) || [];
       form.setValue(
@@ -186,7 +181,6 @@ const CreateEntryTest = () => {
         : updatedSections[sectionIndex].questions;
 
       if (field === 'type') {
-        // Initialize default values based on question type
         const baseQuestion = {
           type: value,
           text: targetQuestions[questionIndex].text || '',
@@ -195,7 +189,6 @@ const CreateEntryTest = () => {
           imageFile: targetQuestions[questionIndex].imageFile || null,
         };
 
-        // Add specific fields based on question type
         switch (value) {
           case 'multipleChoice':
           case 'selectFromDropdown':
@@ -258,35 +251,49 @@ const CreateEntryTest = () => {
             };
         }
 
-        // Update the form values
         const questionPath = passageIndex !== null
           ? `sections.${sectionIndex}.passages.${passageIndex}.questions.${questionIndex}`
           : `sections.${sectionIndex}.questions.${questionIndex}`;
         form.setValue(questionPath, targetQuestions[questionIndex]);
       } else {
-        // Handle other field changes
         targetQuestions[questionIndex][field] = value;
       }
 
-      console.log('Updated entryTestData:', updatedSections);
       return { ...prevData, sections: updatedSections };
     });
   }, [form]);
 
-  const renderFileInput = (path, accept) => (
-    <FormItem>
-      <FormLabel>File Upload</FormLabel>
-      <FormControl>
-        <Input
-          type="file"
-          accept={accept}
-          multiple
-          onChange={(e) => handleFileChange(e, path)}
-        />
-      </FormControl>
-      <FormMessage />
-    </FormItem>
-  );
+  const renderFileInput = (path, accept, label) => {
+    const currentFile = files[path];
+
+    return (
+        <FormItem>
+            <FormLabel>{label}</FormLabel>
+            <div className="space-y-2">
+                <FormControl>
+                    <Input
+                        type="file"
+                        accept={accept}
+                        onChange={(e) => handleFileChange(e, path)}
+                    />
+                </FormControl>
+                {currentFile && (
+                    <FilePreview
+                        file={currentFile}
+                        type={accept}
+                        onRemove={() => {
+                            const newFiles = { ...files };
+                            delete newFiles[path];
+                            setFiles(newFiles);
+                            form.setValue(path, null);
+                        }}
+                    />
+                )}
+                <FormMessage />
+            </div>
+        </FormItem>
+    );
+};
 
   const renderQuestionFields = (sectionIndex, questionIndex, passageIndex = null) => {
     const questionPath = passageIndex !== null
@@ -299,7 +306,6 @@ const CreateEntryTest = () => {
 
     return (
       <div className="space-y-4">
-        {/* Question type field */}
         <FormField
           control={form.control}
           name={`${questionPath}.type`}
@@ -334,7 +340,6 @@ const CreateEntryTest = () => {
           )}
         />
 
-        {/* Question text field */}
         <FormField
           control={form.control}
           name={`${questionPath}.text`}
@@ -356,7 +361,6 @@ const CreateEntryTest = () => {
           )}
         />
 
-        {/* Answer input component */}
         <AnswerInput
           question={question}
           sectionIndex={sectionIndex}
@@ -366,7 +370,6 @@ const CreateEntryTest = () => {
           form={form}
         />
 
-        {/* Points field */}
         <FormField
           control={form.control}
           name={`${questionPath}.points`}
@@ -389,7 +392,6 @@ const CreateEntryTest = () => {
           )}
         />
 
-        {/* File upload fields */}
         <div className="grid grid-cols-2 gap-4">
           <FormField
             control={form.control}
@@ -397,30 +399,57 @@ const CreateEntryTest = () => {
             render={({ field: { value, onChange, ...field } }) => (
               <FormItem>
                 <FormLabel>Audio File</FormLabel>
-                <FormControl>
-                  <Input
-                    type="file"
-                    accept="audio/*"
-                    onChange={(e) => {
-                      const filePath = createFilePath(sectionIndex, questionIndex, 'audioFile', passageIndex);
-                      handleFileChange(e, filePath);
+                <div className="space-y-2">
+                  <FormControl>
+                    <Input
+                      type="file"
+                      accept="audio/*"
+                      onChange={(e) => {
+                        const filePath = createFilePath(sectionIndex, questionIndex, 'audioFile', passageIndex);
+                        handleFileChange(e, filePath);
 
-                      // Update entryTestData
-                      setEntryTestData(prevData => {
-                        const newData = { ...prevData };
-                        const sections = [...newData.sections];
-                        if (passageIndex !== null) {
-                          sections[sectionIndex].passages[passageIndex].questions[questionIndex].audioFile = e.target.files[0];
-                        } else {
-                          sections[sectionIndex].questions[questionIndex].audioFile = e.target.files[0];
-                        }
-                        return { ...newData, sections };
-                      });
-                    }}
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
+                        // Update entryTestData
+                        setEntryTestData(prevData => {
+                          const newData = { ...prevData };
+                          const sections = [...newData.sections];
+                          if (passageIndex !== null) {
+                            sections[sectionIndex].passages[passageIndex].questions[questionIndex].audioFile = e.target.files[0];
+                          } else {
+                            sections[sectionIndex].questions[questionIndex].audioFile = e.target.files[0];
+                          }
+                          return { ...newData, sections };
+                        });
+                      }}
+                      {...field}
+                    />
+                  </FormControl>
+                  {files[createFilePath(sectionIndex, questionIndex, 'audioFile', passageIndex)] && (
+                    <FilePreview
+                      file={files[createFilePath(sectionIndex, questionIndex, 'audioFile', passageIndex)]}
+                      type="audio/*"
+                      onRemove={() => {
+                        const filePath = createFilePath(sectionIndex, questionIndex, 'audioFile', passageIndex);
+                        const newFiles = { ...files };
+                        delete newFiles[filePath];
+                        setFiles(newFiles);
+                        form.setValue(filePath, null);
+
+                        // Update entryTestData
+                        setEntryTestData(prevData => {
+                          const newData = { ...prevData };
+                          const sections = [...newData.sections];
+                          if (passageIndex !== null) {
+                            sections[sectionIndex].passages[passageIndex].questions[questionIndex].audioFile = null;
+                          } else {
+                            sections[sectionIndex].questions[questionIndex].audioFile = null;
+                          }
+                          return { ...newData, sections };
+                        });
+                      }}
+                    />
+                  )}
+                  <FormMessage />
+                </div>
               </FormItem>
             )}
           />
@@ -431,30 +460,57 @@ const CreateEntryTest = () => {
             render={({ field: { value, onChange, ...field } }) => (
               <FormItem>
                 <FormLabel>Image File</FormLabel>
-                <FormControl>
-                  <Input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => {
-                      const filePath = createFilePath(sectionIndex, questionIndex, 'imageFile', passageIndex);
-                      handleFileChange(e, filePath);
+                <div className="space-y-2">
+                  <FormControl>
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const filePath = createFilePath(sectionIndex, questionIndex, 'imageFile', passageIndex);
+                        handleFileChange(e, filePath);
 
-                      // Update entryTestData
-                      setEntryTestData(prevData => {
-                        const newData = { ...prevData };
-                        const sections = [...newData.sections];
-                        if (passageIndex !== null) {
-                          sections[sectionIndex].passages[passageIndex].questions[questionIndex].imageFile = e.target.files[0];
-                        } else {
-                          sections[sectionIndex].questions[questionIndex].imageFile = e.target.files[0];
-                        }
-                        return { ...newData, sections };
-                      });
-                    }}
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
+                        // Update entryTestData
+                        setEntryTestData(prevData => {
+                          const newData = { ...prevData };
+                          const sections = [...newData.sections];
+                          if (passageIndex !== null) {
+                            sections[sectionIndex].passages[passageIndex].questions[questionIndex].imageFile = e.target.files[0];
+                          } else {
+                            sections[sectionIndex].questions[questionIndex].imageFile = e.target.files[0];
+                          }
+                          return { ...newData, sections };
+                        });
+                      }}
+                      {...field}
+                    />
+                  </FormControl>
+                  {files[createFilePath(sectionIndex, questionIndex, 'imageFile', passageIndex)] && (
+                    <FilePreview
+                      file={files[createFilePath(sectionIndex, questionIndex, 'imageFile', passageIndex)]}
+                      type="image/*"
+                      onRemove={() => {
+                        const filePath = createFilePath(sectionIndex, questionIndex, 'imageFile', passageIndex);
+                        const newFiles = { ...files };
+                        delete newFiles[filePath];
+                        setFiles(newFiles);
+                        form.setValue(filePath, null);
+
+                        // Update entryTestData
+                        setEntryTestData(prevData => {
+                          const newData = { ...prevData };
+                          const sections = [...newData.sections];
+                          if (passageIndex !== null) {
+                            sections[sectionIndex].passages[passageIndex].questions[questionIndex].imageFile = null;
+                          } else {
+                            sections[sectionIndex].questions[questionIndex].imageFile = null;
+                          }
+                          return { ...newData, sections };
+                        });
+                      }}
+                    />
+                  )}
+                  <FormMessage />
+                </div>
               </FormItem>
             )}
           />
@@ -466,7 +522,7 @@ const CreateEntryTest = () => {
   const renderPassageContent = (sectionIndex, passageIndex) => (
     <Card className="mt-4">
       <CardHeader>
-        <CardTitle>Passage {passageIndex + 1}</CardTitle>
+        <CardTitle>Part {passageIndex + 1}</CardTitle>
       </CardHeader>
       <CardContent>
         <FormField
@@ -474,7 +530,7 @@ const CreateEntryTest = () => {
           name={`sections.${sectionIndex}.passages.${passageIndex}.text`}
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Passage Text</FormLabel>
+              <FormLabel>Part Text</FormLabel>
               <FormControl>
                 <Textarea
                   {...field}
@@ -494,8 +550,8 @@ const CreateEntryTest = () => {
           )}
         />
         <div className="grid grid-cols-2 gap-4 mt-4">
-          {renderFileInput(`sections[${sectionIndex}].passages[${passageIndex}].audioFile`, "audio/*")}
-          {renderFileInput(`sections[${sectionIndex}].passages[${passageIndex}].imageFile`, "image/*")}
+          {renderFileInput(`sections[${sectionIndex}].passages[${passageIndex}].audioFile`, "audio/*", "Audio File")}
+          {renderFileInput(`sections[${sectionIndex}].passages[${passageIndex}].imageFile`, "image/*", "Image File")}
         </div>
         {form.watch(`sections.${sectionIndex}.passages.${passageIndex}.questions`)?.map((_, questionIndex) => (
           <Card key={questionIndex} className="mt-4">
@@ -513,7 +569,7 @@ const CreateEntryTest = () => {
           onClick={() => handleAddQuestion(sectionIndex, passageIndex)}
           className="mt-4"
         >
-          <PlusCircle className="mr-2 h-4 w-4" /> Add Question to Passage
+          <PlusCircle className="mr-2 h-4 w-4" /> Add Question to Part
         </Button>
       </CardContent>
     </Card>
@@ -534,7 +590,7 @@ const CreateEntryTest = () => {
             onClick={() => handleAddPassage(sectionIndex)}
             className="mt-4"
           >
-            <PlusCircle className="mr-2 h-4 w-4" /> Add Passage
+            <PlusCircle className="mr-2 h-4 w-4" /> Add Part
           </Button>
         </>
       );
@@ -564,139 +620,130 @@ const CreateEntryTest = () => {
   };
 
   const onSubmit = async (data) => {
-      const formData = new FormData();
+    const formData = new FormData();
 
-      // Append basic info
-      formData.append('title', data.title);
-      formData.append('description', data.description);
-      formData.append('testType', data.testType);
-      formData.append('totalTime', data.totalTime.toString());
+    formData.append('title', data.title);
+    formData.append('description', data.description);
+    formData.append('testType', data.testType);
+    formData.append('totalTime', data.totalTime.toString());
 
-      // Helper function to process question data based on type
-      const processQuestionData = (question) => {
-        const baseQuestion = {
-          type: question.type,
-          text: question.text,
-          points: question.points
-        };
-
-        switch (question.type) {
-          case 'multipleChoice':
-          case 'selectFromDropdown':
-            return {
-              ...baseQuestion,
-              options: question.options,
-              correctAnswer: question.options
-                ?.map((opt, index) => opt.isCorrect ? index : -1)
-                .filter(index => index !== -1)
-            };
-
-          case 'trueFalse':
-            return {
-              ...baseQuestion,
-              correctAnswer: Boolean(question.correctAnswer)
-            };
-
-          case 'ordering':
-            return {
-              ...baseQuestion,
-              orderItems: question.orderItems,
-              correctAnswer: question.orderItems?.map((_, index) => index)
-            };
-
-          case 'matching':
-            return {
-              ...baseQuestion,
-              matchingPairs: question.matchingPairs
-            };
-
-          case 'shortAnswer':
-          case 'essay':
-          case 'fillInTheBlank':
-            return {
-              ...baseQuestion,
-              correctAnswer: question.correctAnswer || ''
-            };
-
-          default:
-            return baseQuestion;
-        }
+    const processQuestionData = (question) => {
+      const baseQuestion = {
+        type: question.type,
+        text: question.text,
+        points: question.points
       };
 
-      // Helper function to clean and validate section data
-      const prepareSectionData = (section) => {
-        const processPassages = section.passages?.map(passage => ({
-          text: passage.text,
-          questions: passage.questions?.map(processQuestionData)
-        }));
+      switch (question.type) {
+        case 'multipleChoice':
+        case 'selectFromDropdown':
+          return {
+            ...baseQuestion,
+            options: question.options,
+            correctAnswer: question.options
+              ?.map((opt, index) => opt.isCorrect ? index : -1)
+              .filter(index => index !== -1)
+          };
 
-        const processQuestions = section.questions?.map(processQuestionData);
+        case 'trueFalse':
+          return {
+            ...baseQuestion,
+            correctAnswer: Boolean(question.correctAnswer)
+          };
 
-        const cleanedSection = {
-          name: section.name,
-          description: section.description,
-          timeLimit: section.timeLimit,
-          ...(processPassages?.length && { passages: processPassages }),
-          ...(processQuestions?.length && { questions: processQuestions })
-        };
+        case 'ordering':
+          return {
+            ...baseQuestion,
+            orderItems: question.orderItems,
+            correctAnswer: question.orderItems?.map((_, index) => index)
+          };
 
-        // Remove undefined/null properties
-        Object.keys(cleanedSection).forEach(key =>
-          (cleanedSection[key] === undefined || cleanedSection[key] === null) && delete cleanedSection[key]
+        case 'matching':
+          return {
+            ...baseQuestion,
+            matchingPairs: question.matchingPairs
+          };
+
+        case 'shortAnswer':
+        case 'essay':
+        case 'fillInTheBlank':
+          return {
+            ...baseQuestion,
+            correctAnswer: question.correctAnswer || ''
+          };
+
+        default:
+          return baseQuestion;
+      }
+    };
+
+    const prepareSectionData = (section) => {
+      const processPassages = section.passages?.map(passage => ({
+        text: passage.text,
+        questions: passage.questions?.map(processQuestionData)
+      }));
+
+      const processQuestions = section.questions?.map(processQuestionData);
+
+      const cleanedSection = {
+        name: section.name,
+        description: section.description,
+        timeLimit: section.timeLimit,
+        ...(processPassages?.length && { passages: processPassages }),
+        ...(processQuestions?.length && { questions: processQuestions })
+      };
+
+      Object.keys(cleanedSection).forEach(key =>
+        (cleanedSection[key] === undefined || cleanedSection[key] === null) && delete cleanedSection[key]
+      );
+
+      return cleanedSection;
+    };
+
+    const processedSections = data.sections.map(prepareSectionData);
+    formData.append('sections', JSON.stringify(processedSections));
+
+    const addFileToFormData = (file, path) => {
+      if (file instanceof File) {
+        formData.append(path, file);
+      }
+    };
+
+    data.sections.forEach((section, sectionIndex) => {
+      section.passages?.forEach((passage, passageIndex) => {
+        addFileToFormData(
+          passage.audioFile,
+          `sections[${sectionIndex}].passages[${passageIndex}].audioFile`
+        );
+        addFileToFormData(
+          passage.imageFile,
+          `sections[${sectionIndex}].passages[${passageIndex}].imageFile`
         );
 
-        return cleanedSection;
-      };
-
-      // Process sections data
-      const processedSections = data.sections.map(prepareSectionData);
-      formData.append('sections', JSON.stringify(processedSections));
-
-      // Process files
-      const addFileToFormData = (file, path) => {
-        if (file instanceof File) {
-          formData.append(path, file);
-        }
-      };
-
-      // Add files from sections
-      data.sections.forEach((section, sectionIndex) => {
-        section.passages?.forEach((passage, passageIndex) => {
-          // Handle passage files
-          addFileToFormData(
-            passage.audioFile,
-            `sections[${sectionIndex}].passages[${passageIndex}].audioFile`
-          );
-          addFileToFormData(
-            passage.imageFile,
-            `sections[${sectionIndex}].passages[${passageIndex}].imageFile`
-          );
-
-          // Handle passage question files
-          passage.questions?.forEach((question, questionIndex) => {
-            addFileToFormData(
-              question.audioFile,
-              `sections[${sectionIndex}].passages[${passageIndex}].questions[${questionIndex}].audioFile`
-            );
-            addFileToFormData(
-              question.imageFile,
-              `sections[${sectionIndex}].passages[${passageIndex}].questions[${questionIndex}].imageFile`
-            );
-          });
-        });
-        section.questions?.forEach((question, questionIndex) => {
+        passage.questions?.forEach((question, questionIndex) => {
           addFileToFormData(
             question.audioFile,
-            `sections[${sectionIndex}].questions[${questionIndex}].audioFile`
+            `sections[${sectionIndex}].passages[${passageIndex}].questions[${questionIndex}].audioFile`
           );
           addFileToFormData(
             question.imageFile,
-            `sections[${sectionIndex}].questions[${questionIndex}].imageFile`
+            `sections[${sectionIndex}].passages[${passageIndex}].questions[${questionIndex}].imageFile`
           );
         });
       });
+      section.questions?.forEach((question, questionIndex) => {
+        addFileToFormData(
+          question.audioFile,
+          `sections[${sectionIndex}].questions[${questionIndex}].audioFile`
+        );
+        addFileToFormData(
+          question.imageFile,
+          `sections[${sectionIndex}].questions[${questionIndex}].imageFile`
+        );
+      });
+    });
 
-      await createEntranceTest(formData);
+    await createEntranceTest(formData);
   };
 
   return (

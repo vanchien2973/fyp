@@ -8,7 +8,6 @@ export const uploadFile = async (file, folder) => {
     }
 
     try {
-        // Convert buffer to base64 string
         const fileBase64 = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
         
         const result = await cloudinary.v2.uploader.upload(fileBase64, {

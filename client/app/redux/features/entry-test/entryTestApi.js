@@ -38,11 +38,12 @@ export const entryTestApi = apiSlice.injectEndpoints({
         }),
 
         updateEntranceTest: builder.mutation({
-            query: ({ id, ...updateData }) => ({
+            query: ({ id, data }) => ({
                 url: `entrance-test/${id}`,
                 method: 'PUT',
-                body: updateData,
+                body: data,
                 credentials: 'include',
+                formData: true,
             }),
         }),
 
