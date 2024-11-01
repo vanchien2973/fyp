@@ -13,9 +13,11 @@ import { Textarea } from "../../ui/textarea";
 import { Progress } from "../../ui/progress";
 import { Separator } from "../../ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
+import { Checkbox } from "../../ui/checkbox";
 
 const ViewEntryTest = ({ id }) => {
   const { data, isLoading } = useGetEntranceTestByIdQuery(id);
+  console.log(data);
 
   const test = data?.test;
 
@@ -38,11 +40,11 @@ const ViewEntryTest = ({ id }) => {
     if (!imageUrl) return null;
     if (imageUrl.includes('cloudinary')) {
       return (
-        <div className="mt-4 relative">
+        <div className="mt-4 relative max-w-2xl mx-auto">
           <img
             src={imageUrl}
             alt="Test content"
-            className="rounded-lg w-full object-cover"
+            className="rounded-lg w-full h-auto max-h-[500px] object-contain"
             loading="lazy"
           />
           <Progress
@@ -58,7 +60,38 @@ const ViewEntryTest = ({ id }) => {
   const renderQuestionContent = (question) => {
     const baseContent = (
       <>
-        {question.imageFile && renderImage(question.imageFile)}
+        {question.audioFile && (
+          <div className="mt-4 max-w-2xl mx-auto">
+            <div className="bg-secondary/10 p-4 rounded-lg">
+              <div className="flex items-center space-x-2 mb-2">
+                <Headphones className="h-4 w-4 text-primary" />
+                <span className="text-sm font-medium">Audio Question</span>
+              </div>
+              <audio 
+                controls 
+                className="w-full focus:outline-none focus:ring-2 focus:ring-primary"
+              >
+                <source src={question.audioFile} type="audio/mpeg" />
+                Your browser does not support the audio element.
+              </audio>
+              <Progress value={0} className="w-full mt-2 hidden audio-loading" />
+            </div>
+          </div>
+        )}
+        {question.imageFile && (
+          <div className="mt-4 relative max-w-2xl mx-auto">
+            <img
+              src={question.imageFile}
+              alt="Question content"
+              className="rounded-lg w-full h-auto max-h-[500px] object-contain"
+              loading="lazy"
+            />
+            <Progress
+              value={100}
+              className="w-full mt-2 hidden image-loading"
+            />
+          </div>
+        )}
         {renderDefaultQuestionContent(question)}
         {renderAnswer(question)}
       </>
@@ -76,14 +109,19 @@ const ViewEntryTest = ({ id }) => {
     switch (question.type) {
       case 'multipleChoice':
         return (
-          <RadioGroup>
+          <div className="space-y-3">
             {question.options?.map((option, idx) => (
               <div key={idx} className="flex items-center space-x-2">
-                <RadioGroupItem value={`option-${idx}`} id={`option-${idx}`} />
-                <Label htmlFor={`option-${idx}`}>{option.text}</Label>
+                <Checkbox id={`option-${idx}`} />
+                <Label 
+                  htmlFor={`option-${idx}`}
+                  className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  {option.text}
+                </Label>
               </div>
             ))}
-          </RadioGroup>
+          </div>
         );
       case 'trueFalse':
         return (
@@ -215,13 +253,21 @@ const ViewEntryTest = ({ id }) => {
           {passage.text}
         </div>
         {passage.audioFile && (
-          <div className="mt-4 flex items-center space-x-2">
-            <Headphones className="h-4 w-4" />
-            <audio controls className="w-full">
-              <source src={passage.audioFile} type="audio/mpeg" />
-              Your browser does not support the audio element.
-            </audio>
-            <Progress value={0} className="w-full mt-2 hidden audio-loading" />
+          <div className="mt-4 max-w-2xl mx-auto">
+            <div className="bg-secondary/10 p-4 rounded-lg">
+              <div className="flex items-center space-x-2 mb-2">
+                <Headphones className="h-4 w-4 text-primary" />
+                <span className="text-sm font-medium">Audio Player</span>
+              </div>
+              <audio 
+                controls 
+                className="w-full focus:outline-none focus:ring-2 focus:ring-primary"
+              >
+                <source src={passage.audioFile} type="audio/mpeg" />
+                Your browser does not support the audio element.
+              </audio>
+              <Progress value={0} className="w-full mt-2 hidden audio-loading" />
+            </div>
           </div>
         )}
         {passage.imageFile && renderImage(passage.imageFile)}

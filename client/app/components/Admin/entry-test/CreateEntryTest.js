@@ -560,8 +560,16 @@ const CreateEntryTest = () => {
 
   const renderPassageContent = (sectionIndex, passageIndex) => (
     <Card className="mt-4">
-      <CardHeader>
-        <CardTitle>Part {passageIndex + 1}</CardTitle>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-lg font-semibold">Part {passageIndex + 1}</CardTitle>
+        <Button
+          variant="destructive"
+          size="icon"
+          onClick={() => handleDeletePassage(sectionIndex, passageIndex)}
+          className="h-8 w-8"
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
       </CardHeader>
       <CardContent>
         <FormField
@@ -594,15 +602,22 @@ const CreateEntryTest = () => {
         </div>
         {form.watch(`sections.${sectionIndex}.passages.${passageIndex}.questions`)?.map((_, questionIndex) => (
           <Card key={questionIndex} className="mt-4">
-            <CardHeader>
-              <CardTitle>Question {questionIndex + 1}</CardTitle>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-base font-medium">Question {questionIndex + 1}</CardTitle>
+              <Button
+                variant="destructive"
+                size="icon"
+                onClick={() => handleDeleteQuestion(sectionIndex, questionIndex, passageIndex)}
+                className="h-8 w-8"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
             </CardHeader>
             <CardContent>
               {renderQuestionFields(sectionIndex, questionIndex, passageIndex)}
             </CardContent>
           </Card>
         ))}
-
         <Button
           type="button"
           onClick={() => handleAddQuestion(sectionIndex, passageIndex)}
@@ -639,8 +654,16 @@ const CreateEntryTest = () => {
       <>
         {(currentSection.questions || []).map((_, questionIndex) => (
           <Card key={questionIndex} className="mt-4">
-            <CardHeader>
-              <CardTitle>Question {questionIndex + 1}</CardTitle>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-base font-medium">Question {questionIndex + 1}</CardTitle>
+              <Button
+                variant="destructive"
+                size="icon"
+                onClick={() => handleDeleteQuestion(sectionIndex, questionIndex)}
+                className="h-8 w-8"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
             </CardHeader>
             <CardContent>
               {renderQuestionFields(sectionIndex, questionIndex)}
@@ -817,7 +840,59 @@ const CreateEntryTest = () => {
 
       await createEntranceTest(formData);
     } catch (error) {
-      toast.error("Có lỗi xảy ra khi tạo bài kiểm tra");
+      toast.error("Have an error when creating entrance test");
+    }
+  };
+
+  const handleDeleteSection = (sectionIndex) => {
+    setEntryTestData(prevData => {
+      const updatedSections = prevData.sections.filter((_, index) => index !== sectionIndex);
+      return { ...prevData, sections: updatedSections };
+    });
+    
+    const currentSections = form.getValues('sections');
+    form.setValue('sections', currentSections.filter((_, index) => index !== sectionIndex));
+  };
+
+  const handleDeletePassage = (sectionIndex, passageIndex) => {
+    setEntryTestData(prevData => {
+      const updatedSections = [...prevData.sections];
+      updatedSections[sectionIndex].passages = updatedSections[sectionIndex].passages.filter((_, index) => index !== passageIndex);
+      return { ...prevData, sections: updatedSections };
+    });
+
+    const currentPassages = form.getValues(`sections.${sectionIndex}.passages`);
+    form.setValue(
+      `sections.${sectionIndex}.passages`,
+      currentPassages.filter((_, index) => index !== passageIndex)
+    );
+  };
+
+  const handleDeleteQuestion = (sectionIndex, questionIndex, passageIndex = null) => {
+    setEntryTestData(prevData => {
+      const updatedSections = [...prevData.sections];
+      if (passageIndex !== null) {
+        updatedSections[sectionIndex].passages[passageIndex].questions = 
+          updatedSections[sectionIndex].passages[passageIndex].questions.filter((_, index) => index !== questionIndex);
+      } else {
+        updatedSections[sectionIndex].questions = 
+          updatedSections[sectionIndex].questions.filter((_, index) => index !== questionIndex);
+      }
+      return { ...prevData, sections: updatedSections };
+    });
+
+    if (passageIndex !== null) {
+      const currentQuestions = form.getValues(`sections.${sectionIndex}.passages.${passageIndex}.questions`);
+      form.setValue(
+        `sections.${sectionIndex}.passages.${passageIndex}.questions`,
+        currentQuestions.filter((_, index) => index !== questionIndex)
+      );
+    } else {
+      const currentQuestions = form.getValues(`sections.${sectionIndex}.questions`);
+      form.setValue(
+        `sections.${sectionIndex}.questions`,
+        currentQuestions.filter((_, index) => index !== questionIndex)
+      );
     }
   };
 
@@ -826,6 +901,20 @@ const CreateEntryTest = () => {
       <h1 className="text-3xl font-bold mb-6 flex items-center">
         <Edit3 className="mr-2" /> Create Entrance Test
       </h1>
+
+      <Button
+        type="button"
+        onClick={() => appendSection({
+          name: '',
+          description: '',
+          timeLimit: 60,
+          passages: [],
+          questions: []
+        })}
+        className="mb-4"
+      >
+        <PlusCircle className="mr-2 h-4 w-4" /> Add New Section
+      </Button>
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -930,11 +1019,8 @@ const CreateEntryTest = () => {
 
           {sectionFields.map((section, sectionIndex) => (
             <Card key={section.id} className="mt-6">
-              <CardHeader
-                className="cursor-pointer hover:bg-gray-50"
-                onClick={() => toggleSection(sectionIndex)}
-              >
-                <div className="flex items-center justify-between">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <div className="flex items-center cursor-pointer" onClick={() => toggleSection(sectionIndex)}>
                   <CardTitle className="flex items-center">
                     {section.name === 'Listening' && <Headphones className="mr-2" />}
                     {section.name === 'Reading' && <BookOpen className="mr-2" />}
@@ -943,11 +1029,19 @@ const CreateEntryTest = () => {
                     {section.name} Section
                   </CardTitle>
                   {collapsedSections[sectionIndex] ? (
-                    <ChevronDown className="h-5 w-5" />
+                    <ChevronDown className="h-5 w-5 ml-2" />
                   ) : (
-                    <ChevronUp className="h-5 w-5" />
+                    <ChevronUp className="h-5 w-5 ml-2" />
                   )}
                 </div>
+                <Button
+                  variant="destructive"
+                  size="icon"
+                  onClick={() => handleDeleteSection(sectionIndex)}
+                  className="h-8 w-8"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
               </CardHeader>
 
               {!collapsedSections[sectionIndex] && (
