@@ -6,8 +6,8 @@ import { Input } from "../../ui/input";
 import { Textarea } from "../../ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "../../ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "../../ui/form";
-import { PlusCircle, Edit3, Headphones, BookOpen, Pen, Mic } from 'lucide-react';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "../../ui/form";
+import { PlusCircle, Edit3, Headphones, BookOpen, Pen, Mic, ChevronDown, ChevronUp, Trash2 } from 'lucide-react';
 import { useCreateEntranceTestMutation } from '@/app/redux/features/entry-test/entryTestApi';
 import toast from 'react-hot-toast';
 import AnswerInput from './AnswerInput';
@@ -15,10 +15,29 @@ import { formSchema } from '@/lib/form-schema';
 import sampleEntryTestData from './SampleEntryTest';
 import { redirect } from 'next/navigation';
 import FilePreview from './FilePreview';
+import { useGetHeroDataQuery } from '@/app/redux/features/layout/layoutApi';
 
 const CreateEntryTest = () => {
   const [createEntranceTest, { isLoading, isSuccess, error }] = useCreateEntranceTestMutation();
   const [files, setFiles] = useState({});
+  const [collapsedSections, setCollapsedSections] = useState({});
+  const { data } = useGetHeroDataQuery("Categories", {});
+
+  console.log(data)
+  const [testTypes, setTestTypes] = useState([]);
+
+  console.log("Categories Data:", data?.layout?.categories);
+
+  useEffect(() => {
+    if (data?.layout?.categories) {
+      const types = data.layout.categories
+        .filter(cat => cat.title && cat.title !== '')
+        .map(cat => cat.title);
+      const uniqueTypes = [...new Set(types)];
+      console.log("Unique Test Types:", uniqueTypes);
+      setTestTypes(uniqueTypes);
+    }
+  }, [data]);
 
   const createFilePath = (sectionIndex, questionIndex, fieldName, passageIndex = null) => {
     if (passageIndex !== null) {
@@ -45,7 +64,7 @@ const CreateEntryTest = () => {
   const [entryTestData, setEntryTestData] = useState({
     title: '',
     description: '',
-    testType: 'IELTS',
+    testType: '',
     totalTime: 180,
     sections: [
       {
@@ -107,6 +126,13 @@ const CreateEntryTest = () => {
       }
     }
   }, [isLoading, isSuccess, error]);
+
+  const toggleSection = (sectionIndex) => {
+    setCollapsedSections(prev => ({
+      ...prev,
+      [sectionIndex]: !prev[sectionIndex]
+    }));
+  };
 
   const handleAddPassage = (sectionIndex) => {
     const newPassage = {
@@ -184,7 +210,7 @@ const CreateEntryTest = () => {
         const baseQuestion = {
           type: value,
           text: targetQuestions[questionIndex].text || '',
-          points: targetQuestions[questionIndex].points || 1,
+          points: ['shortAnswer', 'essay'].includes(value) ? 0 : (targetQuestions[questionIndex].points || 1),
           audioFile: targetQuestions[questionIndex].audioFile || null,
           imageFile: targetQuestions[questionIndex].imageFile || null,
         };
@@ -267,33 +293,33 @@ const CreateEntryTest = () => {
     const currentFile = files[path];
 
     return (
-        <FormItem>
-            <FormLabel>{label}</FormLabel>
-            <div className="space-y-2">
-                <FormControl>
-                    <Input
-                        type="file"
-                        accept={accept}
-                        onChange={(e) => handleFileChange(e, path)}
-                    />
-                </FormControl>
-                {currentFile && (
-                    <FilePreview
-                        file={currentFile}
-                        type={accept}
-                        onRemove={() => {
-                            const newFiles = { ...files };
-                            delete newFiles[path];
-                            setFiles(newFiles);
-                            form.setValue(path, null);
-                        }}
-                    />
-                )}
-                <FormMessage />
-            </div>
-        </FormItem>
+      <FormItem>
+        <FormLabel>{label}</FormLabel>
+        <div className="space-y-2">
+          <FormControl>
+            <Input
+              type="file"
+              accept={accept}
+              onChange={(e) => handleFileChange(e, path)}
+            />
+          </FormControl>
+          {currentFile && (
+            <FilePreview
+              file={currentFile}
+              type={accept}
+              onRemove={() => {
+                const newFiles = { ...files };
+                delete newFiles[path];
+                setFiles(newFiles);
+                form.setValue(path, null);
+              }}
+            />
+          )}
+          <FormMessage />
+        </div>
+      </FormItem>
     );
-};
+  };
 
   const renderQuestionFields = (sectionIndex, questionIndex, passageIndex = null) => {
     const questionPath = passageIndex !== null
@@ -373,23 +399,36 @@ const CreateEntryTest = () => {
         <FormField
           control={form.control}
           name={`${questionPath}.points`}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Points</FormLabel>
-              <FormControl>
-                <Input
-                  type="number"
-                  {...field}
-                  onChange={(e) => {
-                    const value = Number(e.target.value);
-                    field.onChange(value);
-                    handleQuestionChange(sectionIndex, questionIndex, 'points', value, passageIndex);
-                  }}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+          render={({ field }) => {
+            const questionType = form.watch(`${questionPath}.type`);
+            const isAutoGraded = !['shortAnswer', 'essay'].includes(questionType);
+
+            return (
+              <FormItem>
+                <FormLabel>Points</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    {...field}
+                    value={isAutoGraded ? field.value : 0}
+                    disabled={!isAutoGraded}
+                    onChange={(e) => {
+                      if (!isAutoGraded) return;
+                      const value = Number(e.target.value);
+                      field.onChange(value);
+                      handleQuestionChange(sectionIndex, questionIndex, 'points', value, passageIndex);
+                    }}
+                  />
+                </FormControl>
+                {!isAutoGraded && (
+                  <FormDescription className="text-yellow-600">
+                    This question requires manual grading
+                  </FormDescription>
+                )}
+                <FormMessage />
+              </FormItem>
+            );
+          }}
         />
 
         <div className="grid grid-cols-2 gap-4">
@@ -620,130 +659,166 @@ const CreateEntryTest = () => {
   };
 
   const onSubmit = async (data) => {
-    const formData = new FormData();
+    try {
+      // Validate answers before submitting
+      const hasInvalidQuestions = data.sections.some(section => {
+        const questions = section.passages 
+          ? section.passages.flatMap(p => p.questions)
+          : section.questions;
+          
+        return questions.some(q => {
+          if (q.type === 'shortAnswer' || q.type === 'essay') return false;
+          
+          switch (q.type) {
+            case 'multipleChoice':
+            case 'selectFromDropdown':
+              return !q.options.some(opt => opt.isCorrect);
+            case 'trueFalse':
+              return typeof q.correctAnswer !== 'boolean';
+            case 'matching':
+              return !q.matchingPairs.every(pair => pair.left && pair.right);
+            case 'ordering':
+              return !q.orderItems.every(item => item.trim() !== '');
+            case 'fillInTheBlank':
+              return !q.correctAnswer || q.correctAnswer.trim() === '';
+            default:
+              return false;
+          }
+        });
+      });
 
-    formData.append('title', data.title);
-    formData.append('description', data.description);
-    formData.append('testType', data.testType);
-    formData.append('totalTime', data.totalTime.toString());
+      if (hasInvalidQuestions) {
+        toast.error("Vui lòng chọn đáp án cho tất cả các câu hỏi trước khi nộp");
+        return;
+      }
 
-    const processQuestionData = (question) => {
-      const baseQuestion = {
-        type: question.type,
-        text: question.text,
-        points: question.points
+      const formData = new FormData();
+
+      formData.append('title', data.title);
+      formData.append('description', data.description);
+      formData.append('testType', data.testType);
+      formData.append('totalTime', data.totalTime.toString());
+
+      const processQuestionData = (question) => {
+        const baseQuestion = {
+          type: question.type,
+          text: question.text,
+          points: question.points
+        };
+
+        switch (question.type) {
+          case 'multipleChoice':
+          case 'selectFromDropdown':
+            return {
+              ...baseQuestion,
+              options: question.options,
+              correctAnswer: question.options
+                ?.map((opt, index) => opt.isCorrect ? index : -1)
+                .filter(index => index !== -1)
+            };
+
+          case 'trueFalse':
+            return {
+              ...baseQuestion,
+              correctAnswer: Boolean(question.correctAnswer)
+            };
+
+          case 'ordering':
+            return {
+              ...baseQuestion,
+              orderItems: question.orderItems,
+              correctAnswer: question.orderItems?.map((_, index) => index)
+            };
+
+          case 'matching':
+            return {
+              ...baseQuestion,
+              matchingPairs: question.matchingPairs
+            };
+
+          case 'shortAnswer':
+          case 'essay':
+          case 'fillInTheBlank':
+            return {
+              ...baseQuestion,
+              correctAnswer: question.correctAnswer || ''
+            };
+
+          default:
+            return baseQuestion;
+        }
       };
 
-      switch (question.type) {
-        case 'multipleChoice':
-        case 'selectFromDropdown':
-          return {
-            ...baseQuestion,
-            options: question.options,
-            correctAnswer: question.options
-              ?.map((opt, index) => opt.isCorrect ? index : -1)
-              .filter(index => index !== -1)
-          };
+      const prepareSectionData = (section) => {
+        const processPassages = section.passages?.map(passage => ({
+          text: passage.text,
+          questions: passage.questions?.map(processQuestionData)
+        }));
 
-        case 'trueFalse':
-          return {
-            ...baseQuestion,
-            correctAnswer: Boolean(question.correctAnswer)
-          };
+        const processQuestions = section.questions?.map(processQuestionData);
 
-        case 'ordering':
-          return {
-            ...baseQuestion,
-            orderItems: question.orderItems,
-            correctAnswer: question.orderItems?.map((_, index) => index)
-          };
+        const cleanedSection = {
+          name: section.name,
+          description: section.description,
+          timeLimit: section.timeLimit,
+          ...(processPassages?.length && { passages: processPassages }),
+          ...(processQuestions?.length && { questions: processQuestions })
+        };
 
-        case 'matching':
-          return {
-            ...baseQuestion,
-            matchingPairs: question.matchingPairs
-          };
+        Object.keys(cleanedSection).forEach(key =>
+          (cleanedSection[key] === undefined || cleanedSection[key] === null) && delete cleanedSection[key]
+        );
 
-        case 'shortAnswer':
-        case 'essay':
-        case 'fillInTheBlank':
-          return {
-            ...baseQuestion,
-            correctAnswer: question.correctAnswer || ''
-          };
-
-        default:
-          return baseQuestion;
-      }
-    };
-
-    const prepareSectionData = (section) => {
-      const processPassages = section.passages?.map(passage => ({
-        text: passage.text,
-        questions: passage.questions?.map(processQuestionData)
-      }));
-
-      const processQuestions = section.questions?.map(processQuestionData);
-
-      const cleanedSection = {
-        name: section.name,
-        description: section.description,
-        timeLimit: section.timeLimit,
-        ...(processPassages?.length && { passages: processPassages }),
-        ...(processQuestions?.length && { questions: processQuestions })
+        return cleanedSection;
       };
 
-      Object.keys(cleanedSection).forEach(key =>
-        (cleanedSection[key] === undefined || cleanedSection[key] === null) && delete cleanedSection[key]
-      );
+      const processedSections = data.sections.map(prepareSectionData);
+      formData.append('sections', JSON.stringify(processedSections));
 
-      return cleanedSection;
-    };
+      const addFileToFormData = (file, path) => {
+        if (file instanceof File) {
+          formData.append(path, file);
+        }
+      };
 
-    const processedSections = data.sections.map(prepareSectionData);
-    formData.append('sections', JSON.stringify(processedSections));
+      data.sections.forEach((section, sectionIndex) => {
+        section.passages?.forEach((passage, passageIndex) => {
+          addFileToFormData(
+            passage.audioFile,
+            `sections[${sectionIndex}].passages[${passageIndex}].audioFile`
+          );
+          addFileToFormData(
+            passage.imageFile,
+            `sections[${sectionIndex}].passages[${passageIndex}].imageFile`
+          );
 
-    const addFileToFormData = (file, path) => {
-      if (file instanceof File) {
-        formData.append(path, file);
-      }
-    };
-
-    data.sections.forEach((section, sectionIndex) => {
-      section.passages?.forEach((passage, passageIndex) => {
-        addFileToFormData(
-          passage.audioFile,
-          `sections[${sectionIndex}].passages[${passageIndex}].audioFile`
-        );
-        addFileToFormData(
-          passage.imageFile,
-          `sections[${sectionIndex}].passages[${passageIndex}].imageFile`
-        );
-
-        passage.questions?.forEach((question, questionIndex) => {
+          passage.questions?.forEach((question, questionIndex) => {
+            addFileToFormData(
+              question.audioFile,
+              `sections[${sectionIndex}].passages[${passageIndex}].questions[${questionIndex}].audioFile`
+            );
+            addFileToFormData(
+              question.imageFile,
+              `sections[${sectionIndex}].passages[${passageIndex}].questions[${questionIndex}].imageFile`
+            );
+          });
+        });
+        section.questions?.forEach((question, questionIndex) => {
           addFileToFormData(
             question.audioFile,
-            `sections[${sectionIndex}].passages[${passageIndex}].questions[${questionIndex}].audioFile`
+            `sections[${sectionIndex}].questions[${questionIndex}].audioFile`
           );
           addFileToFormData(
             question.imageFile,
-            `sections[${sectionIndex}].passages[${passageIndex}].questions[${questionIndex}].imageFile`
+            `sections[${sectionIndex}].questions[${questionIndex}].imageFile`
           );
         });
       });
-      section.questions?.forEach((question, questionIndex) => {
-        addFileToFormData(
-          question.audioFile,
-          `sections[${sectionIndex}].questions[${questionIndex}].audioFile`
-        );
-        addFileToFormData(
-          question.imageFile,
-          `sections[${sectionIndex}].questions[${questionIndex}].imageFile`
-        );
-      });
-    });
 
-    await createEntranceTest(formData);
+      await createEntranceTest(formData);
+    } catch (error) {
+      toast.error("Có lỗi xảy ra khi tạo bài kiểm tra");
+    }
   };
 
   return (
@@ -811,13 +886,19 @@ const CreateEntryTest = () => {
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select test type" />
+                      <SelectValue placeholder="Select test type">
+                        {field.value}
+                      </SelectValue>
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="IELTS">IELTS</SelectItem>
-                    <SelectItem value="TOEIC">TOEIC</SelectItem>
-                    <SelectItem value="Custom">Custom</SelectItem>
+                    {testTypes && testTypes.length > 0 && (
+                      testTypes.map((type) => (
+                        <SelectItem key={type} value={type}>
+                          {type}
+                        </SelectItem>
+                      ))
+                    )}
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -849,70 +930,83 @@ const CreateEntryTest = () => {
 
           {sectionFields.map((section, sectionIndex) => (
             <Card key={section.id} className="mt-6">
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  {section.name === 'Listening' && <Headphones className="mr-2" />}
-                  {section.name === 'Reading' && <BookOpen className="mr-2" />}
-                  {section.name === 'Writing' && <Pen className="mr-2" />}
-                  {section.name === 'Speaking' && <Mic className="mr-2" />}
-                  {section.name} Section
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name={`sections.${sectionIndex}.description`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Section Description</FormLabel>
-                        <FormControl>
-                          <Textarea
-                            {...field}
-                            placeholder={`${section.name} section description`}
-                            onChange={(e) => {
-                              field.onChange(e);
-                              setEntryTestData(prev => {
-                                const newSections = [...prev.sections];
-                                newSections[sectionIndex].description = e.target.value;
-                                return { ...prev, sections: newSections };
-                              });
-                            }}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name={`sections.${sectionIndex}.timeLimit`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Time Limit (minutes)</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            {...field}
-                            onChange={(e) => {
-                              const value = Number(e.target.value);
-                              field.onChange(value);
-                              setEntryTestData(prev => {
-                                const newSections = [...prev.sections];
-                                newSections[sectionIndex].timeLimit = value;
-                                return { ...prev, sections: newSections };
-                              });
-                            }}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+              <CardHeader
+                className="cursor-pointer hover:bg-gray-50"
+                onClick={() => toggleSection(sectionIndex)}
+              >
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center">
+                    {section.name === 'Listening' && <Headphones className="mr-2" />}
+                    {section.name === 'Reading' && <BookOpen className="mr-2" />}
+                    {section.name === 'Writing' && <Pen className="mr-2" />}
+                    {section.name === 'Speaking' && <Mic className="mr-2" />}
+                    {section.name} Section
+                  </CardTitle>
+                  {collapsedSections[sectionIndex] ? (
+                    <ChevronDown className="h-5 w-5" />
+                  ) : (
+                    <ChevronUp className="h-5 w-5" />
+                  )}
                 </div>
-                {renderSectionContent(section, sectionIndex)}
-              </CardContent>
+              </CardHeader>
+
+              {!collapsedSections[sectionIndex] && (
+                <CardContent>
+                  <div className="space-y-4">
+                    <FormField
+                      control={form.control}
+                      name={`sections.${sectionIndex}.description`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Section Description</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              {...field}
+                              placeholder={`${section.name} section description`}
+                              onChange={(e) => {
+                                field.onChange(e);
+                                setEntryTestData(prev => {
+                                  const newSections = [...prev.sections];
+                                  newSections[sectionIndex].description = e.target.value;
+                                  return { ...prev, sections: newSections };
+                                });
+                              }}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name={`sections.${sectionIndex}.timeLimit`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Time Limit (minutes)</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              {...field}
+                              onChange={(e) => {
+                                const value = Number(e.target.value);
+                                field.onChange(value);
+                                setEntryTestData(prev => {
+                                  const newSections = [...prev.sections];
+                                  newSections[sectionIndex].timeLimit = value;
+                                  return { ...prev, sections: newSections };
+                                });
+                              }}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  {renderSectionContent(section, sectionIndex)}
+                </CardContent>
+              )}
             </Card>
           ))}
 

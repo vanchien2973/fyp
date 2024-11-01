@@ -245,8 +245,8 @@ const CourseInformation = ({ courseInfor, setCourseInfor, setCurrentStep, curren
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="Beginner">Beginner</SelectItem>
-                        <SelectItem value="Intermediate Level">Intermediate Level</SelectItem>
-                        <SelectItem value="Advanced Level">Advanced Level</SelectItem>
+                        <SelectItem value="Intermediate Level">Intermediate</SelectItem>
+                        <SelectItem value="Advanced Level">Advanced</SelectItem>
                       </SelectContent>
                     </Select>
                   </FormControl>

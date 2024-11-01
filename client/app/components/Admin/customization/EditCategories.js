@@ -13,9 +13,17 @@ const EditCategories = () => {
     const [editLayout, { isSuccess, error }] = useEditLayoutMutation();
     const [categories, setCategories] = useState([]);
 
+    const generateUniqueId = () => {
+        return '_' + Math.random().toString(36).substr(2, 9);
+    };
+
     useEffect(() => {
         if (data) {
-            setCategories(data.layout.categories);
+            const categoriesWithIds = data.layout.categories.map(cat => ({
+                ...cat,
+                _id: cat._id || generateUniqueId()
+            }));
+            setCategories(categoriesWithIds);
         }
         if (isSuccess) {
             toast.success('Categories updated successfully');
@@ -55,7 +63,14 @@ const EditCategories = () => {
         if (categories[categories.length - 1]?.title === '') {
             toast.error('Please fill the category name');
         } else {
-            setCategories((prevCategory) => [...prevCategory, { title: '', levels: [] }]);
+            setCategories((prevCategory) => [
+                ...prevCategory, 
+                { 
+                    _id: generateUniqueId(),
+                    title: '', 
+                    levels: [] 
+                }
+            ]);
         }
     };
 
@@ -70,9 +85,10 @@ const EditCategories = () => {
     const handleEdit = async () => {
         const originalCategories = data?.layout?.categories;
         if (!areCategoriesUnchanged(originalCategories, categories) && !isAnyCategoriesEmpty(categories)) {
+            const categoriesToSend = categories.map(({ _id, ...rest }) => rest);
             await editLayout({
                 type: 'Categories',
-                categories: categories
+                categories: categoriesToSend
             }).unwrap();
         }
     };
