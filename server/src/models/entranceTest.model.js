@@ -61,7 +61,6 @@ const entranceTestSchema = new mongoose.Schema({
     },
     testType: {
         type: String,
-        enum: ['IELTS', 'TOEIC', 'Custom'],
         required: true
     },
     sections: [sectionSchema],

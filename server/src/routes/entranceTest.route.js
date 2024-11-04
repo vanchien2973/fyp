@@ -1,7 +1,7 @@
 import express from "express";
 import { updateToken } from "../controllers/user.controller";
 import { authorizeRoles, isAuthenticated } from "../middlewares/AuthMiddleware";
-import { createEntranceTest, deleteEntranceTest, getAllEntranceTests, getEntranceTestById, takeEntranceTest, updateEntranceTest } from "../controllers/entranceTest.controller";
+import { createEntranceTest, deleteEntranceTest, getAllEntranceTests, getEntranceTestById, getTestRecommendations, takeEntranceTest, updateEntranceTest } from "../controllers/entranceTest.controller";
 const multer = require('multer');
 const storage = multer.memoryStorage();
 const upload = multer({ 
@@ -15,7 +15,7 @@ const entranceTest = express.Router();
 
 entranceTest.post('/create-test', upload.any(), updateToken, isAuthenticated, authorizeRoles('admin'), createEntranceTest);
 
-entranceTest.post('/:testId/take', upload.any(), updateToken, isAuthenticated, takeEntranceTest);
+entranceTest.post('/take-test/:testId', updateToken, isAuthenticated, takeEntranceTest);
 
 entranceTest.get('/all-test', isAuthenticated, updateToken, authorizeRoles('admin'), getAllEntranceTests);
 

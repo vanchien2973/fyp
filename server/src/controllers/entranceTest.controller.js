@@ -56,13 +56,9 @@ export const createEntranceTest = CatchAsyncError(async (req, res, next) => {
 // Update Entrance Test 
 export const updateEntranceTest = CatchAsyncError(async (req, res, next) => {
     try {
-        console.log('req.params:', req.params);
-        console.log('req.body:', req.body);
-        console.log('req.files:', req.files);
         const { id } = req.params;
         const { title, description, testType, totalTime, sections } = req.body;
 
-        // Input validation
         if (!id || !title || !description || !testType || !totalTime || !sections) {
             return next(new ErrorHandler('Missing required fields', 400));
         }
@@ -75,7 +71,7 @@ export const updateEntranceTest = CatchAsyncError(async (req, res, next) => {
         }
 
         const existingTest = await EntranceTestModel.findById(id);
-        console.log('existingTest:', existingTest);
+
         if (!existingTest) {
             return next(new ErrorHandler(`Entrance test with ID ${id} not found`, 404));
         }
@@ -85,7 +81,6 @@ export const updateEntranceTest = CatchAsyncError(async (req, res, next) => {
         let newSections;
         try {
             newSections = await handleFileUploads(parsedSections, req.files || []);
-            console.log('newSections:', newSections);
         } catch (uploadError) {
             await deleteAllSectionFiles(oldSections);
             return next(new ErrorHandler(`File upload failed: ${uploadError.message}`, 500));
@@ -105,8 +100,7 @@ export const updateEntranceTest = CatchAsyncError(async (req, res, next) => {
             updateData,
             { new: true, runValidators: true }
         );
-        console.log('updatedTest:', updatedTest);
-        
+
         if (!updatedTest) {
             await deleteAllSectionFiles(newSections);
             return next(new ErrorHandler('Database update failed', 500));
@@ -120,7 +114,6 @@ export const updateEntranceTest = CatchAsyncError(async (req, res, next) => {
             test: updatedTest
         });
     } catch (error) {
-        console.error('Unexpected error during test update:', error);
         return next(new ErrorHandler(`Failed to update entrance test: ${error.message}`, 500));
     }
 });
@@ -159,113 +152,6 @@ export const deleteEntranceTest = CatchAsyncError(async (req, res, next) => {
     }
 });
 
-export const takeEntranceTest = CatchAsyncError(async (req, res, next) => {
-    try {
-        const { testId } = req.params;
-        const { userId, answers } = req.body;
-
-        const test = await EntranceTestModel.findById(testId);
-        if (!test) {
-            return next(new ErrorHandler("Entrance test not found", 404));
-        }
-
-        const user = await UserModel.findById(userId);
-        if (!user) {
-            return next(new ErrorHandler("User not found", 404));
-        }
-
-        let totalScore = 0;
-        let sectionScores = {};
-        let detailedResults = [];
-
-        test.sections.forEach(section => {
-            let sectionScore = 0;
-
-            const processQuestions = (questions, passageIndex = null) => {
-                questions.forEach(question => {
-                    const userAnswer = answers.find(a => a.questionId.toString() === question._id.toString());
-                    if (!userAnswer) return;
-
-                    let isCorrect = false;
-                    let score = 0;
-
-                    switch (question.type) {
-                        case 'multipleChoice':
-                        case 'trueFalse':
-                            isCorrect = question.correctAnswer === userAnswer.answer;
-                            score = isCorrect ? question.points : 0;
-                            break;
-                        case 'shortAnswer':
-                        case 'essay':
-                            // For these types, we might need manual grading later
-                            score = 0;
-                            isCorrect = null; // To be determined
-                            break;
-                        case 'fillInTheBlank':
-                            isCorrect = question.correctAnswer.toLowerCase() === userAnswer.answer.toLowerCase();
-                            score = isCorrect ? question.points : 0;
-                            break;
-                        case 'matching':
-                            isCorrect = JSON.stringify(question.correctAnswer) === JSON.stringify(userAnswer.answer);
-                            score = isCorrect ? question.points : 0;
-                            break;
-                        case 'ordering':
-                            isCorrect = JSON.stringify(question.correctAnswer) === JSON.stringify(userAnswer.answer);
-                            score = isCorrect ? question.points : 0;
-                            break;
-                        case 'selectFromDropdown':
-                            isCorrect = question.correctAnswer === userAnswer.answer;
-                            score = isCorrect ? question.points : 0;
-                            break;
-                    }
-
-                    sectionScore += score;
-                    totalScore += score;
-
-                    detailedResults.push({
-                        section: section.name,
-                        passageIndex,
-                        questionId: question._id,
-                        userAnswer: userAnswer.answer,
-                        isCorrect,
-                        score,
-                        maxScore: question.points
-                    });
-                });
-            };
-
-            processQuestions(section.questions);
-            section.passages.forEach((passage, index) => processQuestions(passage.questions, index));
-
-            sectionScores[section.name] = sectionScore;
-        });
-
-        const testResult = {
-            test: testId,
-            score: totalScore,
-            sectionScores,
-            detailedResults,
-            takenAt: new Date()
-        };
-
-        user.entranceTestResults.push(testResult);
-        await user.save();
-
-        // Generate course recommendations based on test results
-        const recommendations = await generateRecommendations(sectionScores, totalScore);
-
-        res.status(200).json({
-            success: true,
-            message: "Entrance test completed successfully",
-            testResult,
-            recommendations
-        });
-    } catch (error) {
-        console.error("Error in takeEntranceTest:", error);
-        return next(new ErrorHandler(error.message, 500));
-    }
-});
-
 // Get All Entrance Tests (for admin)
 export const getAllEntranceTests = CatchAsyncError(async (req, res, next) => {
     try {
@@ -299,47 +185,229 @@ export const getEntranceTestById = CatchAsyncError(async (req, res, next) => {
     }
 });
 
-const generateRecommendations = async (sectionScores, totalScore) => {
-    const sectionNames = Object.keys(sectionScores);
+// Take Entrance Test
+export const takeEntranceTest = CatchAsyncError(async (req, res, next) => {
+    try {
+        const { testId } = req.params;
+        const { answers } = req.body;
+        const userId = req.user._id;
 
-    if (!sectionNames || sectionNames.length === 0) {
-        console.error("No section scores provided");
-        return { recommendedCourses: [], recommendedSections: [] };
-    }
-
-    const categories = await LayoutModel.find(
-        {
-            title: { $in: sectionNames },
-            type: "Categories"
+        if (!testId || !answers) {
+            return next(new ErrorHandler('Missing required fields', 400));
         }
-    ).lean();
 
-    if (!categories || categories.length === 0) {
-        console.error("No categories found for the given scores");
-        return { recommendedCourses: [], recommendedSections: [] };
+        const test = await EntranceTestModel.findById(testId);
+        if (!test) {
+            return next(new ErrorHandler('Entrance test not found', 404));
+        }
+
+        const user = await UserModel.findById(userId);
+        if (!user) {
+            return next(new ErrorHandler('User not found', 404));
+        }
+
+        const sectionScores = {};
+        const detailedResults = [];
+        let totalScore = 0;
+        let totalPoints = 0;
+
+        for (const section of test.sections) {
+            let sectionScore = 0;
+            let sectionTotalPoints = 0;
+
+            for (const passage of (section.passages || [])) {
+                for (const question of passage.questions) {
+                    const userAnswer = answers[question._id];
+                    const result = evaluateAnswer(question, userAnswer);
+                    
+                    sectionScore += result.score;
+                    sectionTotalPoints += question.points;
+                    
+                    detailedResults.push({
+                        section: section.name,
+                        questionId: question._id,
+                        userAnswer,
+                        isCorrect: result.isCorrect,
+                        score: result.score,
+                        maxScore: question.points
+                    });
+                }
+            }
+
+            for (const question of (section.questions || [])) {
+                const userAnswer = answers[question._id];
+                const result = evaluateAnswer(question, userAnswer);
+                
+                sectionScore += result.score;
+                sectionTotalPoints += question.points;
+                
+                detailedResults.push({
+                    section: section.name,
+                    questionId: question._id,
+                    userAnswer,
+                    isCorrect: result.isCorrect,
+                    score: result.score,
+                    maxScore: question.points
+                });
+            }
+
+            if (sectionTotalPoints > 0) {
+                sectionScores[section.name] = (sectionScore / sectionTotalPoints) * 100;
+            } else {
+                sectionScores[section.name] = 0;
+            }
+
+            totalScore += sectionScore;
+            totalPoints += sectionTotalPoints;
+        }
+
+        const finalScore = totalPoints > 0 ? (totalScore / totalPoints) * 100 : 0;
+        const level = determineLevel(finalScore);
+
+        const recommendations = await generateRecommendations(sectionScores, finalScore);
+
+        const testResult = {
+            test: testId,
+            score: finalScore,
+            sectionScores,
+            detailedResults,
+            recommendations,
+            takenAt: new Date()
+        };
+
+        await UserModel.findByIdAndUpdate(userId, {
+            $push: { entranceTestResults: testResult },
+            proficiencyLevel: level
+        });
+
+        res.status(200).json({
+            success: true,
+            score: finalScore,
+            sectionScores,
+            level,
+            recommendations,
+            detailedResults
+        });
+
+    } catch (error) {
+        return next(new ErrorHandler(error.message, 500));
+    }
+});
+
+const evaluateAnswer = (question, userAnswer) => {
+    if (!userAnswer) {
+        return { score: 0, isCorrect: false };
     }
 
-    const recommendedSections = categories
-        .map(category => ({
-            ...category,
-            score: sectionScores[category.title] || 0
-        }))
-        .sort((a, b) => b.score - a.score)
-        .slice(0, 3);
+    switch (question.type) {
+        case 'multipleChoice':
+        case 'selectFromDropdown':
+            const correctOption = question.options.find(opt => opt.isCorrect);
+            const isCorrect = correctOption && userAnswer === correctOption.text;
+            return {
+                score: isCorrect ? question.points : 0,
+                isCorrect
+            };
 
-    const recommendedCourses = await CourseModel.find({
-        'category.title': { $in: recommendedSections.map(cat => cat.title) },
-        level: determineLevel(totalScore)
-    })
-        .sort({ ratings: -1, purchased: -1 })
-        .limit(5)
-        .lean();
+        case 'trueFalse':
+            const boolAnswer = userAnswer === 'true';
+            return {
+                score: boolAnswer === question.correctAnswer ? question.points : 0,
+                isCorrect: boolAnswer === question.correctAnswer
+            };
 
-    return { recommendedCourses, recommendedSections };
+        case 'matching':
+            if (Array.isArray(userAnswer) && Array.isArray(question.matchingPairs)) {
+                const correctCount = userAnswer.filter((answer, index) => 
+                    answer === question.matchingPairs[index]?.right
+                ).length;
+                const score = (correctCount / question.matchingPairs.length) * question.points;
+                return {
+                    score,
+                    isCorrect: correctCount === question.matchingPairs.length
+                };
+            }
+            return { score: 0, isCorrect: false };
+
+        case 'ordering':
+            if (Array.isArray(userAnswer) && Array.isArray(question.orderItems)) {
+                const correctOrder = question.orderItems.map((_, index) => index + 1);
+                const isCorrect = userAnswer.every((num, index) => num === correctOrder[index]);
+                return {
+                    score: isCorrect ? question.points : 0,
+                    isCorrect
+                };
+            }
+            return { score: 0, isCorrect: false };
+
+        case 'fillInTheBlank':
+        case 'shortAnswer':
+            const normalizedUserAnswer = userAnswer.toLowerCase().trim();
+            const normalizedCorrectAnswer = question.correctAnswer.toLowerCase().trim();
+            const isExactMatch = normalizedUserAnswer === normalizedCorrectAnswer;
+            return {
+                score: isExactMatch ? question.points : 0,
+                isCorrect: isExactMatch
+            };
+
+        case 'essay':
+        case 'speaking':
+            return {
+                score: 0,
+                isCorrect: null,
+                needsManualGrading: true
+            };
+
+        default:
+            return { score: 0, isCorrect: false };
+    }
 };
 
+// Determine Level
 const determineLevel = (score) => {
-    if (score < 50) return 'Beginner';
-    if (score < 80) return 'Intermediate';
-    return 'Advanced';
+    if (score >= 80) return "Advanced";
+    if (score >= 60) return "Intermediate";
+    if (score >= 40) return "Beginner";
+    return "Beginner";
+};
+
+// Generate Recommendations
+const generateRecommendations = async (sectionScores, totalScore) => {
+    try {
+        const sectionNames = Object.keys(sectionScores);
+        const level = determineLevel(totalScore);
+
+        const recommendedCourses = await CourseModel.find({
+            $and: [
+                {
+                    $or: sectionNames.map(section => ({
+                        "category.title": section
+                    }))
+                },
+                { rank: level }
+            ]
+        }).limit(5);
+
+        const recommendedSections = Object.entries(sectionScores)
+            .filter(([_, score]) => score < 70)
+            .map(([section]) => ({
+                name: section,
+                score: Math.round(sectionScores[section])
+            }));
+
+        return {
+            level,
+            recommendedCourses,
+            recommendedSections,
+            totalScore: Math.round(totalScore)
+        };
+    } catch (error) {
+        console.error("Error generating recommendations:", error);
+        return {
+            level: "Beginner",
+            recommendedCourses: [],
+            recommendedSections: [],
+            totalScore: 0
+        };
+    }
 };

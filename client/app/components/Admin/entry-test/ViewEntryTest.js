@@ -17,8 +17,6 @@ import { Checkbox } from "../../ui/checkbox";
 
 const ViewEntryTest = ({ id }) => {
   const { data, isLoading } = useGetEntranceTestByIdQuery(id);
-  console.log(data);
-
   const test = data?.test;
 
   const getSectionIcon = (name) => {
@@ -112,13 +110,18 @@ const ViewEntryTest = ({ id }) => {
           <div className="space-y-3">
             {question.options?.map((option, idx) => (
               <div key={idx} className="flex items-center space-x-2">
-                <Checkbox id={`option-${idx}`} />
-                <Label 
-                  htmlFor={`option-${idx}`}
-                  className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                >
-                  {option.text}
-                </Label>
+                <RadioGroup>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem 
+                      value={option.text} 
+                      id={`${question._id}-option-${idx}`}
+                      disabled
+                    />
+                    <Label htmlFor={`${question._id}-option-${idx}`}>
+                      {option.text}
+                    </Label>
+                  </div>
+                </RadioGroup>
               </div>
             ))}
           </div>

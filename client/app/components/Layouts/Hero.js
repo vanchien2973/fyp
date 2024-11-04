@@ -26,11 +26,14 @@ const Hero = () => {
                     {data?.layout?.banner.subTitle}
                   </p>
                   <div className="mt-5 lg:mt-8 flex flex-col sm:items-center gap-2 sm:flex-row sm:gap-3">
-                    <div className="w-full max-w-lg  lg:w-auto">
-                      <Button size={"lg"}>
-                        <Link href='/courses'>
-                        View Courses
-                        </Link>
+                    <div className="w-full sm:w-auto">
+                      <Button size="lg">
+                        <Link href='/courses'>View Courses</Link>
+                      </Button>
+                    </div>
+                    <div className="w-full sm:w-auto">
+                      <Button variant="outline" size="lg">
+                        <Link href='/entry-tests'>Take Entry Test</Link>
                       </Button>
                     </div>
                   </div>

@@ -14,7 +14,7 @@ export const entryTestApi = apiSlice.injectEndpoints({
 
         takeEntranceTest: builder.mutation({
             query: ({ testId, answers }) => ({
-                url: `${testId}/take`,
+                url: `take-test/${testId}`,
                 method: 'POST',
                 body: { answers },
                 credentials: 'include',

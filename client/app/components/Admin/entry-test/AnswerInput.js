@@ -61,46 +61,50 @@ const AnswerInput = ({
             control={form.control}
             name={`${getFieldName('options')}.${optionIndex}.isCorrect`}
             render={({ field }) => (
-              <FormItem>
-                <FormControl>
-                  <Checkbox
-                    checked={isEditing ? option.isCorrect : field.value}
-                    onCheckedChange={(checked) => {
-                      field.onChange(checked);
-                      const updatedOptions = [...question.options];
-                      updatedOptions[optionIndex].isCorrect = checked;
-                      updateOptions(updatedOptions);
-                      
-                      if (question.type === 'selectFromDropdown' && checked) {
-                        updateCorrectAnswer(option.text);
-                      }
-                    }}
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name={`${getFieldName('options')}.${optionIndex}.text`}
-            render={({ field }) => (
               <FormItem className="flex-grow">
                 <FormControl>
-                  <Input
-                    {...field}
-                    value={isEditing ? option.text : field.value}
-                    placeholder={`Option ${optionIndex + 1}`}
-                    onChange={(e) => {
-                      field.onChange(e);
-                      const updatedOptions = [...question.options];
-                      updatedOptions[optionIndex].text = e.target.value;
-                      updateOptions(updatedOptions);
-                      
-                      if (question.type === 'selectFromDropdown' && option.isCorrect) {
-                        updateCorrectAnswer(e.target.value);
+                  <div className="flex items-center space-x-2">
+                    <RadioGroup
+                      value={
+                        question.options.findIndex(opt => opt.isCorrect)?.toString() || ''
                       }
-                    }}
-                  />
+                      onValueChange={(value) => {
+                        const updatedOptions = question.options.map((opt, idx) => ({
+                          ...opt,
+                          isCorrect: idx === parseInt(value)
+                        }));
+                        updateOptions(updatedOptions);
+                        
+                        if (question.type === 'selectFromDropdown') {
+                          updateCorrectAnswer(updatedOptions[parseInt(value)].text);
+                        }
+                      }}
+                    >
+                      <div className="flex items-center space-x-2 w-full">
+                        <RadioGroupItem 
+                          value={optionIndex.toString()} 
+                          id={`${question._id}-option-${optionIndex}`}
+                        />
+                        <Input
+                          value={option.text || ''}
+                          placeholder={`Option ${optionIndex + 1}`}
+                          onChange={(e) => {
+                            const updatedOptions = [...question.options];
+                            updatedOptions[optionIndex] = {
+                              ...updatedOptions[optionIndex],
+                              text: e.target.value
+                            };
+                            updateOptions(updatedOptions);
+                            
+                            if (question.type === 'selectFromDropdown' && option.isCorrect) {
+                              updateCorrectAnswer(e.target.value);
+                            }
+                          }}
+                          className="flex-grow"
+                        />
+                      </div>
+                    </RadioGroup>
+                  </div>
                 </FormControl>
               </FormItem>
             )}

@@ -19,6 +19,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "../ui/pagination"
+import Link from 'next/link';
 
 const AllCourses = () => {
   const { data, isLoading } = useGetAllUserCoursesQuery({});
@@ -118,6 +119,19 @@ const AllCourses = () => {
 
   return (
     <div className="container mx-auto p-4 mb-8">
+      {/* Add Entry Test Banner */}
+      <Card className="mb-8 bg-gradient-to-r from-primary/10 to-primary/5">
+        <CardContent className="flex flex-col md:flex-row justify-between items-center p-6">
+          <div className="mb-4 md:mb-0">
+            <h2 className="text-2xl font-bold mb-2">Not sure which level to start?</h2>
+            <p className="text-muted-foreground">Take our entry test to find the perfect course for you!</p>
+          </div>
+          <Button size="lg" asChild>
+            <Link href="/entry-tests">Take Entry Test</Link>
+          </Button>
+        </CardContent>
+      </Card>
+
       <div className="mb-8">
         <h1 className="text-2xl font-bold mb-4">Courses</h1>
         <div className="flex flex-nowrap gap-2 items-center">
