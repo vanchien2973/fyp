@@ -11,14 +11,14 @@ import {
 const notificationRouter = express.Router();
 
 // Route for regular users
-notificationRouter.get('/user-notifications', updateToken, isAuthenticated, getUserNotifications);
+notificationRouter.get('/user-notifications', isAuthenticated, getUserNotifications);
 
 // Routes for admin
-notificationRouter.get('/system-notifications', updateToken, isAuthenticated, authorizeRoles('admin'), getSystemNotifications);
+notificationRouter.get('/system-notifications', isAuthenticated, authorizeRoles('admin'), getSystemNotifications);
 
 // Routes for both users and admin
-notificationRouter.put('/update-notification/:id', updateToken, isAuthenticated, updateNotificationStatus);
+notificationRouter.put('/update-notification/:id', isAuthenticated, updateNotificationStatus);
 
-notificationRouter.delete('/delete-notification/:id', updateToken, isAuthenticated, deleteNotification);
+notificationRouter.delete('/delete-notification/:id', isAuthenticated, deleteNotification);
 
 export default notificationRouter;

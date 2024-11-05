@@ -5,22 +5,22 @@ import { addComment, addReply, createPost, deletePost, editPost, getAllPosts, li
 
 const forumRouter = express.Router();
 
-forumRouter.post('/create-post', updateToken, isAuthenticated, createPost);
+forumRouter.post('/create-post', isAuthenticated, createPost);
 
-forumRouter.put('/add-comment-post', updateToken, isAuthenticated, addComment);
+forumRouter.put('/add-comment-post', isAuthenticated, addComment);
 
-forumRouter.put('/add-reply-comment', updateToken, isAuthenticated, addReply);
+forumRouter.put('/add-reply-comment', isAuthenticated, addReply);
 
-forumRouter.put('/like-post/:postId', updateToken, isAuthenticated, likePost);
+forumRouter.put('/like-post/:postId', isAuthenticated, likePost);
 
-forumRouter.put('/posts/:postId/comments/:commentId', updateToken, isAuthenticated, likeComment);
+forumRouter.put('/posts/:postId/comments/:commentId', isAuthenticated, likeComment);
 
-forumRouter.put('/posts/:postId/comments/:commentId/replies/:replyId', updateToken, isAuthenticated, likeReply);
+forumRouter.put('/posts/:postId/comments/:commentId/replies/:replyId', isAuthenticated, likeReply);
 
-forumRouter.put('/posts/:postId', updateToken, isAuthenticated, editPost);
+forumRouter.put('/posts/:postId', isAuthenticated, editPost);
 
-forumRouter.delete('/posts/:postId', updateToken, isAuthenticated, deletePost);
+forumRouter.delete('/posts/:postId', isAuthenticated, deletePost);
 
-forumRouter.get('/posts', updateToken, isAuthenticated, getAllPosts);
+forumRouter.get('/posts', isAuthenticated, getAllPosts);
 
 export default forumRouter;

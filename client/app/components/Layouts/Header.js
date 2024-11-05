@@ -122,13 +122,13 @@ const Header = ({ open, setOpen, route, setRoute }) => {
                   <ThemeToggle />
                   <Link href="/profile" className="flex items-center">
                     <Image
-                      src={user.avatar ? user.avatar?.url : defaultAvatar}
+                      src={user?.avatar?.url || defaultAvatar}
                       width={32}
                       height={32}
                       alt="User Avatar"
                       className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-primary"
                     />
-                    <span className="hidden md:inline ml-2 text-sm">{userData.name}</span>
+                    <span className="hidden md:inline ml-2 text-sm">{userData?.name}</span>
                   </Link>
                 </>
               ) : (

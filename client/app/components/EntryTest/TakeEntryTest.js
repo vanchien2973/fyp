@@ -25,6 +25,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../ui/dialog"
+import { useLoadUserQuery } from '@/app/redux/features/api/apiSlice';
 
 const TakeEntryTest = ({ test }) => {
     if (!test) return null;
@@ -36,6 +37,8 @@ const TakeEntryTest = ({ test }) => {
     const [timeRemaining, setTimeRemaining] = useState(test?.totalTime * 60);
     const [isTestSubmitted, setIsTestSubmitted] = useState(false);
     const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+    const [loadUser, setLoadUser] = useState(false);
+    const {} = useLoadUserQuery({ skip: loadUser ? false : true });
 
     // Timer effect
     useEffect(() => {
@@ -318,6 +321,7 @@ const TakeEntryTest = ({ test }) => {
             }).unwrap();
             
             setIsTestSubmitted(true);
+            setLoadUser(true);
             toast.success('Test submitted successfully!');
             router.push('/entry-tests/recommendation-courses');
         } catch (error) {

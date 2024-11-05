@@ -214,14 +214,18 @@ export const takeEntranceTest = CatchAsyncError(async (req, res, next) => {
         for (const section of test.sections) {
             let sectionScore = 0;
             let sectionTotalPoints = 0;
+            let sectionQuestionCount = 0;
 
             for (const passage of (section.passages || [])) {
                 for (const question of passage.questions) {
                     const userAnswer = answers[question._id];
                     const result = evaluateAnswer(question, userAnswer);
                     
-                    sectionScore += result.score;
-                    sectionTotalPoints += question.points;
+                    if (!result.needsManualGrading) {
+                        sectionScore += result.score;
+                        sectionTotalPoints += question.points;
+                        sectionQuestionCount++;
+                    }
                     
                     detailedResults.push({
                         section: section.name,
@@ -229,7 +233,8 @@ export const takeEntranceTest = CatchAsyncError(async (req, res, next) => {
                         userAnswer,
                         isCorrect: result.isCorrect,
                         score: result.score,
-                        maxScore: question.points
+                        maxScore: question.points,
+                        needsManualGrading: result.needsManualGrading
                     });
                 }
             }
@@ -238,8 +243,11 @@ export const takeEntranceTest = CatchAsyncError(async (req, res, next) => {
                 const userAnswer = answers[question._id];
                 const result = evaluateAnswer(question, userAnswer);
                 
-                sectionScore += result.score;
-                sectionTotalPoints += question.points;
+                if (!result.needsManualGrading) {
+                    sectionScore += result.score;
+                    sectionTotalPoints += question.points;
+                    sectionQuestionCount++;
+                }
                 
                 detailedResults.push({
                     section: section.name,
@@ -247,46 +255,66 @@ export const takeEntranceTest = CatchAsyncError(async (req, res, next) => {
                     userAnswer,
                     isCorrect: result.isCorrect,
                     score: result.score,
-                    maxScore: question.points
+                    maxScore: question.points,
+                    needsManualGrading: result.needsManualGrading
                 });
             }
 
             if (sectionTotalPoints > 0) {
                 sectionScores[section.name] = (sectionScore / sectionTotalPoints) * 100;
+                totalScore += sectionScore;
+                totalPoints += sectionTotalPoints;
             } else {
                 sectionScores[section.name] = 0;
             }
-
-            totalScore += sectionScore;
-            totalPoints += sectionTotalPoints;
         }
 
         const finalScore = totalPoints > 0 ? (totalScore / totalPoints) * 100 : 0;
         const level = determineLevel(finalScore);
 
-        const recommendations = await generateRecommendations(sectionScores, finalScore);
+        const recommendations = await generateRecommendations(sectionScores, finalScore, testId);
 
         const testResult = {
-            test: testId,
+            test: {
+                _id: testId,
+                testType: test.testType
+            },
             score: finalScore,
             sectionScores,
             detailedResults,
-            recommendations,
-            takenAt: new Date()
+            recommendations: {
+                level: recommendations.level,
+                recommendedCourses: recommendations.recommendedCourses.map(course => course._id),
+                recommendedSections: recommendations.recommendedSections,
+                testType: recommendations.testType
+            },
+            takenAt: new Date(),
+            totalGradablePoints: totalPoints,
+            totalGradableScore: totalScore
         };
 
-        await UserModel.findByIdAndUpdate(userId, {
-            $push: { entranceTestResults: testResult },
-            proficiencyLevel: level
+        await UserModel.findByIdAndUpdate(
+            userId,
+            {
+                $push: { entranceTestResults: testResult },
+                proficiencyLevel: recommendations.level
+            }
+        ).populate({
+            path: 'entranceTestResults.recommendations.recommendedCourses',
+            model: 'Course'
         });
 
         res.status(200).json({
             success: true,
             score: finalScore,
             sectionScores,
-            level,
-            recommendations,
-            detailedResults
+            level: recommendations.level,
+            recommendations: testResult.recommendations,
+            detailedResults,
+            gradableInfo: {
+                totalGradablePoints: totalPoints,
+                totalGradableScore: totalScore
+            }
         });
 
     } catch (error) {
@@ -367,47 +395,47 @@ const evaluateAnswer = (question, userAnswer) => {
 const determineLevel = (score) => {
     if (score >= 80) return "Advanced";
     if (score >= 60) return "Intermediate";
-    if (score >= 40) return "Beginner";
     return "Beginner";
 };
 
 // Generate Recommendations
-const generateRecommendations = async (sectionScores, totalScore) => {
+const generateRecommendations = async (sectionScores, totalScore, testId) => {
     try {
-        const sectionNames = Object.keys(sectionScores);
         const level = determineLevel(totalScore);
+        
+        const test = await EntranceTestModel.findById(testId);
+        if (!test) {
+            return {
+                level,
+                recommendedCourses: [],
+                recommendedSections: [],
+                testType: null
+            };
+        }
 
         const recommendedCourses = await CourseModel.find({
-            $and: [
-                {
-                    $or: sectionNames.map(section => ({
-                        "category.title": section
-                    }))
-                },
-                { rank: level }
-            ]
+            rank: level,
+            'category.title': test.testType
         }).limit(5);
-
-        const recommendedSections = Object.entries(sectionScores)
-            .filter(([_, score]) => score < 70)
-            .map(([section]) => ({
-                name: section,
-                score: Math.round(sectionScores[section])
-            }));
 
         return {
             level,
             recommendedCourses,
-            recommendedSections,
-            totalScore: Math.round(totalScore)
+            recommendedSections: Object.entries(sectionScores)
+                .filter(([_, score]) => score < 70)
+                .map(([section]) => ({
+                    name: section,
+                    score: Math.round(sectionScores[section])
+                })),
+            testType: test.testType
         };
     } catch (error) {
-        console.error("Error generating recommendations:", error);
         return {
-            level: "Beginner",
+            level: determineLevel(totalScore),
             recommendedCourses: [],
             recommendedSections: [],
-            totalScore: 0
+            testType: null
         };
     }
 };
+

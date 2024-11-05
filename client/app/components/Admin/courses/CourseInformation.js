@@ -245,8 +245,8 @@ const CourseInformation = ({ courseInfor, setCourseInfor, setCurrentStep, curren
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="Beginner">Beginner</SelectItem>
-                        <SelectItem value="Intermediate Level">Intermediate</SelectItem>
-                        <SelectItem value="Advanced Level">Advanced</SelectItem>
+                        <SelectItem value="Intermediate">Intermediate</SelectItem>
+                        <SelectItem value="Advanced">Advanced</SelectItem>
                       </SelectContent>
                     </Select>
                   </FormControl>
@@ -265,6 +265,7 @@ const CourseInformation = ({ courseInfor, setCourseInfor, setCurrentStep, curren
                   <FormControl>
                     <Select
                       disabled={isEdit}
+                      defaultValue={courseInfor.category?.title}
                       value={courseInfor.category?.title}
                       onValueChange={(value) => {
                         if (!isEdit) {
@@ -303,6 +304,7 @@ const CourseInformation = ({ courseInfor, setCourseInfor, setCurrentStep, curren
                   <FormControl>
                     <Select
                       disabled={isEdit}
+                      defaultValue={courseInfor.category?.level}
                       value={courseInfor.category?.level}
                       onValueChange={(value) => {
                         if (!isEdit) {

@@ -37,7 +37,10 @@ const EditCourse = ({ id }) => {
                 ...prev,
                 name: editCourseData.name,
                 description: editCourseData.description,
-                category: editCourseData.category,
+                category: {
+                    title: editCourseData.category?.title || "",
+                    level: editCourseData.category?.level || ""
+                },
                 rank: editCourseData.rank,
                 price: editCourseData.price,
                 estimatedPrice: editCourseData?.estimatedPrice,

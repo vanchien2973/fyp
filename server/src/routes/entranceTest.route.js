@@ -13,16 +13,16 @@ const upload = multer({
 
 const entranceTest = express.Router();
 
-entranceTest.post('/create-test', upload.any(), updateToken, isAuthenticated, authorizeRoles('admin'), createEntranceTest);
+entranceTest.post('/create-test', upload.any(), isAuthenticated, authorizeRoles('admin'), createEntranceTest);
 
-entranceTest.post('/take-test/:testId', updateToken, isAuthenticated, takeEntranceTest);
+entranceTest.post('/take-test/:testId', isAuthenticated, takeEntranceTest);
 
-entranceTest.get('/all-test', isAuthenticated, updateToken, authorizeRoles('admin'), getAllEntranceTests);
+entranceTest.get('/all-test', isAuthenticated, authorizeRoles('admin'), getAllEntranceTests);
 
-entranceTest.delete('/entrance-test/:id', updateToken, isAuthenticated, authorizeRoles('admin'), deleteEntranceTest);
+entranceTest.delete('/entrance-test/:id', isAuthenticated, authorizeRoles('admin'), deleteEntranceTest);
 
-entranceTest.put('/entrance-test/:id', upload.any(), updateToken, isAuthenticated, authorizeRoles('admin'), updateEntranceTest);
+entranceTest.put('/entrance-test/:id', upload.any(), isAuthenticated, authorizeRoles('admin'), updateEntranceTest);
 
-entranceTest.get('/entrance-test/:id', updateToken, isAuthenticated, authorizeRoles('admin'), getEntranceTestById);
+entranceTest.get('/entrance-test/:id', isAuthenticated, authorizeRoles('admin'), getEntranceTestById);
 
 export default entranceTest;

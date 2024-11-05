@@ -14,31 +14,51 @@ import {
     AccordionTrigger,
 } from "../ui/accordion";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
+import { useGetAllCoursesQuery } from '@/app/redux/features/courses/coursesApi';
+import { useLoadUserQuery } from '@/app/redux/features/api/apiSlice';
 
 const RecommendationCourse = () => {
     const { user } = useSelector((state) => state.auth);
+    const { data: userData, isLoading: isLoadingUser } = useLoadUserQuery();
+    const { data: coursesData, isLoading: isLoadingCourses } = useGetAllCoursesQuery({});
     const [latestResult, setLatestResult] = useState(null);
+    const [recommendedCourses, setRecommendedCourses] = useState([]);
 
     useEffect(() => {
-        if (user?.entranceTestResults && user.entranceTestResults.length > 0) {
-            // Tìm kết quả mới nhất bằng reduce
-            const latest = user.entranceTestResults.reduce((latest, current) => {
-                if (!latest.takenAt) return current;
-                if (!current.takenAt) return latest;
-                
-                const latestDate = new Date(latest.takenAt);
-                const currentDate = new Date(current.takenAt);
-                
-                return currentDate > latestDate ? current : latest;
-            });
+        const getLatestResult = () => {
+            const testResults = userData?.user?.entranceTestResults || user?.entranceTestResults;
+            if (testResults && testResults.length > 0) {
+                return [...testResults].sort((a, b) => 
+                    new Date(b.takenAt) - new Date(a.takenAt)
+                )[0];
+            }
+            return null;
+        };
 
-            // Log để debug
-            console.log('Found latest result:', latest);
-            console.log('Latest date:', new Date(latest.takenAt));
-
-            setLatestResult(latest);
+        const result = getLatestResult();
+        if (result && coursesData?.courses) {
+            setLatestResult(result);
+            
+            if (result.recommendations?.recommendedCourses) {
+                const recommendedCourseIds = result.recommendations.recommendedCourses;
+                const filteredCourses = coursesData.courses.filter(course => 
+                    recommendedCourseIds.includes(course._id)
+                );
+                setRecommendedCourses(filteredCourses);
+            }
         }
-    }, [user]);
+    }, [userData, user, coursesData]);
+
+    if (isLoadingUser || isLoadingCourses) {
+        return (
+            <Alert>
+                <AlertTitle>Loading</AlertTitle>
+                <AlertDescription>
+                    Please wait while we load your data...
+                </AlertDescription>
+            </Alert>
+        );
+    }
 
     const getLevelColor = (score) => {
         if (!score && score !== 0) return "text-gray-500";
@@ -62,6 +82,94 @@ const RecommendationCourse = () => {
         }
     };
 
+    const renderSectionScore = (section, score) => {
+        if ((section === 'Writing' || section === 'Speaking') && (!score || score === 0)) {
+            return (
+                <Badge variant="secondary">
+                    Needs Manual Grading
+                </Badge>
+            );
+        }
+        
+        const roundedScore = score ? Math.round(score * 10) / 10 : 0;
+        return (
+            <Badge className={getLevelColor(roundedScore)}>
+                {roundedScore}%
+            </Badge>
+        );
+    };
+
+    const renderSectionProgress = (section, score) => {
+        if ((section === 'Writing' || section === 'Speaking') && (!score || score === 0)) {
+            return null;
+        }
+        const progressValue = Math.min(Math.max(score || 0, 0), 100);
+        return <Progress value={progressValue} className="h-2" />;
+    };
+
+    const renderRecommendedCourses = () => {
+        if (isLoadingCourses) {
+            return (
+                <Alert>
+                    <AlertTitle>Loading</AlertTitle>
+                    <AlertDescription>
+                        Please wait while we load the course information...
+                    </AlertDescription>
+                </Alert>
+            );
+        }
+
+        if (!latestResult || !latestResult.recommendations) {
+            return (
+                <Alert>
+                    <AlertTitle>No Data</AlertTitle>
+                    <AlertDescription>
+                        No test results or course recommendations found.
+                    </AlertDescription>
+                </Alert>
+            );
+        }
+
+        if (!recommendedCourses || recommendedCourses.length === 0) {
+            return (
+                <Alert>
+                    <AlertTitle>No Courses Found</AlertTitle>
+                    <AlertDescription>
+                        Currently no courses match your level {latestResult.recommendations.level} 
+                        and test type {latestResult.test?.testType}.
+                    </AlertDescription>
+                </Alert>
+            );
+        }
+
+        return (
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                        <GraduationCap className="h-5 w-5" />
+                        Recommended Courses ({recommendedCourses.length})
+                    </CardTitle>
+                    <p className="text-sm text-muted-foreground">
+                        Based on level {latestResult.recommendations?.level} and test type {latestResult.test?.testType}
+                    </p>
+                </CardHeader>
+                <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {recommendedCourses.map((course, index) => {
+                            return (
+                                <CourseCard 
+                                    course={course} 
+                                    key={index}
+                                    isRecommended={true}
+                                />
+                            );
+                        })}
+                    </div>
+                </CardContent>
+            </Card>
+        );
+    };
+
     if (!latestResult) {
         return (
             <Alert>
@@ -73,13 +181,11 @@ const RecommendationCourse = () => {
         );
     }
 
-    // Kiểm tra và khởi tạo sectionScores nếu không tồn tại
     const sectionScores = latestResult?.sectionScores || {};
     const detailedResults = latestResult?.detailedResults || [];
     const recommendations = latestResult?.recommendations || [];
     const totalScore = latestResult?.score || 0;
 
-    // Kiểm tra xem có phải là kết quả hợp lệ không
     const isValidResult = latestResult && latestResult.takenAt && latestResult.score !== undefined;
 
     if (!isValidResult) {
@@ -96,13 +202,15 @@ const RecommendationCourse = () => {
 
     return (
         <div className="container mx-auto p-4 space-y-6">
-            {/* Tổng quan kết quả */}
             <Card className="w-full">
                 <CardHeader className="flex flex-row items-center justify-between">
                     <div>
                         <CardTitle className="text-2xl font-bold">Test Results</CardTitle>
                         <p className="text-muted-foreground mt-1">
                             Completed on: {latestResult.takenAt ? new Date(latestResult.takenAt).toLocaleDateString('en-US') : 'N/A'}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                            *Score calculated from automatically gradable questions only
                         </p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -132,11 +240,9 @@ const RecommendationCourse = () => {
                                             {getSectionIcon(section)}
                                             <span>{section}</span>
                                         </div>
-                                        <Badge className={getLevelColor(score)}>
-                                            {Math.round(score || 0)}%
-                                        </Badge>
+                                        {renderSectionScore(section, score)}
                                     </div>
-                                    <Progress value={score || 0} className="h-2" />
+                                    {renderSectionProgress(section, score)}
                                 </Card>
                             ))}
                         </div>
@@ -144,7 +250,6 @@ const RecommendationCourse = () => {
                 </CardContent>
             </Card>
 
-            {/* Trình độ và đề xuất */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <Card>
                     <CardHeader>
@@ -169,7 +274,6 @@ const RecommendationCourse = () => {
                     </CardContent>
                 </Card>
 
-                {/* Chi tiết từng phần */}
                 <Card>
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
@@ -185,18 +289,24 @@ const RecommendationCourse = () => {
                                         <div className="flex items-center gap-2">
                                             {getSectionIcon(result.section)}
                                             <span>Question {index + 1}</span>
-                                            <Badge variant={result.isCorrect ? "success" : "destructive"}>
-                                                {result.score}/{result.maxScore}
-                                            </Badge>
+                                            {result.needsManualGrading ? (
+                                                <Badge variant="secondary">Needs Manual Grading</Badge>
+                                            ) : (
+                                                <Badge variant={result.isCorrect ? "success" : "destructive"}>
+                                                    {result.score}/{result.maxScore}
+                                                </Badge>
+                                            )}
                                         </div>
                                     </AccordionTrigger>
                                     <AccordionContent>
                                         <div className="space-y-2 p-2">
                                             <p>Section: {result.section}</p>
                                             <p>Your answer: {result.userAnswer || 'No answer'}</p>
-                                            <p className={result.isCorrect ? "text-green-500" : "text-red-500"}>
-                                                {result.isCorrect ? "Correct" : "Incorrect"}
-                                            </p>
+                                            {!result.needsManualGrading && (
+                                                <p className={result.isCorrect ? "text-green-500" : "text-red-500"}>
+                                                    {result.isCorrect ? "Correct" : "Incorrect"}
+                                                </p>
+                                            )}
                                         </div>
                                     </AccordionContent>
                                 </AccordionItem>
@@ -206,24 +316,7 @@ const RecommendationCourse = () => {
                 </Card>
             </div>
 
-            {/* Khóa học đề xuất */}
-            {recommendations.length > 0 && (
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <GraduationCap className="h-5 w-5" />
-                            Recommended Courses
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {recommendations.map((course, index) => (
-                                <CourseCard key={index} course={course} />
-                            ))}
-                        </div>
-                    </CardContent>
-                </Card>
-            )}
+            {renderRecommendedCourses()}
         </div>
     );
 };

@@ -16,7 +16,11 @@ const ListCourses = () => {
     const { isLoading, data } = useGetAllCoursesQuery({}, { refetchOnMountOrArgChange: true });
     const rows = React.useMemo(() => {
         if (data && data.courses) {
-            return data.courses.map((item) => ({
+            const sortedCourses = [...data.courses].sort((a, b) => {
+                return new Date(b.createdAt) - new Date(a.createdAt);
+            });
+            
+            return sortedCourses.map((item) => ({
                 id: item._id,
                 name: item.name,
                 ratings: item.ratings,

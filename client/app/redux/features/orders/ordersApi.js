@@ -1,4 +1,5 @@
 import { apiSlice } from "../api/apiSlice";
+import { userLogin } from "../auth/authSlice";
 
 export const analyticsApi = apiSlice.injectEndpoints({
     endpoints: (builder) => ({
@@ -22,7 +23,18 @@ export const analyticsApi = apiSlice.injectEndpoints({
                 url: 'payment',
                 body: { amount },
                 credentials: 'include'
-            })
+            }),
+            async onQueryStarted(arg, { queryFulfilled, dispatch }) {
+                try {
+                    const result = await queryFulfilled;
+                    dispatch(userLogin({
+                        accessToken: result.data.accessToken,
+                        user: result.data.user,
+                    }));
+                } catch (error) {
+                    console.log(error);
+                }
+            },
         }),
         createOrder: builder.mutation({
             query: ({ courseId, paymentInfor }) => ({

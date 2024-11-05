@@ -78,8 +78,11 @@ const userSchema = new mongoose.Schema({
     ],
     entranceTestResults: [{
         test: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'EntranceTest'
+            _id: {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'EntranceTest'
+            },
+            testType: String
         },
         score: Number,
         sectionScores: {
@@ -92,8 +95,21 @@ const userSchema = new mongoose.Schema({
             userAnswer: mongoose.Schema.Types.Mixed,
             isCorrect: Boolean,
             score: Number,
-            maxScore: Number
+            maxScore: Number,
+            needsManualGrading: Boolean
         }],
+        recommendations: {
+            level: String,
+            recommendedCourses: [{
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'Course'
+            }],
+            recommendedSections: [{
+                name: String,
+                score: Number
+            }],
+            testType: String
+        },
         takenAt: {
             type: Date,
             default: Date.now

@@ -13,20 +13,20 @@ userRouter.get("/logout", isAuthenticated, logoutUser);
 
 userRouter.get("/refresh", updateToken);
 
-userRouter.get("/me", updateToken, isAuthenticated, getUserInfo);
+userRouter.get("/me", isAuthenticated, getUserInfo);
 
 userRouter.post("/social-auth", socialAuth);
 
-userRouter.put("/update-user-profile", updateToken, isAuthenticated, updateUser);
+userRouter.put("/update-user-profile", isAuthenticated, updateUser);
 
-userRouter.put("/update-user-password", updateToken, isAuthenticated, updatePassword);
+userRouter.put("/update-user-password", isAuthenticated, updatePassword);
 
-userRouter.put("/update-user-avatar", updateToken, isAuthenticated, updateAvatar);
+userRouter.put("/update-user-avatar", isAuthenticated, updateAvatar);
 
-userRouter.get("/get-all-users", updateToken, isAuthenticated, authorizeRoles('admin'), getAllUsers);
+userRouter.get("/get-all-users", isAuthenticated, authorizeRoles('admin'), getAllUsers);
 
-userRouter.put("/assign-user-role", updateToken, isAuthenticated, authorizeRoles('admin'), assignRoleUser);
+userRouter.put("/assign-user-role", isAuthenticated, authorizeRoles('admin'), assignRoleUser);
 
-userRouter.delete("/delete-user/:id", updateToken, isAuthenticated, authorizeRoles('admin'), deleteUser);
+userRouter.delete("/delete-user/:id", isAuthenticated, authorizeRoles('admin'), deleteUser);
 
 export default userRouter;

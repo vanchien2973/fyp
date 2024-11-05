@@ -5,10 +5,10 @@ import { getCoursesAnalytics, getOrdersAnalytics, getUsersAnalytics } from "../c
 
 const analyticRouter = express.Router();
 
-analyticRouter.get('/get-users-analytics', updateToken, isAuthenticated, authorizeRoles('admin'), getUsersAnalytics);
+analyticRouter.get('/get-users-analytics', isAuthenticated, authorizeRoles('admin'), getUsersAnalytics);
 
-analyticRouter.get('/get-courses-analytics', updateToken, isAuthenticated, authorizeRoles('admin'), getCoursesAnalytics);
+analyticRouter.get('/get-courses-analytics', isAuthenticated, authorizeRoles('admin'), getCoursesAnalytics);
 
-analyticRouter.get('/get-orders-analytics', updateToken, isAuthenticated, authorizeRoles('admin'), getOrdersAnalytics);
+analyticRouter.get('/get-orders-analytics', isAuthenticated, authorizeRoles('admin'), getOrdersAnalytics);
 
 export default analyticRouter;

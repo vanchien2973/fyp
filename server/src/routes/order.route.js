@@ -7,7 +7,7 @@ const orderRouter = express.Router();
 
 orderRouter.post('/create-order', isAuthenticated, createOrder);
 
-orderRouter.get('/get-all-orders', updateToken, isAuthenticated, authorizeRoles('admin'), getAllOrdersInSystem);
+orderRouter.get('/get-all-orders', isAuthenticated, authorizeRoles('admin'), getAllOrdersInSystem);
 
 orderRouter.get('/payment/stripepublishablekey', sendStripePublishableKey);
 

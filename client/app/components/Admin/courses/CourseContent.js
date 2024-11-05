@@ -246,7 +246,7 @@ const CourseContent = ({ currentStep, setCurrentStep, courseContentData, setCour
                                         )}
                                     </AccordionTrigger>
                                     <AccordionContent>
-                                        {section.content.map((item, contentIndex) => (
+                                        {section?.content?.map((item, contentIndex) => (
                                             <Accordion type="single" collapsible key={contentIndex}>
                                                 <AccordionItem value={`courseContentData.${sectionIndex}.content.${contentIndex}`}>
                                                     <AccordionTrigger

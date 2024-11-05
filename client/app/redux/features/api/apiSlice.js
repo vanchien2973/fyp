@@ -12,7 +12,7 @@ export const apiSlice = createApi({
                 url: "refresh",
                 method: "GET",
                 credentials: "include",
-            })
+            }),
         }),
         loadUser: builder.query({
             query: () => ({
@@ -28,7 +28,7 @@ export const apiSlice = createApi({
                         user: result.data.user,
                     }));
                 } catch (error) {
-                   console.log(error)
+                    console.log(error);
                 }
             },
         }),
