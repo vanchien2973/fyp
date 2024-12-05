@@ -8,9 +8,11 @@ export const store = configureStore({
         [apiSlice.reducerPath]: apiSlice.reducer,
         auth: authSlice,
     },
-    devTools: false,
+    devTools: true,
     middleware: (getDefaultMiddleware) =>
-        getDefaultMiddleware().concat(apiSlice.middleware),
+        getDefaultMiddleware({
+            serializableCheck: false,
+        }).concat(apiSlice.middleware),
 });
 
 // Call the refresh token, load user function on every page load

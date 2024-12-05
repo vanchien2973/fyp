@@ -33,7 +33,11 @@ const ListInvoices = () => {
   }, [invoicesData, usersData, coursesData]);
 
   const rows = React.useMemo(() => {
-    return orderData.map((item) => ({
+    const sortedOrders = [...orderData].sort((a, b) => {
+      return new Date(b.createdAt) - new Date(a.createdAt);
+    });
+
+    return sortedOrders.map((item) => ({
       id: item._id,
       userName: item.userName,
       userEmail: item.userEmail,

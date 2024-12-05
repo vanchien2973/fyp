@@ -8,23 +8,20 @@ const CourseVideoPlay = ({ videoUrl }) => {
         playbackInfo: '',
     });
 
-    useEffect(() => {
-        axios.post(`${process.env.NEXT_PUBLIC_SERVER_URI}getVdoCipherOtp`, {
+    useEffect(() => {        
+        axios.post(`${process.env.NEXT_PUBLIC_SERVER_URI}get-vdo-cipher-otp`, {
             videoId: videoUrl,
         })
         .then((res) => {
             setVideoData(res.data);
         })
-        .catch((err) => {
-            console.error("Error fetching OTP and playbackInfo:", err);
-        });
     }, [videoUrl]);
 
     return (
         <div style={{ paddingTop: '50%', position: 'relative', overflow: 'hidden'}}>
             {videoData.otp && videoData.playbackInfo !== '' && (
                 <iframe
-                    src={`https://player.vdocipher.com/v2/?otp=${videoData.otp}&playbackInfo=${videoData.playbackInfo}&player=bCOfBDVJgrAB82Er`}
+                    src={`https://player.vdocipher.com/v2/?otp=${videoData.otp}&playbackInfo=${videoData.playbackInfo}&player=VeJmjE5svmHz9nbu`}
                     style={{
                         border: 0,
                         width: '100%',

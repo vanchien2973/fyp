@@ -13,33 +13,82 @@ const ChangePassword = () => {
     const [confirmPassword, setConfirmPassword] = useState("");
     const [updatePassword, { isSuccess, error }] = useUpdatePasswordMutation();
 
+    const isValidPassword = (password) => {
+        if (password.length < 8) {
+            toast.error("Password must be at least 8 characters!");
+            return false;
+        }
+
+        if (!/\d/.test(password)) {
+            toast.error("Password must contain at least one number!");
+            return false;
+        }
+
+        if (!/[a-z]/.test(password)) {
+            toast.error("Password must contain at least one lowercase letter!");
+            return false;
+        }
+
+        if (!/[A-Z]/.test(password)) {
+            toast.error("Password must contain at least one uppercase letter!");
+            return false;
+        }
+
+        if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+            toast.error("Password must contain at least one special character!");
+            return false;
+        }
+
+        return true;
+    };
+
     const passwordChangeHandler = async (e) => {
         e.preventDefault();
-    
+
+        if (!currentPassword || !newPassword || !confirmPassword) {
+            toast.error("All fields are required");
+            return;
+        }
+
+        if (!isValidPassword(currentPassword)) {
+            return;
+        }
+
+        if (!isValidPassword(newPassword)) {
+            return;
+        }
+
         if (newPassword !== confirmPassword) {
             toast.error("Passwords do not match");
             return;
         }
-    
+
+        // Check if new password is same as current
         if (currentPassword === newPassword) {
             toast.error("New password cannot be the same as the current password");
             return;
         }
-    
-        await updatePassword({ currentPassword, newPassword });
+
+        try {
+            await updatePassword({ currentPassword, newPassword });
+        } catch (error) {
+            toast.error("Failed to update password");
+        }
     };
 
     useEffect(() => {
         if (isSuccess) {
-            toast.success("Password changed successfully")
+            setCurrentPassword("");
+            setNewPassword("");
+            setConfirmPassword("");
+            toast.success("Password changed successfully");
         }
         if (error) {
-            if ("data" in error) {
-                const errorData = error;
-                toast.error(errorData.error.message);
+            if ('data' in error) {
+                toast.error(error.data?.message || "Invalid current password");
             }
         }
-    }, [isSuccess, error])
+    }, [isSuccess, error]);
 
     return (
         <div className="w-full max-w-3xl mx-auto">

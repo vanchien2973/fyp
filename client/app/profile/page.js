@@ -17,7 +17,7 @@ const page = () => {
         <div>
             <Protected>
                 <Heading
-                    title={`Profile - ${user.name}`}
+                    title={`Profile - ${user?.name}`}
                     description="LMS using MERN"
                     keywords="MERN, Redux, Redis"
                 />

@@ -5,13 +5,14 @@ import UserModel from "../models/user.model";
 import LayoutModel from "../models/layout.model";
 import CourseModel from "../models/course.model";
 import { deleteAllSectionFiles, handleFileUploads } from "../services/entranceTest.service";
+import { redis } from "../utils/redis";
 
 // Create Entry Test
 export const createEntranceTest = CatchAsyncError(async (req, res, next) => {
     try {
         const { title, description, testType, totalTime, sections } = req.body;
 
-        if (!title || !description || !testType || !totalTime || !sections) {
+        if (!title || !testType || !totalTime || !sections) {
             return next(new ErrorHandler('Missing required fields', 400));
         }
 
@@ -59,7 +60,7 @@ export const updateEntranceTest = CatchAsyncError(async (req, res, next) => {
         const { id } = req.params;
         const { title, description, testType, totalTime, sections } = req.body;
 
-        if (!id || !title || !description || !testType || !totalTime || !sections) {
+        if (!id || !title || !testType || !totalTime || !sections) {
             return next(new ErrorHandler('Missing required fields', 400));
         }
 
@@ -270,7 +271,6 @@ export const takeEntranceTest = CatchAsyncError(async (req, res, next) => {
         }
 
         const finalScore = totalPoints > 0 ? (totalScore / totalPoints) * 100 : 0;
-        const level = determineLevel(finalScore);
 
         const recommendations = await generateRecommendations(sectionScores, finalScore, testId);
 
@@ -285,7 +285,6 @@ export const takeEntranceTest = CatchAsyncError(async (req, res, next) => {
             recommendations: {
                 level: recommendations.level,
                 recommendedCourses: recommendations.recommendedCourses.map(course => course._id),
-                recommendedSections: recommendations.recommendedSections,
                 testType: recommendations.testType
             },
             takenAt: new Date(),
@@ -293,23 +292,29 @@ export const takeEntranceTest = CatchAsyncError(async (req, res, next) => {
             totalGradableScore: totalScore
         };
 
-        await UserModel.findByIdAndUpdate(
+        const updatedUser = await UserModel.findByIdAndUpdate(
             userId,
             {
                 $push: { entranceTestResults: testResult },
                 proficiencyLevel: recommendations.level
-            }
+            },
+            { new: true }
         ).populate({
             path: 'entranceTestResults.recommendations.recommendedCourses',
             model: 'Course'
         });
+        await redis.set(req.user?._id, JSON.stringify(updatedUser));
 
         res.status(200).json({
             success: true,
             score: finalScore,
             sectionScores,
             level: recommendations.level,
-            recommendations: testResult.recommendations,
+            recommendations: {
+                level: recommendations.level,
+                recommendedCourses: recommendations.recommendedCourses.map(course => course._id),
+                testType: recommendations.testType
+            },
             detailedResults,
             gradableInfo: {
                 totalGradablePoints: totalPoints,
@@ -408,7 +413,6 @@ const generateRecommendations = async (sectionScores, totalScore, testId) => {
             return {
                 level,
                 recommendedCourses: [],
-                recommendedSections: [],
                 testType: null
             };
         }
@@ -421,19 +425,12 @@ const generateRecommendations = async (sectionScores, totalScore, testId) => {
         return {
             level,
             recommendedCourses,
-            recommendedSections: Object.entries(sectionScores)
-                .filter(([_, score]) => score < 70)
-                .map(([section]) => ({
-                    name: section,
-                    score: Math.round(sectionScores[section])
-                })),
             testType: test.testType
         };
     } catch (error) {
         return {
             level: determineLevel(totalScore),
             recommendedCourses: [],
-            recommendedSections: [],
             testType: null
         };
     }

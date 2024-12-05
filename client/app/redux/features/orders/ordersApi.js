@@ -24,6 +24,14 @@ export const analyticsApi = apiSlice.injectEndpoints({
                 body: { amount },
                 credentials: 'include'
             }),
+        }),
+        createOrder: builder.mutation({
+            query: ({ courseId, paymentInfor }) => ({
+                method: 'POST',
+                url: 'create-order',
+                body: { courseId, paymentInfor },
+                credentials: 'include'
+            }),
             async onQueryStarted(arg, { queryFulfilled, dispatch }) {
                 try {
                     const result = await queryFulfilled;
@@ -35,14 +43,6 @@ export const analyticsApi = apiSlice.injectEndpoints({
                     console.log(error);
                 }
             },
-        }),
-        createOrder: builder.mutation({
-            query: ({ courseId, paymentInfor }) => ({
-                method: 'POST',
-                url: 'create-order',
-                body: { courseId, paymentInfor },
-                credentials: 'include'
-            })
         })
     })
 });

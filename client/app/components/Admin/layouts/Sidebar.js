@@ -24,7 +24,7 @@ export default function Sidebar({ className }) {
     >
       <div className="hidden p-5 pt-10 lg:block">
         <Link
-          href={'https://github.com/Kiranism/next-shadcn-dashboard-starter'}
+          href={''}
           target="_blank"
         >
           <svg

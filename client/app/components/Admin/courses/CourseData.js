@@ -18,7 +18,7 @@ const CourseData = ({ benefits, setBenefits, prerequisites, setPrerequisites, cu
         benefits: benefits.length > 0 ? benefits : [{ title: '' }],
         prerequisites: prerequisites.length > 0 ? prerequisites : [{ title: '' }],
       },
-      mode: 'onChange'
+      mode: 'onTouched'
     });
   
     const { control, formState: { errors, isValid }, handleSubmit, trigger } = form;
@@ -44,10 +44,6 @@ const CourseData = ({ benefits, setBenefits, prerequisites, setPrerequisites, cu
         setCurrentStep(currentStep - 1);
       }
     };
-  
-    useEffect(() => {
-      trigger();
-    }, [trigger]);
   
     return (
       <>

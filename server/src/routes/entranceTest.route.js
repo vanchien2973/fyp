@@ -17,6 +17,8 @@ entranceTest.post('/create-test', upload.any(), isAuthenticated, authorizeRoles(
 
 entranceTest.post('/take-test/:testId', isAuthenticated, takeEntranceTest);
 
+entranceTest.get('/tests', getAllEntranceTests);
+
 entranceTest.get('/all-test', isAuthenticated, authorizeRoles('admin'), getAllEntranceTests);
 
 entranceTest.delete('/entrance-test/:id', isAuthenticated, authorizeRoles('admin'), deleteEntranceTest);

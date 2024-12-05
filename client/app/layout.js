@@ -21,11 +21,10 @@ const roboto = Roboto({
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
-      <body className={roboto.variable} suppressHydrationWarning={true}>
+    <html lang="en" suppressHydrationWarning={true}>
+      <body className={roboto.variable}>
         <NextTopLoader showSpinner={false} />
         <Providers>
-          {/* <ProtectedRoute> */}
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
             <SessionProvider>
               <Loading>
@@ -34,7 +33,6 @@ export default function RootLayout({ children }) {
               <Toaster position="top-center" reverseOrder={false} />
             </SessionProvider>
           </ThemeProvider>
-          {/* </ProtectedRoute> */}
         </Providers>
       </body>
     </html>

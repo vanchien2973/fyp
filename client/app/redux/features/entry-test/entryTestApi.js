@@ -41,6 +41,14 @@ export const entryTestApi = apiSlice.injectEndpoints({
             }),
         }),
 
+        getAllTests: builder.query({
+            query: () => ({
+                url: 'tests',
+                method: 'GET',
+                credentials: 'include',
+            }),
+        }),
+
         deleteEntranceTest: builder.mutation({
             query: (id) => ({
                 url: `entrance-test/${id}`,
@@ -74,6 +82,7 @@ export const {
     useTakeEntranceTestMutation,
     useGetAllEntranceTestsQuery,
     useDeleteEntranceTestMutation,
+    useGetAllTestsQuery,
     useUpdateEntranceTestMutation,
     useGetEntranceTestByIdQuery,
 } = entryTestApi;

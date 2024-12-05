@@ -19,10 +19,18 @@ import { useLoadUserQuery } from '@/app/redux/features/api/apiSlice';
 
 const RecommendationCourse = () => {
     const { user } = useSelector((state) => state.auth);
-    const { data: userData, isLoading: isLoadingUser } = useLoadUserQuery();
+    const { data: userData, isLoading: isLoadingUser, refetch: refetchUser } = useLoadUserQuery();
     const { data: coursesData, isLoading: isLoadingCourses } = useGetAllCoursesQuery({});
     const [latestResult, setLatestResult] = useState(null);
     const [recommendedCourses, setRecommendedCourses] = useState([]);
+
+    console.log(recommendedCourses);
+
+    useEffect(() => {
+        refetchUser();
+    }, []);
+
+    console.log(userData);
 
     useEffect(() => {
         const getLatestResult = () => {
@@ -39,15 +47,17 @@ const RecommendationCourse = () => {
         if (result && coursesData?.courses) {
             setLatestResult(result);
             
-            if (result.recommendations?.recommendedCourses) {
-                const recommendedCourseIds = result.recommendations.recommendedCourses;
-                const filteredCourses = coursesData.courses.filter(course => 
-                    recommendedCourseIds.includes(course._id)
-                );
-                setRecommendedCourses(filteredCourses);
-            }
+            const recommendedCourseIds = result.recommendations?.recommendedCourses?.map(course => 
+                typeof course === 'string' ? course : course._id
+            ) || [];
+            
+            const filteredCourses = coursesData.courses
+                .filter(course => recommendedCourseIds.includes(course._id))
+                .slice(0, 3);
+            
+            setRecommendedCourses(filteredCourses);
         }
-    }, [userData, user, coursesData]);
+    }, [userData, coursesData]);
 
     if (isLoadingUser || isLoadingCourses) {
         return (
@@ -183,8 +193,6 @@ const RecommendationCourse = () => {
 
     const sectionScores = latestResult?.sectionScores || {};
     const detailedResults = latestResult?.detailedResults || [];
-    const recommendations = latestResult?.recommendations || [];
-    const totalScore = latestResult?.score || 0;
 
     const isValidResult = latestResult && latestResult.takenAt && latestResult.score !== undefined;
 

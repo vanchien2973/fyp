@@ -9,7 +9,8 @@ import CourseContentList from "./CourseContentList";
 const CourseContent = ({ id, user }) => {
   const { data: contentData, isLoading, refetch } = useGetCourseContentQuery(id, { refetchOnMountOrArgChange: true });
   const [activeVideo, setActiveVideo] = useState(0);
-  const data = contentData?.contents?.[0]?.content;
+  const [activeSection, setActiveSection] = useState(0);
+  const data = contentData?.contents?.[activeSection]?.content;
   const [route, setRoute] = useState('Login');
   const [open, setOpen] = useState(false);
   const [headerHeight, setHeaderHeight] = useState(0);
@@ -20,6 +21,13 @@ const CourseContent = ({ id, user }) => {
       setHeaderHeight(header.offsetHeight);
     }
   }, []);
+
+  const isAdmin = user?.role === 'admin';
+  const adminMessage = isAdmin ? (
+    <div className="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 mb-4">
+      You are watching this course as an admin.
+    </div>
+  ) : null;
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -34,6 +42,7 @@ const CourseContent = ({ id, user }) => {
       </div>
       <div className="flex-grow" style={{ paddingTop: `${headerHeight}px` }}>
         <div className="container mx-auto p-4">
+          {adminMessage}
           <Heading
             title={`${data?.[activeVideo]?.title || 'Course'} - ELP`}
             description="ELP is an English center."
@@ -61,6 +70,8 @@ const CourseContent = ({ id, user }) => {
                         data={contentData?.contents}
                         activeVideo={activeVideo}
                         setActiveVideo={setActiveVideo}
+                        activeSection={activeSection}
+                        setActiveSection={setActiveSection}
                       />
                     </div>
                   </>

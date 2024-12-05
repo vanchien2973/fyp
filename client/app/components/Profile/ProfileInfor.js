@@ -39,14 +39,47 @@ const ProfileInfor = ({ avatar = null, user }) => {
         }
     }, [isSuccess, error, success, editError]);
 
+    const isValidPhoneNumber = (phone) => {
+        const phoneRegex = /^[0-9]+$/;
+        if (!phoneRegex.test(phone)) {
+            toast.error("Phone number must be only digits!");
+            return false;
+        }
+        
+        if (phone.length < 10) {
+            toast.error("Phone number must be at least 10 digits!");
+            return false;
+        }
+        
+        if (phone.length > 15) {
+            toast.error("Phone number can't be longer than 15!");
+            return false;
+        }
+        
+        return true;
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if(name !== "") {
-             await editProfile({
-                name: name,
-                phoneNumber: phoneNumber
-            });
+        
+        if (!name.trim()) {
+            toast.error("Name cannot be empty!");
+            return;
         }
+
+        if (!phoneNumber?.trim()) {
+            toast.error("Phone number cannot be empty!");
+            return;
+        }
+
+        if (!isValidPhoneNumber(phoneNumber.trim())) {
+            return;
+        }
+
+        await editProfile({
+            name: name.trim(),
+            phoneNumber: phoneNumber.trim()
+        });
     };
 
     return (

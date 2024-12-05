@@ -11,11 +11,8 @@ import {
     DialogTitle,
 } from '../ui/dialog';
 import { Alert, AlertCircle, AlertTitle, AlertDescription } from '../ui/alert';
-import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
-import socketIO from 'socket.io-client';
-const ENDPOINT = process.env.NEXT_PUBLIC_SOCKET_SERVER_URI || '';
-const socketId = socketIO(ENDPOINT, { transports: ['websocket'] });
+import { useSocket } from '@/app/hooks/useSocket';
 
 const CheckoutForm = ({ isOpen, setOpen, data, user }) => {
     const stripe = useStripe();
@@ -24,8 +21,9 @@ const CheckoutForm = ({ isOpen, setOpen, data, user }) => {
     const [createOrder, { data: orderData, error: orderError }] = useCreateOrderMutation();
     const [loadUser, setLoadUser] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
-    const {} = useLoadUserQuery({ skip: loadUser ? false : true });
+    const { refetch } = useLoadUserQuery({ skip: loadUser ? false : true });
     const router = useRouter();
+    const socket = useSocket(user);
 
     useEffect(() => {
         if (!stripe || !elements) {
@@ -53,30 +51,34 @@ const CheckoutForm = ({ isOpen, setOpen, data, user }) => {
         } else if (paymentIntent && paymentIntent.status === 'succeeded') {
             setIsLoading(false);
             createOrder({ courseId: data._id, paymentInfo: paymentIntent });
-            
         } else {
             setMessage('Payment failed. Please try again.');
         }
-
         setIsLoading(false);
     };
 
     useEffect(() => {
         if (orderData) {
             setLoadUser(true);
-            // Notification for user
-            socketId.emit('notification', {
-                userId: user._id,
-                title: 'Course Purchase Successful',
+            // Notification cho admin
+            socket.emit('notification', {
+                type: 'order',
+                subtype: 'new_order',
+                title: "New Order Received",
+                message: `New order for ${data.name} by ${user?.name}`,
+                recipientRole: 'admin'
+            });
+
+            // Notification cho user
+            socket.emit('notification', {
+                type: 'order', 
+                recipientId: user._id,
+                title: "Course Purchase Successful",
                 message: `You have successfully purchased the course: ${data.name}`,
-                type: 'order'
+                subtype: 'purchase_success'
             });
-            // Notification for admin
-            socketId.emit('notification', {
-                title: 'New Order Received',
-                message: `A new order has been placed for the course: ${data.name} by ${user.name}.`,
-                type: 'system'
-            });
+            refetch();
+            window.location.reload();
             router.push(`/courses/course-access/${data._id}`);
         }
         if (orderError) {
@@ -84,7 +86,7 @@ const CheckoutForm = ({ isOpen, setOpen, data, user }) => {
                 toast.error(orderError.data.message);
             }
         }
-    }, [orderData, orderError, data._id, router]);
+    }, [orderData, orderError, data._id, router, socket]);
 
     return (
         <Dialog open={isOpen} onOpenChange={setOpen}>

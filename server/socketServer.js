@@ -1,47 +1,69 @@
 import { Server as SocketIOServer } from 'socket.io';
-import NotificationModel from './src/models/notification.model';
+
+let io;
 
 export const initSocketIOServer = (server) => {
-    const io = new SocketIOServer(server);
+    io = new SocketIOServer(server, {
+        cors: {
+            origin: process.env.ORIGIN,
+            credentials: true
+        },
+        transports: ['websocket']
+    });
+
+    // Lưu trữ mapping của user và socket
+    const userSockets = new Map();
+    const adminSockets = new Set();
 
     io.on('connection', (socket) => {
-        console.log('A user connected');
+        console.log('Client connected:', socket.id);
 
+        // Xử lý user join với role
+        socket.on('join', ({ userId, role }) => {
+            if (role === 'admin') {
+                adminSockets.add(socket.id);
+                socket.join('admin-room');
+            }
+            
+            // Luôn join user vào room cá nhân, kể cả admin
+            userSockets.set(userId.toString(), socket.id);
+            socket.join(userId.toString());
+        });
+
+        // Xử lý notifications
         socket.on('notification', async (data) => {
-            try {
-                let notification;
-                if (data.type === 'system') {
-                    // Create system notification (for admin)
-                    notification = await NotificationModel.create({
-                        title: data.title,
-                        message: data.message,
-                        type: 'system'
-                    });
-                    // Broadcast to admin
-                    io.emit('newNotification', { type: 'system', notification });
-                } else {
-                    // Create user notification
-                    notification = await NotificationModel.create({
-                        recipient: data.userId,
-                        title: data.title,
-                        message: data.message,
-                        type: data.type || 'user'
-                    });
-                    // Emit to specific user
-                    io.to(data.userId).emit('newNotification', { type: 'user', notification });
-                    
-                    // If it's a forum post, also send as system notification, but don't create a new DB entry
-                    if (data.type === 'forum') {
-                        io.emit('newNotification', { type: 'system', notification });
-                    }
+            try {                
+                // Xử lý notification cho admin
+                if (data.recipientRole === 'admin') {
+                    io.to('admin-room').emit('newNotification', data);
                 }
+                
+                // Xử lý notification cho user cụ thể
+                if (data.recipientId) {
+                    const recipientRoom = data.recipientId.toString();
+                    io.to(recipientRoom).emit('newNotification', data);
+                }
+
             } catch (error) {
-                console.error('Error creating notification:', error);
+                console.error('Socket notification error:', error);
             }
         });
 
+        // Xử lý disconnect
         socket.on('disconnect', () => {
-            console.log('A user disconnected');
+            adminSockets.delete(socket.id);
+            for (const [userId, socketId] of userSockets.entries()) {
+                if (socketId === socket.id) {
+                    userSockets.delete(userId);
+                    socket.leave(userId.toString());
+                    break;
+                }
+            }
+            console.log('Client disconnected:', socket.id);
         });
     });
+
+    return io;
 };
+
+export { io };

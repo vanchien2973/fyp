@@ -6,7 +6,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger
 } from '@/app/components/ui/dropdown-menu';
-import { Edit, MoreHorizontal, Trash } from 'lucide-react';
+import { Edit, MoreHorizontal, Trash, Eye } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { AlertModal } from '../../modal/alert-modal';
@@ -25,12 +25,14 @@ export const CellAction = ({ data }) => {
     if (isSuccess) {
         setOpen(false);
         refetch();
-        toast.success('Course deleted successfully');
+        toast.success('Course and all associated content deleted successfully');
     }
     if (error && 'data' in error) {
-      toast.error(error.data?.message || 'An error occurred while deleting the course');
+        const errorMessage = error.data?.message || 'An error occurred while deleting the course';
+        toast.error(errorMessage);
+        setOpen(false);
     }
-}, [isSuccess, error, refetch]);
+  }, [isSuccess, error, refetch]);
 
   const handleDelete = async () => {
     await deleteCourse(data.id).unwrap();
@@ -53,6 +55,11 @@ export const CellAction = ({ data }) => {
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>Actions</DropdownMenuLabel>
+          <DropdownMenuItem
+            onClick={() => router.push(`/courses/course-access/${data.id}`)}
+          >
+            <Eye className="mr-2 h-4 w-4" /> View Course
+          </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => router.push(`/admin/edit-course/${data.id}`)}
           >

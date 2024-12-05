@@ -4,7 +4,14 @@ import { ScrollArea } from "../ui/scroll-area";
 import { Button } from "../ui/button";
 import { TvMinimalPlay } from 'lucide-react';
 
-const CourseContentList = ({ data, activeVideo, setActiveVideo, isDemo }) => {
+const CourseContentList = ({ 
+  data, 
+  activeVideo, 
+  setActiveVideo, 
+  activeSection, 
+  setActiveSection, 
+  isDemo
+}) => {
   const [openSections, setOpenSections] = useState([]);
 
   const toggleSection = (sectionIndex) => {
@@ -13,6 +20,11 @@ const CourseContentList = ({ data, activeVideo, setActiveVideo, isDemo }) => {
         ? prev.filter((i) => i !== sectionIndex)
         : [...prev, sectionIndex]
     );
+  };
+
+  const handleVideoClick = (sectionIndex, videoIndex) => {
+    setActiveSection(sectionIndex);
+    setActiveVideo(videoIndex);
   };
 
   return (
@@ -58,7 +70,7 @@ const CourseContentList = ({ data, activeVideo, setActiveVideo, isDemo }) => {
                       className={`w-full justify-start text-left mb-2 ${
                         globalVideoIndex === activeVideo ? 'bg-gray-100 dark:bg-gray-800' : ''
                       }`}
-                      onClick={() => !isDemo && setActiveVideo(globalVideoIndex)} // Set the global video index
+                      onClick={() => handleVideoClick(sectionIndex, videoIndex)} // Set the global video index
                     >
                       <TvMinimalPlay size={20} className="mr-3 text-blue-500 flex-shrink-0" />
                       <div>

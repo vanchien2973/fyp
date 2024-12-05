@@ -3,6 +3,8 @@ import ErrorHandler from "../utils/ErrorHandler";
 import UserModel from "../models/user.model";
 import ForumModel from "../models/forum.model";
 import { createNotification } from "./notification.controller";
+import NotificationModel from "../models/notification.model";
+import { io } from "../../socketServer";
 
 // Create post in Forum
 export const createPost = CatchAsyncError(async (req, res, next) => {
@@ -27,15 +29,18 @@ export const createPost = CatchAsyncError(async (req, res, next) => {
         });
         await newPost.save();
 
-        // Notify admin
         const adminUser = await UserModel.findOne({ role: 'admin' });
         if (adminUser) {
-            await createNotification(
-                adminUser._id,
-                "New Forum Post",
-                `${user.name} has created a new forum post: ${title}`,
-                'system'
-            );
+            const notificationData = {
+                recipient: adminUser._id,
+                title: "New Forum Post",
+                message: `${user.name} has created a new forum post: ${title}`,
+                type: 'system'
+            };
+            await NotificationModel.create(notificationData);
+
+            // Gửi thông báo realtime
+            io.to('admin-room').emit('newNotification', notificationData);
         }
 
         res.status(201).json({
@@ -78,13 +83,17 @@ export const addComment = CatchAsyncError(async (req, res, next) => {
         await post.save();
 
         // Notify post owner
-        if (post.user.toString() !== userId.toString()) {
-            await createNotification(
-                post.user,
-                "New Comment on Your Post",
-                `${user.name} commented on your post: "${post.title}"`,
-                'forum'
-            );
+        if (postId.user && postId.user._id) {
+            const notificationData = {
+                recipient: postId.user._id,
+                title: "New Comment on Your Post",
+                message: `${user.name} commented on your post: "${post.title}"`,
+                type: 'forum'
+            };
+            await NotificationModel.create(notificationData);
+
+            // Gửi thông báo realtime
+            io.to(postId.user._id.toString()).emit('newNotification', notificationData);
         }
 
         res.status(201).json({
@@ -127,13 +136,17 @@ export const addReply = CatchAsyncError(async (req, res, next) => {
         await post.save();
 
         // Notify comment owner
-        if (comment.user.toString() !== userId.toString()) {
-            await createNotification(
-                comment.user,
-                "New Reply to Your Comment",
-                `${user.name} replied to your comment on the post: "${post.title}"`,
-                'forum'
-            );
+        if (commentId.user && commentId.user._id) {
+            const notificationData = {
+                recipient: commentId.user._id,
+                title: "New Reply to Your Comment",
+                message: `${user.name} replied to your comment on the post: "${post.title}"`,
+                type: 'forum'
+            };
+            await NotificationModel.create(notificationData);
+
+            // Gửi thông báo realtime
+            io.to(commentId.user._id.toString()).emit('newNotification', notificationData);
         }
 
         res.status(201).json({
@@ -170,13 +183,17 @@ export const likePost = CatchAsyncError(async (req, res, next) => {
             message = "Post liked successfully";
 
             // Notify post owner
-            if (post.user.toString() !== userId.toString()) {
-                await createNotification(
-                    post.user,
-                    "New Like on Your Post",
-                    `${user.name} liked your post: "${post.title}"`,
-                    'forum'
-                );
+            if (postId.user && postId.user._id) {
+                const notificationData = {
+                    recipient: postId.user._id,
+                    title: "New Like on Your Post",
+                    message: `${user.name} liked your post: "${post.title}"`,
+                    type: 'forum'
+                };
+                await NotificationModel.create(notificationData);
+
+                // Gửi thông báo realtime
+                io.to(postId.user._id.toString()).emit('newNotification', notificationData);
             }
         } else {
             post.likes.splice(likedIndex, 1);
@@ -210,6 +227,12 @@ export const likeComment = CatchAsyncError(async (req, res, next) => {
             return next(new ErrorHandler("Comment not found", 404));
         }
 
+        // Thêm dòng này để lấy thông tin user
+        const user = await UserModel.findById(userId);
+        if (!user) {
+            return next(new ErrorHandler("User not found", 404));
+        }
+
         // Check if the user has already liked the comment
         const likedIndex = comment.likes.findIndex(like => like.toString() === userId.toString());
 
@@ -219,13 +242,17 @@ export const likeComment = CatchAsyncError(async (req, res, next) => {
             message = "Comment liked successfully";
 
             // Notify post owner
-            if (comment.user.toString() !== userId.toString()) {
-                await createNotification(
-                    comment.user,
-                    "New Like on Your Comment",
-                    `${user.name} liked your comment: "${post.title}"`,
-                    'forum'
-                );
+            if (commentId.user && commentId.user._id) {
+                const notificationData = {
+                    recipient: commentId.user._id,
+                    title: "New Like on Your Comment",
+                    message: `${user.name} liked your comment: "${post.title}"`,
+                    type: 'forum'
+                };
+                await NotificationModel.create(notificationData);
+
+                // Gửi thông báo realtime
+                io.to(commentId.user._id.toString()).emit('newNotification', notificationData);
             }
         } else {
             comment.likes.splice(likedIndex, 1);
@@ -250,6 +277,12 @@ export const likeReply = CatchAsyncError(async (req, res, next) => {
         const { postId, commentId, replyId } = req.params;
         const userId = req.user._id;
 
+        // Thêm dòng này để lấy thông tin user
+        const user = await UserModel.findById(userId);
+        if (!user) {
+            return next(new ErrorHandler("User not found", 404));
+        }
+
         // Find the post
         const post = await ForumModel.findById(postId);
         if (!post) {
@@ -273,13 +306,17 @@ export const likeReply = CatchAsyncError(async (req, res, next) => {
             message = "Reply liked successfully";
 
             // Notify post owner
-            if (reply.user.toString() !== userId.toString()) {
-                await createNotification(
-                    reply.user,
-                    "New Like on Your Reply",
-                    `${user.name} liked your reply: "${post.title}"`,
-                    'forum'
-                );
+            if (replyId.user && replyId.user._id) {
+                const notificationData = {
+                    recipient: replyId.user._id,
+                    title: "New Like on Your Reply",
+                    message: `${user.name} liked your reply: "${post.title}"`,
+                    type: 'forum'
+                };
+                await NotificationModel.create(notificationData);
+
+                // Gửi thông báo realtime
+                io.to(replyId.user._id.toString()).emit('newNotification', notificationData);
             }
         } else {
             reply.likes.splice(likedIndex, 1);

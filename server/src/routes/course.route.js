@@ -23,7 +23,7 @@ courseRouter.put("/add-review/:id", isAuthenticated, addReview);
 
 courseRouter.put("/add-reply-review", isAuthenticated, authorizeRoles('admin'), addReplyForReview);
 
-courseRouter.post("/getVdoCipherOtp", generateVideoUrl);
+courseRouter.post("/get-vdo-cipher-otp", generateVideoUrl);
 
 courseRouter.get("/get-all-courses", isAuthenticated, authorizeRoles('admin'), getAllCoursesInSystem);
 

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Bell, Check, Trash2 } from 'lucide-react';
 import { useGetUserNotificationsQuery, useGetSystemNotificationsQuery, useUpdateNotificationStatusMutation, useDeleteNotificationMutation } from '@/app/redux/features/notifications/notificationsApi';
 import { useSelector } from 'react-redux';
-import socketIO from 'socket.io-client';
+import { useSocket } from '@/app/hooks/useSocket';
 import {
     Popover,
     PopoverContent,
@@ -14,59 +14,96 @@ import { Badge } from "../../ui/badge";
 import { format } from 'timeago.js';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../ui/tooltip";
 
-const ENDPOINT = process.env.NEXT_PUBLIC_SOCKET_SERVER_URI || '';
-const socketId = socketIO(ENDPOINT, { transports: ['websocket'] });
-
 const DropdownNotifications = () => {
     const { user } = useSelector((state) => state.auth);
     const isAdmin = user && user.role === 'admin';
     
-    const { data: userData, refetch: refetchUserData } = useGetUserNotificationsQuery();
-    const { data: adminData, refetch: refetchAdminData } = useGetSystemNotificationsQuery();
+    const { data: userData, refetch: refetchUserData } = useGetUserNotificationsQuery(undefined, {
+        skip: !user
+    });
+    const { data: adminData, refetch: refetchAdminData } = useGetSystemNotificationsQuery(undefined, {
+        skip: !isAdmin
+    });
     
     const [updateNotificationStatus] = useUpdateNotificationStatusMutation();
     const [deleteNotification] = useDeleteNotificationMutation();
     const [notifications, setNotifications] = useState([]);
     const [audio] = useState(new Audio('https://res.cloudinary.com/du3a3d1dh/video/upload/v1729144964/djfftb2qb0tbvikx5une.mp3'));
 
-    const playNotificationSound = useCallback(() => {
-        audio.play();
+    const socket = useSocket(user);
+
+    const playNotificationSound = useCallback(async () => {
+        try {
+            await audio.play();
+        } catch (error) {
+            console.log("Audio play failed:", error);
+        }
     }, [audio]);
 
     useEffect(() => {
-        let combinedNotifications = [];
-        if (userData) {
-            combinedNotifications = [...combinedNotifications, ...userData.notifications];
-        }
-        if (isAdmin && adminData) {
-            combinedNotifications = [...combinedNotifications, ...adminData.notifications];
-        }
-        const sortedNotifications = combinedNotifications.sort((a, b) =>
-            new Date(b.createdAt) - new Date(a.createdAt)
-        );
-        setNotifications(sortedNotifications);
-        audio.load();
-    }, [isAdmin, adminData, userData, audio]);
+        if (!socket || !user) return;
 
-    useEffect(() => {
-        const handleNewNotification = (data) => {
-            if (data.type === 'user' || (isAdmin && data.type === 'system')) {
-                if (data.type === 'user') {
-                    refetchUserData();
+        const handleNewNotification = async (data) => {
+            try {                
+                const shouldHandleNotification = (
+                    (data.recipientId === user._id.toString()) || 
+                    (isAdmin && ['system', 'new_post', 'new_order'].includes(data.type))
+                );
+
+                if (shouldHandleNotification) {
+                    if (data.recipientId === user._id.toString()) {
+                        await refetchUserData();
+                    }
+                    if (isAdmin) {
+                        await refetchAdminData();
+                    }
+                    
+                    await playNotificationSound();
+                    
+                    setNotifications(prev => [{
+                        _id: Date.now(),
+                        title: data.title,
+                        message: data.message,
+                        status: 'unread',
+                        createdAt: new Date().toISOString(),
+                        ...data
+                    }, ...prev]);
                 }
-                if (isAdmin) {
-                    refetchAdminData();
-                }
-                playNotificationSound();
+            } catch (error) {
+                console.error('Error handling notification:', error);
             }
         };
-    
-        socketId.on('newNotification', handleNewNotification);
-    
+
+        socket.on('newNotification', handleNewNotification);
+        
         return () => {
-            socketId.off('newNotification', handleNewNotification);
+            socket.off('newNotification');
         };
-    }, [refetchAdminData, refetchUserData, isAdmin, playNotificationSound]);
+    }, [user, isAdmin, socket]);
+
+    useEffect(() => {
+        audio.load();
+    }, [audio]);
+
+    useEffect(() => {
+        // Kết hợp dữ liệu từ cả hai nguồn khi có dữ liệu mới
+        const combinedNotifications = [];
+        
+        if (userData?.notifications) {
+            combinedNotifications.push(...userData.notifications);
+        }
+        
+        if (isAdmin && adminData?.notifications) {
+            combinedNotifications.push(...adminData.notifications);
+        }
+
+        // Sắp xếp theo thời gian tạo mới nhất
+        combinedNotifications.sort((a, b) => 
+            new Date(b.createdAt) - new Date(a.createdAt)
+        );
+
+        setNotifications(combinedNotifications);
+    }, [userData, adminData, isAdmin]);
 
     const handleNotificationStatusChange = async (id) => {
         await updateNotificationStatus(id).unwrap();

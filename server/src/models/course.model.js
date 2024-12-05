@@ -15,7 +15,6 @@ const linkSchema = new mongoose.Schema({
     url: String,
 });
 
-
 const commentSchema = new mongoose.Schema({
     user: Object,
     question: String,

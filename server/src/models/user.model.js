@@ -104,10 +104,6 @@ const userSchema = new mongoose.Schema({
                 type: mongoose.Schema.Types.ObjectId,
                 ref: 'Course'
             }],
-            recommendedSections: [{
-                name: String,
-                score: Number
-            }],
             testType: String
         },
         takenAt: {
@@ -138,7 +134,7 @@ userSchema.methods.comparePassword = async function (enteredPassword) {
 
 // Generate Access Token
 userSchema.methods.generateAccessToken = function () {
-    return jwt.sign({ id: this._id }, process.env.ACCESS_TOKEN_SECRET || '', { expiresIn: '5m' });
+    return jwt.sign({ id: this._id }, process.env.ACCESS_TOKEN_SECRET || '', { expiresIn: '30m' });
 };
 
 // Generate Refresh Token

@@ -1,4 +1,4 @@
-import { Filter, HeartIcon, MessageCircleIcon, MoveHorizontalIcon, Plus, SearchIcon } from 'lucide-react'
+import { Filter, MoveHorizontalIcon, Plus, SearchIcon } from 'lucide-react'
 import React, { useEffect, useState } from 'react'
 import { UserAvatar } from '../../ui/avatar'
 import { Card, CardContent, CardFooter, CardHeader } from '../../ui/card'
@@ -141,11 +141,16 @@ const Forum = ({ user }) => {
       setIsModalOpen(false);
       setNewPost({ title: '', content: '', tags: '' });
       refetch();
+
+      // Sửa lại cách emit notification
       socketId.emit('notification', {
+        type: 'forum',
+        subtype: 'new_post',
+        recipientRole: 'admin',
         title: 'New Forum Post',
-        message: `${user.name} has created a new forum post: ${newPost.title}`,
-        type: 'system'
+        message: `${user.name} has created a new forum post: ${newPost.title}`
       });
+
       toast.success("Your post has been successfully created.");
     }
     if (error) {
@@ -193,11 +198,22 @@ const Forum = ({ user }) => {
 
   const handleEditPost = async (e) => {
     e.preventDefault();
+    
+    if (!editingPost.title.trim()) {
+      toast.error("Title cannot be empty");
+      return;
+    }
+
+    if (!editingPost.content.trim()) {
+      toast.error("Content cannot be empty");
+      return;
+    }
+
     if (!editPostLoading) {
       await editPost({
         postId: editingPost._id,
-        title: editingPost.title,
-        content: editingPost.content,
+        title: editingPost.title.trim(),
+        content: editingPost.content.trim(),
         tags: editingPost.tags.split(',').map(tag => tag.trim())
       }).unwrap();
     }
@@ -221,6 +237,7 @@ const Forum = ({ user }) => {
     });
     setIsEditModalOpen(true);
   };
+
 
   return (
     <>
@@ -329,11 +346,11 @@ const Forum = ({ user }) => {
                               <div className="flex items-center gap-2">
                                 <UserAvatar user={post?.user} />
                                 <div>
-                                  <div className="font-medium">{post.user.name}</div>
+                                  <div className="font-medium">{post?.user?.name}</div>
                                   <div className="text-xs text-muted-foreground">{format(post.createdAt)}</div>
                                 </div>
                               </div>
-                              {(post.user._id === user._id || user.role === 'admin') && (
+                              {(post?.user?._id === user._id || user.role === 'admin') && (
                                 <DropdownMenu>
                                   <DropdownMenuTrigger asChild>
                                     <Button variant="ghost" size="icon" className="w-8 h-8 rounded-full">
@@ -341,7 +358,7 @@ const Forum = ({ user }) => {
                                     </Button>
                                   </DropdownMenuTrigger>
                                   <DropdownMenuContent align="end">
-                                    {post.user._id === user._id && (
+                                    {post?.user?._id === user._id && (
                                       <DropdownMenuItem onClick={() => openEditModal(post)}>Edit</DropdownMenuItem>
                                     )}
                                     <DropdownMenuItem onClick={() => openDeleteDialog(post)}>Delete</DropdownMenuItem>
@@ -351,15 +368,15 @@ const Forum = ({ user }) => {
 
                             </CardHeader>
                             <CardContent>
-                              <h3 className="text-lg font-semibold">{post.title}</h3>
-                              <p className="mt-2 text-muted-foreground">{post.content}</p>
+                              <h3 className="text-lg font-semibold">{post?.title}</h3>
+                              <p className="mt-2 text-muted-foreground">{post?.content}</p>
                             </CardContent>
                             <CommentSection
                               postTitle={post.title}
                               postId={post._id}
-                              postAuthorId={post.user._id} 
-                              likes={post.likes}
-                              comments={post.comments}
+                              postAuthorId={post?.user?._id} 
+                              likes={post?.likes}
+                              comments={post?.comments}
                               currentUser={user}
                               refetch={refetch}
                             />

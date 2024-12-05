@@ -29,11 +29,6 @@ export const registerUser = CatchAsyncError(async (req, res, next) => {
     const activationCode = activationToken.activationCode;
     const data = { user: { name: user.name }, activationCode };
 
-    const html = await ejs.renderFile(
-        path.join(__dirname, "../mails/ActivationMail.ejs"),
-        data,
-    );
-    // Send the activation email
     try {
         await SendMail({
             email: user.email,
@@ -60,7 +55,6 @@ const createActivationToken = (user) => {
         process.env.ACTIVATION_TOKEN_SECRET,
         { expiresIn: "10m" }
     );
-
     return { token, activationCode };
 };
 
@@ -79,7 +73,6 @@ export const activateUser = CatchAsyncError(async (req, res, next) => {
             activation_token,
             process.env.ACTIVATION_TOKEN_SECRET
         );
-
         if (newUser.activationCode !== activation_code) {
             return next(new ErrorHandler("Invalid Activation Code!", 400));
         }
@@ -93,7 +86,7 @@ export const activateUser = CatchAsyncError(async (req, res, next) => {
         }
 
         await UserModel.create({ name, email, phoneNumber, password });
-
+        
         res.status(201).json({
             success: true,
             message: "Account activated successfully!",
@@ -134,7 +127,6 @@ export const logoutUser = CatchAsyncError(async (req, res, next) => {
         res.cookie("access_token", "", { maxAge: 1 });
         res.cookie("refresh_token", "", { maxAge: 1 });
 
-        // Clear the user session in Redis
         if (req.user && req.user._id) {
             await redis.del(req.user._id.toString());
         }
@@ -167,7 +159,7 @@ export const updateToken = CatchAsyncError(async (req, res, next) => {
         const user = JSON.parse(session);
 
         const accessToken = jwt.sign({ id: user._id }, process.env.ACCESS_TOKEN_SECRET, {
-            expiresIn: "5m"
+            expiresIn: "30m"
         });
 
         const refreshToken = jwt.sign({ id: user._id }, process.env.REFRESH_TOKEN_SECRET, {
@@ -320,12 +312,8 @@ export const updateAvatar = CatchAsyncError(async (req, res, next) => {
 
         // Upload to Cloudinary
         if (avatar && user) {
-            // If user has an avatar
             if (user?.avatar?.public_id) {
-                // Delete the old avatar
                 await cloudinary.v2.uploader.destroy(user?.avatar?.public_id);
-
-                // Upload new avatar
                 const result = await cloudinary.v2.uploader.upload(avatar, {
                     folder: "avatars",
                     width: 150,

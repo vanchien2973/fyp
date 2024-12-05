@@ -75,20 +75,6 @@ export const deleteNotification = CatchAsyncError(async (req, res, next) => {
     }
 });
 
-// Create a new notification
-export const createNotification = CatchAsyncError(async (recipientId, title, message, type) => {
-    try {
-        await NotificationModel.create({
-            recipient: recipientId,
-            title,
-            message,
-            type
-        });
-    } catch (error) {
-        console.error('Error creating notification:', error);
-    }
-});
-
 // Cron job to delete old read notifications
 cron.schedule('0 0 * * *', async () => {
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);

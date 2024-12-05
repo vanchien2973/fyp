@@ -28,9 +28,6 @@ import {
 import { useLoadUserQuery } from '@/app/redux/features/api/apiSlice';
 
 const TakeEntryTest = ({ test }) => {
-    if (!test) return null;
-    
-    console.log('Test data in TakeEntryTest:', test);
     const router = useRouter();
     const [answers, setAnswers] = useState({});
     const [takeEntranceTest] = useTakeEntranceTestMutation();

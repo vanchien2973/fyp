@@ -2,12 +2,13 @@
 import CourseDetail from '@/app/components/Course/CourseDetail'
 import React from 'react'
 
-const page = ({ params }) => {
+const Page = ({ params }) => {
+
   return (
     <div>
-        <CourseDetail id={params.id} />
+      <CourseDetail id={params.id} />
     </div>
   )
 }
 
-export default page
+export default Page

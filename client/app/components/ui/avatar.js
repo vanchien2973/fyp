@@ -37,8 +37,8 @@ AvatarFallback.displayName = AvatarPrimitive.Fallback.displayName;
 
 const UserAvatar = ({ user, className }) => (
   <Avatar className={cn("h-8 w-8", className)}>
-    <AvatarImage src={user.avatar ? user.avatar.url : '/assets/avatar.png'} alt={user.name} />
-    <AvatarFallback>{user.name ? user.name[0] : ''}</AvatarFallback>
+    <AvatarImage src={user?.avatar ? user?.avatar.url : '/assets/avatar.png'} alt={user?.name} />
+    <AvatarFallback>{user?.name ? user?.name[0] : ''}</AvatarFallback>
   </Avatar>
 );
 

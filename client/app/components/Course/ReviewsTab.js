@@ -104,7 +104,7 @@ const ReviewsTab = ({
                                             />
                                         ))}
                                     </div>
-                                    <p className="text-sm text-gray-600">{item.review}</p>
+                                    <p className="text-sm text-gray-600">{item.comment}</p>
                                     <p className="text-xs text-gray-400 mt-1">
                                         {format(item.createdAt)}
                                     </p>
@@ -169,7 +169,7 @@ const ReviewsTab = ({
                                                                         <h6 className="text-sm font-semibold">{comment.user.name}</h6>
                                                                         <BadgeCheck className="w-4 h-4 text-blue-500" />
                                                                     </div>
-                                                                    <p className="text-sm text-gray-600">{comment.comment}</p>
+                                                                    <p className="text-sm text-gray-600">{comment?.comment}</p>
                                                                     <p className="text-xs text-gray-400 mt-1">
                                                                         {format(comment.createdAt)}
                                                                     </p>

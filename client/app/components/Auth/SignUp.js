@@ -22,7 +22,11 @@ const schema = Yup.object().shape({
         .max(15, "Phone number can't be longer than 15 digits!"),
     password: Yup.string()
         .required("Please enter your password!")
-        .min(8, "Password must be at least 8 characters!"),
+        .min(8, "Password must be at least 8 characters!")
+        .matches(
+            /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/,
+            "Require: number, lowercase, uppercase, special character"
+        ),
 });
 
 const SignUp = ({ setRoute, setOpen }) => {
@@ -153,12 +157,14 @@ const SignUp = ({ setRoute, setOpen }) => {
                                 />
                             )}
                             {errors.password && touched.password && (
-                                <span className="text-red-500 text-sm">{errors.password}</span>
+                                <span className="text-red-500 text-sm block mt-1">
+                                    Require: number, lowercase, uppercase, special character
+                                </span>
                             )}
                         </div>
                     </div>
 
-                    <Button type="submit" className="flex w-full justify-center gap-2 px-2 py-2 shadow-md" value="Sign Up">
+                    <Button type="submit" className="mt-9 flex w-full justify-center gap-2 px-2 py-2 shadow-md" value="Sign Up">
                         <h5 className="text-sm font-semibold uppercase">
                             Sign up
                         </h5>

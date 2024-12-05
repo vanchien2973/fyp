@@ -8,18 +8,18 @@ import UserModel from "../models/user.model";
 import { createOrderService, getAllOrdersService } from "../services/order.service";
 import NotificationModel from "../models/notification.model";
 import { redis } from "../utils/redis";
-import { createNotification } from "./notification.controller";
+import { io } from '../../socketServer';
 require('dotenv').config();
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
 
 // Create Order
 export const createOrder = CatchAsyncError(async (req, res, next) => {
     try {
-        const { courseId, paymentInfor } = req.body;
+        const { courseId, paymentInfo } = req.body;
 
-        if (paymentInfor) {
-            if ('id' in paymentInfor) {
-                const paymentIntentId = paymentInfor.id;
+        if (paymentInfo) {
+            if ('id' in paymentInfo) {
+                const paymentIntentId = paymentInfo.id;
                 const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
                 if (paymentIntent.status !== 'succeeded') {
                     return next(new ErrorHandler("Payment not authorized!", 400));
@@ -33,13 +33,11 @@ export const createOrder = CatchAsyncError(async (req, res, next) => {
 
         const user = await UserModel.findById(req.user?._id);
         const courseExistInUser = user?.courses.some((course) => course._id.toString() === courseId);
-
         if (courseExistInUser) {
             return next(new ErrorHandler("Course already exists in your course list!", 400));
         }
 
         const course = await CourseModel.findById(courseId);
-
         if (!course) {
             return next(new ErrorHandler("Course not found", 404));
         }
@@ -48,7 +46,7 @@ export const createOrder = CatchAsyncError(async (req, res, next) => {
             courseId: course._id,
             userId: user?._id,
             price: course.price,
-            paymentInfor,
+            paymentInfo,
         };
 
         const mailData = {
@@ -63,9 +61,6 @@ export const createOrder = CatchAsyncError(async (req, res, next) => {
                 }),
             }
         };
-
-        // Render the email template
-        const html = await ejs.renderFile(path.join(__dirname, '../mails/OrderConfirmation.ejs'), mailData);
 
         try {
             if (user) {
@@ -84,23 +79,32 @@ export const createOrder = CatchAsyncError(async (req, res, next) => {
         await redis.set(req.user?._id, JSON.stringify(user))
         await user?.save();
 
-        // Notify user about successful purchase
-        await createNotification(
-            user._id,
-            "Course Purchase Successful",
-            `You have successfully purchased the course: ${course.name}`,
-            'order'
-        );
+        // Save notification for user
+        if (user) {
+            const userNotificationData = {
+                recipient: user._id,
+                recipientId: user._id.toString(),
+                title: "Course Purchase Successful",
+                message: `You have successfully purchased the course: ${course.name}`,
+                type: 'order'
+            };
+            await NotificationModel.create(userNotificationData);
+            io.to(user._id.toString()).emit('newNotification', userNotificationData);
+        }
 
-        // Notify admin about new order
+        // Save notification for admin
         const adminUser = await UserModel.findOne({ role: 'admin' });
         if (adminUser) {
-            await createNotification(
-                adminUser._id,
-                "New Order Received",
-                `A new order has been placed for the course: ${course.name} by ${user.name}`,
-                'system'
-            );
+            const adminNotificationData = {
+                recipient: adminUser._id,
+                title: "New Order Received",
+                message: `A new order has been placed for the course: ${course.name} by ${user.name}`,
+                type: 'system'
+            };
+            await NotificationModel.create(adminNotificationData);
+
+            // Gửi thông báo realtime cho admin
+            io.to('admin-room').emit('newNotification', adminNotificationData);
         }
 
         // Update the purchased count

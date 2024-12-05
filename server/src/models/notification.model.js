@@ -4,7 +4,7 @@ const notificationSchema = new mongoose.Schema({
     recipient: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
-        type: String,
+        required: false
     },
     title: {
         type: String,
@@ -22,7 +22,7 @@ const notificationSchema = new mongoose.Schema({
     type: {
         type: String,
         enum: ['system', 'order', 'forum', 'course'],
-        type: String,
+        required: true
     }
 }, { timestamps: true });
 

@@ -9,7 +9,9 @@ import Rating from "@/app/utils/Rating";
 const CourseCard = ({ course, isProfile }) => {
   return (
     <Link
-      href={!isProfile ? `/courses/course/${course._id}` : `/courses/course-access/${course._id}`}
+      href={!isProfile ? `/course/${course._id}` : `/courses/course-access/${course._id}`}
+      prefetch={false}
+      className="block w-full"
     >
       <Card className="w-full flex flex-col overflow-hidden transition-all duration-300 ease-in-out hover:shadow-lg hover:scale-102">
         <CardHeader className="relative h-48 p-0">

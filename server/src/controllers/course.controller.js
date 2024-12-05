@@ -4,14 +4,11 @@ import cloudinary from "cloudinary";
 import axios from 'axios';
 import { redis } from "../utils/redis";
 import mongoose from "mongoose";
-import ejs from 'ejs';
-import SendMail from "../utils/SendMail";
-import path from "path";
 import CourseModel from "../models/course.model";
 import { createCourse, getAllCoursService } from "../services/course.service";
 import NotificationModel from "../models/notification.model";
-import { createNotification } from "./notification.controller";
 import UserModel from "../models/user.model";
+import { io } from "../../socketServer";
 require('dotenv').config();
 
 // Create Course
@@ -28,7 +25,7 @@ export const uploadCourse = CatchAsyncError(async (req, res, next) => {
                 url: myCloud.secure_url,
             }
         }
-        createCourse(data, res, next)
+        createCourse(data, res);
     } catch (error) {
         return next(new ErrorHandler(error.message, 500));
     }
@@ -95,23 +92,13 @@ export const editCourse = CatchAsyncError(async (req, res, next) => {
 export const getSingleCourse = CatchAsyncError(async (req, res, next) => {
     try {
         const courseId = req.params.id;
-        const isCacheExist = await redis.get(courseId);
+        const course = await CourseModel.findById(courseId).select("-courseData.videoUrl -courseData.suggestion -courseData.questions -courseData.links");
+        await redis.set(courseId, JSON.stringify(course), 'EX', 604800); // 7 days
 
-        if (isCacheExist) {
-            const course = JSON.parse(isCacheExist);
-            res.status(200).json({
-                success: true,
-                course
-            });
-        } else {
-            const course = await CourseModel.findById(courseId).select("-courseData.videlUrl -courseData.suggestion -courseData.questions -courseData.links");
-            await redis.set(courseId, JSON.stringify(course), 'EX', 604800); // 7 days
-
-            res.status(200).json({
-                success: true,
-                course
-            });
-        };
+        res.status(200).json({
+            success: true,
+            course
+        });
     } catch (error) {
         return next(new ErrorHandler(error.message, 500));
     }
@@ -120,8 +107,8 @@ export const getSingleCourse = CatchAsyncError(async (req, res, next) => {
 // Get All Courses (without purchase)
 export const getAllCourses = CatchAsyncError(async (req, res, next) => {
     try {
-        const courses = await CourseModel.find().select("-courseData.videlUrl -courseData.suggestion -courseData.questions -courseData.links");
-        // await redis.set("allCourses", JSON.stringify(courses));
+        const courses = await CourseModel.find().select("-courseData.videoUrl -courseData.suggestion -courseData.questions -courseData.links");
+        await redis.set("allCourses", JSON.stringify(courses));
         res.status(200).json({
             success: true,
             courses
@@ -131,19 +118,32 @@ export const getAllCourses = CatchAsyncError(async (req, res, next) => {
     }
 });
 
-// Get Course Content (for user puchased)
+// Get Course Content (for user purchased)
 export const getCourseByUser = CatchAsyncError(async (req, res, next) => {
     try {
         const userCourseList = req.user?.courses;
         const courseId = req.params.id;
-        const courseExists = userCourseList?.find((course) => course._id.toString() === courseId);
 
+        // Cho phép admin truy cập mà không cần kiểm tra đã mua
+        if (req.user.role === 'admin') {
+            const course = await CourseModel.findById(courseId);
+            if (!course) {
+                return next(new ErrorHandler("Course not found", 404));
+            }
+            const contents = course?.courseData;
+            return res.status(200).json({
+                success: true,
+                contents
+            });
+        }
+
+        // Kiểm tra với người dùng thông thường
+        const courseExists = userCourseList?.find((course) => course._id.toString() === courseId);
         if (!courseExists) {
             return next(new ErrorHandler("You are not authorized to access this course", 404));
         };
 
         const course = await CourseModel.findById(courseId);
-
         const contents = course?.courseData;
 
         res.status(200).json({
@@ -178,15 +178,19 @@ export const addQuestion = CatchAsyncError(async (req, res, next) => {
             questionReplies: [],
         };
         courseContent.questions.push(newQuestion);
-        // Add notification for course creator
+
         const adminUser = await UserModel.findOne({ role: 'admin' });
         if (adminUser) {
-            await createNotification(
-                adminUser._id,
-                "New Question Received",
-                `You have a new question in ${courseContent.title}`,
-                'system'
-            );
+            const notificationData = {
+                recipient: adminUser._id,
+                title: "New Question Received",
+                message: `You have a new question in ${courseContent.title}`,
+                type: 'system'
+            };
+            await NotificationModel.create(notificationData);
+
+            // Gửi thông báo realtime
+            io.to('admin-room').emit('newNotification', notificationData);
         }
         await course.save();
         res.status(200).json({
@@ -203,11 +207,6 @@ export const addQuestion = CatchAsyncError(async (req, res, next) => {
 export const addAnswer = CatchAsyncError(async (req, res, next) => {
     try {
         const { answer, courseId, contentId, questionId } = req.body;
-
-        if (!mongoose.Types.ObjectId.isValid(contentId)) {
-            return next(new ErrorHandler("Invalid Content Id", 400));
-        };
-
         const course = await CourseModel.findById(courseId);
 
         if (!course) {
@@ -222,7 +221,9 @@ export const addAnswer = CatchAsyncError(async (req, res, next) => {
             return next(new ErrorHandler("Invalid Content Id", 400));
         };
 
-        const question = courseContent.questions.find((item) => item._id.equals(questionId));
+        const question = courseContent.questions.find(
+            (item) => item._id.equals(questionId.id)
+        );
 
         if (!question) {
             return next(new ErrorHandler("Invalid Question Id", 400));
@@ -234,16 +235,22 @@ export const addAnswer = CatchAsyncError(async (req, res, next) => {
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
         };
+
         question.questionReplies.push(newAnswer);
         await course?.save();
 
-        // Add notification for question asker
-        await createNotification(
-            question.user._id,
-            "New Answer to Your Question",
-            `Your question in ${courseContent.title} has a new answer`,
-            'course'
-        );
+        if (questionId.user && questionId.user._id) {
+            const notificationData = {
+                recipient: questionId.user._id,
+                title: "New Answer to Your Question",
+                message: `Your question in ${courseContent.title} has a new answer`,
+                type: 'course'
+            };
+            await NotificationModel.create(notificationData);
+
+            // Gửi thông báo realtime
+            io.to(questionId.user._id.toString()).emit('newNotification', notificationData);
+        }
 
         res.status(200).json({
             success: true,
@@ -259,11 +266,6 @@ export const addReview = CatchAsyncError(async (req, res, next) => {
     try {
         const userCourseList = req.user?.courses || [];
         const courseId = req.params.id;
-
-        // Check if courseId is valid
-        if (!mongoose.Types.ObjectId.isValid(courseId)) {
-            return next(new ErrorHandler("Invalid Course Id", 400));
-        }
 
         const courseExists = userCourseList.some((course) => {
             return course && course._id && course._id.toString() === courseId.toString();
@@ -303,12 +305,16 @@ export const addReview = CatchAsyncError(async (req, res, next) => {
         // Add notification for course creator
         const adminUser = await UserModel.findOne({ role: 'admin' });
         if (adminUser) {
-            await createNotification(
-                adminUser._id,
-                "New Course Review",
-                `${req.user.name} has left a review for ${course.name}`,
-                'system'
-            );
+            const notificationData = {
+                recipient: adminUser._id,
+                title: "New Course Review",
+                message: `${req.user.name} has left a review for ${course.name}`,
+                type: 'system'
+            };
+            await NotificationModel.create(notificationData);
+
+            // Gửi thông báo realtime
+            io.to('admin-room').emit('newNotification', notificationData);
         }
 
         res.status(200).json({
@@ -344,12 +350,18 @@ export const addReplyForReview = CatchAsyncError(async (req, res, next) => {
         review.commentReplies?.push(replyData);
 
         // Add notification for review author
-        await createNotification(
-            review.user._id,
-            "New Reply to Your Review",
-            `Admin has replied to your review on ${course.name}`,
-            'course'
-        );
+        if (reviewId.user && reviewId.user._id) {
+            const notificationData = {
+                recipient: reviewId.user._id,
+                title: "New Reply to Your Review",
+                message: `Admin has replied to your review on ${course.name}`,
+                type: 'course'
+            };
+            await NotificationModel.create(notificationData);
+
+            // Gửi thông báo realtime
+            io.to(reviewId.user._id.toString()).emit('newNotification', notificationData);
+        }
 
         await course?.save();
         await redis.set(courseId, JSON.stringify(course), 'EX', 604800); // 7 days
@@ -366,18 +378,20 @@ export const addReplyForReview = CatchAsyncError(async (req, res, next) => {
 export const generateVideoUrl = CatchAsyncError(async (req, res, next) => {
     try {
         const { videoId } = req.body;
+        const apiUrl = `https://dev.vdocipher.com/api/videos/${videoId}/otp`;
+
+        const headers = {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+            Authorization: `Apisecret ${process.env.VDOCIPHER_API_SECRET}`,
+        };
+
         const response = await axios.post(
-            `https://dev.vdocipher.com/api/videos/${videoId}/otp`,
+            apiUrl,
             { ttl: 300 },
-            {
-                headers: {
-                    Accept: 'application/json',
-                    'Content-Type': 'application/json',
-                    Authorization: `Apisecret ${process.env.VDOCIPHER_API_SECRET}`,
-                },
-            }
+            { headers }
         );
-        res.json(response.data)
+        res.json(response.data);
     } catch (error) {
         return next(new ErrorHandler(error.message, 400));
     }
@@ -397,15 +411,26 @@ export const deleteCourse = CatchAsyncError(async (req, res, next) => {
     try {
         const { id } = req.params;
         const course = await CourseModel.findById(id);
+
         if (!course) {
             return next(new ErrorHandler("Course not found", 404));
         }
+
+        if (course.purchased > 0) {
+            return next(new ErrorHandler("Cannot delete course with active enrollments", 400));
+        }
+
+        if (course.thumbnail && course.thumbnail.public_id) {
+            await cloudinary.v2.uploader.destroy(course.thumbnail.public_id);
+        }
+
         await course.deleteOne({ id });
         await redis.del(id);
+
         res.status(200).json({
             success: true,
-            message: "Course deleted successfully",
-        })
+            message: "Course and all associated content deleted successfully",
+        });
     } catch (error) {
         return next(new ErrorHandler(error.message, 400));
     }

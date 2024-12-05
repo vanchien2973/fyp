@@ -15,6 +15,7 @@ import { AlertModal } from '../modal/alert-modal';
 import { useDeleteUserMutation, useGetAllUsersQuery, useUpdateRoleMutation } from '@/app/redux/features/user/userApi';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../../ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
+import { useSelector } from 'react-redux';
 
 export const CellAction = ({ data }) => {
   const [loading, setLoading] = useState(false);
@@ -25,6 +26,7 @@ export const CellAction = ({ data }) => {
   const { refetch } = useGetAllUsersQuery({}, { refetchOnMountOrArgChange: true });
   const [deleteUser, { error: deleteError, isSuccess: isDeleteSuccess }] = useDeleteUserMutation();
   const [updateRole, { error: updateError, isSuccess: isUpdateSuccess }] = useUpdateRoleMutation();
+  const { user: currentUser } = useSelector((state) => state.auth);
 
   useEffect(() => {
     if (isDeleteSuccess) {
@@ -46,6 +48,18 @@ export const CellAction = ({ data }) => {
   }, [isDeleteSuccess, deleteError, isUpdateSuccess, updateError, refetch]);
 
   const handleDelete = async () => {
+    if (data.role === 'admin' && data.email === 'admin@gmail.com') {
+      toast.error('Cannot delete the main admin account');
+      setOpen(false);
+      return;
+    }
+    
+    if (data.email === currentUser.email) {
+      toast.error('Cannot delete your own account');
+      setOpen(false);
+      return;
+    }
+
     await deleteUser(data.id);
   };
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useGetAllEntranceTestsQuery } from '@/app/redux/features/entry-test/entryTestApi';
+import { useGetAllTestsQuery } from '@/app/redux/features/entry-test/entryTestApi';
 import { useGetHeroDataQuery } from '@/app/redux/features/layout/layoutApi';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
@@ -19,7 +19,7 @@ import {
 } from "@/app/components/ui/pagination";
 
 const ChooseTestEntry = () => {
-  const { data: testsData, isLoading: testsLoading } = useGetAllEntranceTestsQuery();
+  const { data: testsData, isLoading: testsLoading } = useGetAllTestsQuery();
   const { data: categoriesData, isLoading: categoriesLoading } = useGetHeroDataQuery("Categories");
   
   const [currentPage, setCurrentPage] = useState(1);
@@ -27,9 +27,6 @@ const ChooseTestEntry = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [filteredTests, setFilteredTests] = useState([]);
   const testsPerPage = 6;
-  const testTypes = testsData?.tests 
-    ? ['all', ...new Set(testsData.tests.map(test => test.testType))]
-    : ['all'];
   const categories = categoriesData?.layout?.categories || [];
 
   useEffect(() => {
@@ -136,30 +133,32 @@ const ChooseTestEntry = () => {
           return (
             <Card 
               key={test._id} 
-              className="hover:shadow-lg transition-shadow duration-300 border border-gray-200"
+              className="hover:shadow-lg transition-shadow duration-300 border border-gray-200 flex flex-col"
             >
               <CardHeader className="pb-4">
-                <CardTitle className="text-lg font-semibold">{test.title}</CardTitle>
+                <CardTitle className="text-xl font-semibold line-clamp-2 min-h-[3rem]">
+                  {test.title}
+                </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
+              <CardContent className="flex-1 flex flex-col">
+                <div className="space-y-4 flex-1">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <BookOpen className="h-4 w-4" />
-                    <span>{matchingCategory?.title || test.testType}</span>
+                    <BookOpen className="h-4 w-4 flex-shrink-0" />
+                    <span className="line-clamp-1">{matchingCategory?.title || test.testType}</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Timer className="h-4 w-4" />
+                    <Timer className="h-4 w-4 flex-shrink-0" />
                     <span>{test.totalTime} minutes</span>
                   </div>
-                  <Button 
-                    className="w-full mt-4 hover:bg-primary/90" 
-                    asChild
-                  >
-                    <Link href={`/entry-test/${test._id}`}>
-                      Start Test
-                    </Link>
-                  </Button>
                 </div>
+                <Button 
+                  className="w-full mt-6 hover:bg-primary/90" 
+                  asChild
+                >
+                  <Link href={`/entry-test/${test._id}`}>
+                    Start Test
+                  </Link>
+                </Button>
               </CardContent>
             </Card>
           );

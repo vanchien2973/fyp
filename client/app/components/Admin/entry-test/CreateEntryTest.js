@@ -711,7 +711,7 @@ const CreateEntryTest = () => {
       });
 
       if (hasInvalidQuestions) {
-        toast.error("Vui lòng chọn đáp án cho tất cả các câu hỏi trước khi nộp");
+        toast.error("Please select the correct answer for all questions before submitting");
         return;
       }
 
