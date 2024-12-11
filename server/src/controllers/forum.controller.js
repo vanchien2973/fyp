@@ -83,9 +83,9 @@ export const addComment = CatchAsyncError(async (req, res, next) => {
         await post.save();
 
         // Notify post owner
-        if (postId.user && postId.user._id) {
+        if (post.user) {
             const notificationData = {
-                recipient: postId.user._id,
+                recipient: post.user,
                 title: "New Comment on Your Post",
                 message: `${user.name} commented on your post: "${post.title}"`,
                 type: 'forum'
@@ -93,7 +93,7 @@ export const addComment = CatchAsyncError(async (req, res, next) => {
             await NotificationModel.create(notificationData);
 
             // Gửi thông báo realtime
-            io.to(postId.user._id.toString()).emit('newNotification', notificationData);
+            io.to(post.user.toString()).emit('newNotification', notificationData);
         }
 
         res.status(201).json({
@@ -136,9 +136,9 @@ export const addReply = CatchAsyncError(async (req, res, next) => {
         await post.save();
 
         // Notify comment owner
-        if (commentId.user && commentId.user._id) {
+        if (comment.user) {
             const notificationData = {
-                recipient: commentId.user._id,
+                recipient: comment.user,
                 title: "New Reply to Your Comment",
                 message: `${user.name} replied to your comment on the post: "${post.title}"`,
                 type: 'forum'
@@ -146,7 +146,7 @@ export const addReply = CatchAsyncError(async (req, res, next) => {
             await NotificationModel.create(notificationData);
 
             // Gửi thông báo realtime
-            io.to(commentId.user._id.toString()).emit('newNotification', notificationData);
+            io.to(comment.user.toString()).emit('newNotification', notificationData);
         }
 
         res.status(201).json({
@@ -174,7 +174,6 @@ export const likePost = CatchAsyncError(async (req, res, next) => {
             return next(new ErrorHandler("User not found", 404));
         }
 
-        // Check if the user has already liked the post
         const likedIndex = post.likes.findIndex(like => like.toString() === userId.toString());
         let message;
 
@@ -182,10 +181,10 @@ export const likePost = CatchAsyncError(async (req, res, next) => {
             post.likes.push(userId);
             message = "Post liked successfully";
 
-            // Notify post owner
-            if (postId.user && postId.user._id) {
+            // Notify post owner if the post owner exists and is not the same as the liker
+            if (post.user && post.user.toString() !== userId.toString()) {
                 const notificationData = {
-                    recipient: postId.user._id,
+                    recipient: post.user,
                     title: "New Like on Your Post",
                     message: `${user.name} liked your post: "${post.title}"`,
                     type: 'forum'
@@ -193,7 +192,7 @@ export const likePost = CatchAsyncError(async (req, res, next) => {
                 await NotificationModel.create(notificationData);
 
                 // Gửi thông báo realtime
-                io.to(postId.user._id.toString()).emit('newNotification', notificationData);
+                io.to(post.user.toString()).emit('newNotification', notificationData);
             }
         } else {
             post.likes.splice(likedIndex, 1);
@@ -227,32 +226,30 @@ export const likeComment = CatchAsyncError(async (req, res, next) => {
             return next(new ErrorHandler("Comment not found", 404));
         }
 
-        // Thêm dòng này để lấy thông tin user
         const user = await UserModel.findById(userId);
         if (!user) {
             return next(new ErrorHandler("User not found", 404));
         }
 
-        // Check if the user has already liked the comment
         const likedIndex = comment.likes.findIndex(like => like.toString() === userId.toString());
-
         let message;
+
         if (likedIndex === -1) {
             comment.likes.push(userId);
             message = "Comment liked successfully";
 
-            // Notify post owner
-            if (commentId.user && commentId.user._id) {
+            // Notify comment owner if they exist and are not the same as the liker
+            if (comment.user && comment.user.toString() !== userId.toString()) {
                 const notificationData = {
-                    recipient: commentId.user._id,
+                    recipient: comment.user,
                     title: "New Like on Your Comment",
-                    message: `${user.name} liked your comment: "${post.title}"`,
+                    message: `${user.name} liked your comment on the post: "${post.title}"`,
                     type: 'forum'
                 };
                 await NotificationModel.create(notificationData);
 
                 // Gửi thông báo realtime
-                io.to(commentId.user._id.toString()).emit('newNotification', notificationData);
+                io.to(comment.user.toString()).emit('newNotification', notificationData);
             }
         } else {
             comment.likes.splice(likedIndex, 1);
@@ -277,13 +274,6 @@ export const likeReply = CatchAsyncError(async (req, res, next) => {
         const { postId, commentId, replyId } = req.params;
         const userId = req.user._id;
 
-        // Thêm dòng này để lấy thông tin user
-        const user = await UserModel.findById(userId);
-        if (!user) {
-            return next(new ErrorHandler("User not found", 404));
-        }
-
-        // Find the post
         const post = await ForumModel.findById(postId);
         if (!post) {
             return next(new ErrorHandler("Forum post not found", 404));
@@ -297,26 +287,30 @@ export const likeReply = CatchAsyncError(async (req, res, next) => {
             return next(new ErrorHandler("Reply not found", 404));
         }
 
-        // Check if the user has already liked the reply
-        const likedIndex = reply.likes.findIndex(like => like.toString() === userId.toString());
+        const user = await UserModel.findById(userId);
+        if (!user) {
+            return next(new ErrorHandler("User not found", 404));
+        }
 
+        const likedIndex = reply.likes.findIndex(like => like.toString() === userId.toString());
         let message;
+
         if (likedIndex === -1) {
             reply.likes.push(userId);
             message = "Reply liked successfully";
 
-            // Notify post owner
-            if (replyId.user && replyId.user._id) {
+            // Notify reply owner if they exist and are not the same as the liker
+            if (reply.user && reply.user.toString() !== userId.toString()) {
                 const notificationData = {
-                    recipient: replyId.user._id,
+                    recipient: reply.user,
                     title: "New Like on Your Reply",
-                    message: `${user.name} liked your reply: "${post.title}"`,
+                    message: `${user.name} liked your reply on the post: "${post.title}"`,
                     type: 'forum'
                 };
                 await NotificationModel.create(notificationData);
 
                 // Gửi thông báo realtime
-                io.to(replyId.user._id.toString()).emit('newNotification', notificationData);
+                io.to(reply.user.toString()).emit('newNotification', notificationData);
             }
         } else {
             reply.likes.splice(likedIndex, 1);

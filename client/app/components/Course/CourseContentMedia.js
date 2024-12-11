@@ -178,18 +178,17 @@ const CourseContentMedia = ({
             });
 
             const review = course?.reviews?.find(r => r._id === reviewId);
-            const recipientId = review?.user?._id;
             
-            if (recipientId) {
+            if (review?.user?._id) {
                 socket.emit('notification', {
                     type: 'course',
                     subtype: 'review_reply',
-                    recipientId: recipientId,
+                    recipientId: review.user._id,
                     title: 'New Reply to Your Review',
-                    message: `Admin has replied to your review on ${data[activeVideo].title}`,
+                    message: `${user.name} has replied to your review on ${course.name}`,
+                    status: 'unread',
+                    createdAt: new Date().toISOString()
                 });
-            } else {
-                console.error('Recipient ID is missing');
             }
         }
     };

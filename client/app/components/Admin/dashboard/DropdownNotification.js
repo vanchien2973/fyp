@@ -46,12 +46,14 @@ const DropdownNotifications = () => {
         const handleNewNotification = async (data) => {
             try {                
                 const shouldHandleNotification = (
-                    (data.recipientId === user._id.toString()) || 
+                    (data.recipient === user._id.toString()) || 
                     (isAdmin && ['system', 'new_post', 'new_order'].includes(data.type))
                 );
 
                 if (shouldHandleNotification) {
-                    if (data.recipientId === user._id.toString()) {
+                    console.log('Received notification:', data);
+                    
+                    if (data.recipient === user._id.toString()) {
                         await refetchUserData();
                     }
                     if (isAdmin) {

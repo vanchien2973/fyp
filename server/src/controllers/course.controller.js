@@ -350,9 +350,9 @@ export const addReplyForReview = CatchAsyncError(async (req, res, next) => {
         review.commentReplies?.push(replyData);
 
         // Add notification for review author
-        if (reviewId.user && reviewId.user._id) {
+        if (review.user && review.user._id) {
             const notificationData = {
-                recipient: reviewId.user._id,
+                recipient: review.user._id,
                 title: "New Reply to Your Review",
                 message: `Admin has replied to your review on ${course.name}`,
                 type: 'course'
@@ -360,7 +360,7 @@ export const addReplyForReview = CatchAsyncError(async (req, res, next) => {
             await NotificationModel.create(notificationData);
 
             // Gửi thông báo realtime
-            io.to(reviewId.user._id.toString()).emit('newNotification', notificationData);
+            io.to(review.user._id.toString()).emit('newNotification', notificationData);
         }
 
         await course?.save();

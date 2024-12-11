@@ -20,17 +20,6 @@ export const entryTestApi = apiSlice.injectEndpoints({
                 body: { answers },
                 credentials: 'include',
             }),
-            async onQueryStarted(arg, { queryFulfilled, dispatch }) {
-                try {
-                    const result = await queryFulfilled;
-                    dispatch(userLogin({
-                        accessToken: result.data.accessToken,
-                        user: result.data.user,
-                    }));
-                } catch (error) {
-                    console.log(error);
-                }
-            },
         }),
 
         getAllEntranceTests: builder.query({
