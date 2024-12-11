@@ -302,7 +302,7 @@ export const addReview = CatchAsyncError(async (req, res, next) => {
         await course.save();
         await redis.set(courseId, JSON.stringify(course), 'EX', 604800); // 7 days
 
-        // Add notification for course creator
+        // Add notification for admin
         const adminUser = await UserModel.findOne({ role: 'admin' });
         if (adminUser) {
             const notificationData = {
@@ -378,18 +378,16 @@ export const addReplyForReview = CatchAsyncError(async (req, res, next) => {
 export const generateVideoUrl = CatchAsyncError(async (req, res, next) => {
     try {
         const { videoId } = req.body;
-        const apiUrl = `https://dev.vdocipher.com/api/videos/${videoId}/otp`;
-
-        const headers = {
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
-            Authorization: `Apisecret ${process.env.VDOCIPHER_API_SECRET}`,
-        };
-
         const response = await axios.post(
-            apiUrl,
+            `https://dev.vdocipher.com/api/videos/${videoId}/otp`,
             { ttl: 300 },
-            { headers }
+            {
+                headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+                    Authorization: `Apisecret ${process.env.VDOCIPHER_API_SECRET}`,
+                },
+            }
         );
         res.json(response.data);
     } catch (error) {

@@ -23,6 +23,7 @@ const CourseContentList = ({
   };
 
   const handleVideoClick = (sectionIndex, videoIndex) => {
+    if (isDemo) return;
     setActiveSection(sectionIndex);
     setActiveVideo(videoIndex);
   };
@@ -69,8 +70,9 @@ const CourseContentList = ({
                       variant="ghost"
                       className={`w-full justify-start text-left mb-2 ${
                         globalVideoIndex === activeVideo ? 'bg-gray-100 dark:bg-gray-800' : ''
-                      }`}
-                      onClick={() => handleVideoClick(sectionIndex, videoIndex)} // Set the global video index
+                      } ${isDemo ? 'cursor-not-allowed opacity-70' : ''}`}
+                      onClick={() => handleVideoClick(sectionIndex, videoIndex)}
+                      disabled={isDemo}
                     >
                       <TvMinimalPlay size={20} className="mr-3 text-blue-500 flex-shrink-0" />
                       <div>

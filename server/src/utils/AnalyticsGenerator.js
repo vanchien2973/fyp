@@ -1,5 +1,3 @@
-
-
 export async function generateLast12MonthsData(model) {
     const last12Months = [];
     const currentDate = new Date();

@@ -59,15 +59,6 @@ const DropdownNotifications = () => {
                     }
                     
                     await playNotificationSound();
-                    
-                    setNotifications(prev => [{
-                        _id: Date.now(),
-                        title: data.title,
-                        message: data.message,
-                        status: 'unread',
-                        createdAt: new Date().toISOString(),
-                        ...data
-                    }, ...prev]);
                 }
             } catch (error) {
                 console.error('Error handling notification:', error);
@@ -86,15 +77,26 @@ const DropdownNotifications = () => {
     }, [audio]);
 
     useEffect(() => {
-        // Kết hợp dữ liệu từ cả hai nguồn khi có dữ liệu mới
+        // Tạo Set để theo dõi ID thông báo đã xử lý
+        const processedIds = new Set();
         const combinedNotifications = [];
         
         if (userData?.notifications) {
-            combinedNotifications.push(...userData.notifications);
+            userData.notifications.forEach(notification => {
+                if (!processedIds.has(notification._id)) {
+                    processedIds.add(notification._id);
+                    combinedNotifications.push(notification);
+                }
+            });
         }
         
         if (isAdmin && adminData?.notifications) {
-            combinedNotifications.push(...adminData.notifications);
+            adminData.notifications.forEach(notification => {
+                if (!processedIds.has(notification._id)) {
+                    processedIds.add(notification._id);
+                    combinedNotifications.push(notification);
+                }
+            });
         }
 
         // Sắp xếp theo thời gian tạo mới nhất

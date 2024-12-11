@@ -127,7 +127,6 @@ export const getAllOrdersInSystem = CatchAsyncError(async (req, res, next) => {
 
 // Send Stripe Publishable Key
 export const sendStripePublishableKey = CatchAsyncError(async (req, res, next) =>{
-
     res.status(200).json({
         stripePublishableKey: process.env.STRIPE_PUBLISHABLE_KEY
     })

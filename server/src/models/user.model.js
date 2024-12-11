@@ -134,12 +134,12 @@ userSchema.methods.comparePassword = async function (enteredPassword) {
 
 // Generate Access Token
 userSchema.methods.generateAccessToken = function () {
-    return jwt.sign({ id: this._id }, process.env.ACCESS_TOKEN_SECRET || '', { expiresIn: '30m' });
+    return jwt.sign({ id: this._id }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '30m' });
 };
 
 // Generate Refresh Token
 userSchema.methods.generateRefreshToken = function () {
-    return jwt.sign({ id: this._id }, process.env.REFRESH_TOKEN_SECRET || '', { expiresIn: '3d' });
+    return jwt.sign({ id: this._id }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '3d' });
 };
 
 const UserModel = mongoose.model('User', userSchema);

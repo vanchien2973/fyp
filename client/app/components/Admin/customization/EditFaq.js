@@ -56,6 +56,7 @@ const EditFaq = () => {
         setQuestions([
             ...questions,
             {
+                _id: Date.now().toString(),
                 question: '',
                 answer: '',
                 active: false,
@@ -74,9 +75,10 @@ const EditFaq = () => {
     const handleEdit = async () => {
         const originalQuestions = data?.layout?.faq;
         if (!areQuestionsUnchanged(originalQuestions, questions) && !isAnyQuestionEmpty(questions)) {
+            const questionsToSubmit = questions.map(({ _id, ...rest }) => rest);
             await editLayout({
                 type: 'FAQ',
-                faq: questions
+                faq: questionsToSubmit
             }).unwrap();
         }
     };

@@ -8,6 +8,7 @@ import Reviews from "./components/Layouts/Reviews";
 import FAQ from "./components/Layouts/FAQ";
 import Hero from "./components/Layouts/Hero";
 
+
 const Page = () => {
   const [open, setOpen] = useState(false);
   const [activeItem, setActiveItem] = useState(1);

@@ -21,7 +21,7 @@ const CourseVideoPlay = ({ videoUrl }) => {
         <div style={{ paddingTop: '50%', position: 'relative', overflow: 'hidden'}}>
             {videoData.otp && videoData.playbackInfo !== '' && (
                 <iframe
-                    src={`https://player.vdocipher.com/v2/?otp=${videoData.otp}&playbackInfo=${videoData.playbackInfo}&player=VeJmjE5svmHz9nbu`}
+                    src={`https://player.vdocipher.com/v2/?otp=${videoData.otp}&playbackInfo=${videoData.playbackInfo}&player=j6eioHedW9b1nxkX`}
                     style={{
                         border: 0,
                         width: '100%',
@@ -31,7 +31,7 @@ const CourseVideoPlay = ({ videoUrl }) => {
                         left: 0,
                     }}
                     allow="encrypted-media"
-                    allowFullScreen={true}
+                    allowfullscreen={true}
                 ></iframe>
             )}
         </div>
