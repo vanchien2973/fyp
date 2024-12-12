@@ -15,6 +15,8 @@ const Page = () => {
     const { data, isLoading, isError } = useGetEntranceTestByIdQuery(id);
     const test = data?.test;
 
+    console.log(data)
+
     if (isLoading) return <Loader />;
     if (!test) return null;
 

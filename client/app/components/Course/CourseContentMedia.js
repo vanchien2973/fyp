@@ -236,7 +236,7 @@ const CourseContentMedia = ({
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                     <div className="overflow-x-auto">
                         <TabsList className="inline-flex w-auto min-w-full">
-                            {["Overview", "Resources", "Documents", "Q&A", "Reviews"].map(
+                            {["Overview", "Resources", "Q&A", "Reviews"].map(
                                 (text) => (
                                     <TabsTrigger
                                         key={text.toLowerCase()}

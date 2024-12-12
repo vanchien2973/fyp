@@ -2,7 +2,6 @@
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
-import Image from "next/image";
 import defaultAvatar from "../../../public/assets/avatar.png";
 import { useSession } from "next-auth/react";
 import toast from "react-hot-toast";
@@ -39,6 +38,7 @@ import { RiAccountCircleLine } from "react-icons/ri";
 import ThemeToggle from "../Admin/layouts/ThemeToggle";
 import { useLoadUserQuery } from "@/app/redux/features/api/apiSlice";
 import DropdownNotifications from "../Admin/dashboard/DropdownNotification";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 
 const navItemsData = [
   { name: "Home", url: "/", icon: HomeIcon },
@@ -55,7 +55,7 @@ const Header = ({ open, setOpen, route, setRoute }) => {
   const [socialAuth, { isSuccess }] = useSocialAuthMutation();
   const [logout, setLogout] = useState(false);
   const { data: userData, isLoading, refetch } = useLoadUserQuery(undefined, {});
-  const {} = useLogoutQuery(undefined, { skip: !logout ? true : false });
+  const { } = useLogoutQuery(undefined, { skip: !logout ? true : false });
   const pathname = usePathname();
 
   useEffect(() => {
@@ -118,17 +118,15 @@ const Header = ({ open, setOpen, route, setRoute }) => {
             <div className="flex items-center space-x-2 sm:space-x-4">
               {userData ? (
                 <>
-                  <DropdownNotifications/>
+                  <DropdownNotifications />
                   <ThemeToggle />
                   <Link href="/profile" className="flex items-center">
-                    <Image
-                      src={user?.avatar?.url || defaultAvatar}
-                      width={32}
-                      height={32}
-                      alt="User Avatar"
-                      className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-primary"
-                    />
-                    <span className="hidden md:inline ml-2 text-sm">{userData?.name}</span>
+                    <Avatar className="w-[40px] h-[40px]">
+                      <AvatarImage src={user.avatar || userData?.avatar ? user.avatar?.url : defaultAvatar} alt="Profile" />
+                      <AvatarFallback>
+                        {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                      </AvatarFallback>
+                    </Avatar>
                   </Link>
                 </>
               ) : (

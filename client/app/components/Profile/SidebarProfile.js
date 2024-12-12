@@ -7,6 +7,7 @@ import { BookOpenIcon, ArrowPathIcon } from "@heroicons/react/24/outline";
 import { MdOutlineAdminPanelSettings } from "react-icons/md";
 import { Separator } from '../ui/separator';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
+import defaultAvatar from "../../../public/assets/avatar.png";
 
 const SidebarProfile = ({ user, active, avatar, setActive, logoutHandler }) => {
   const menuItems = [
@@ -33,7 +34,12 @@ const SidebarProfile = ({ user, active, avatar, setActive, logoutHandler }) => {
             onClick={item.action}
           >
             {item.id === 1 ? (
-              <UserAvatar user={user}/>
+              <Avatar className="w-[40px] h-[40px]">
+                <AvatarImage src={user.avatar || avatar ? user.avatar.url : defaultAvatar} alt="Profile" />
+                <AvatarFallback>
+                  {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                </AvatarFallback>
+              </Avatar>
             ) : item.icon && <item.icon className="h-5 w-5 md:h-7 md:w-7" />}
             <span className="hidden md:inline ml-3">{item.label}</span>
           </Button>
